@@ -53,11 +53,6 @@ class Set:
 		return len(self.cards)
 
 
-# class Hand:
-# 	def __init__(self, cards):
-# 		self.cards=cards
-
-
 class Game:
 	def __init__(self):
 		self.set = Set()
@@ -73,9 +68,10 @@ class Game:
 		self.table = []
 
 	def attack(self, card_number: int):
-		b = False
 		if card_number >= len(self.hand[self.turn]):
 			return False
+
+		b = False
 		card = self.hand[self.turn][card_number]
 		if not self.table:
 			self.table.append([card, None])
@@ -94,8 +90,12 @@ class Game:
 		return True
 
 	def defense(self, card_number, card_number_table):
+		if card_number >= len(self.hand[not self.turn]):
+			return False
+
 		card1 = self.hand[not self.turn][card_number]
 		card2 = self.table[card_number_table][0]
+
 		if not card1.more(card2, self.trump_card) or \
 				not (self.table[card_number_table][1] is None) or \
 				not (card2 is Card):
