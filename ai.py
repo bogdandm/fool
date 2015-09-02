@@ -5,11 +5,11 @@ from engine import *
 
 
 class AI:
-	def __init__(self, game: Game, hand_number):
+	def __init__(self, game: Game, hand_number: int):
 		self.game = game
 		self.hand = game.hand[hand_number]
 		self.hand_number = hand_number
-		self.unknown_cards = game.set.cards[:]
+		self.unknown_cards = game.set.cards[:] + self.game.hand[not hand_number]
 		self.oof_cards = []
 		self.enemy_cards = []
 		self.table_cards = []
@@ -44,21 +44,32 @@ class AI:
 						del self.enemy_cards[i]
 			self.table_cards.append(card)
 
+		self.unknown_cards = difference(self.unknown_cards, self.oof_cards + self.enemy_cards + self.table_cards)
+
 	def attack(self):
 		trump = self.game.trump_card
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
+		can_attack = True
+		result = None
 		for card in self.hand:
 			sums.append((card, 0))
-			sums[-1][1] += 1 / card.number * 10  # Скидываем мелкие
-			if trump.suit == card.suit:  # Сохраняем козыри
-				sums[-1][1] += -10
+			if self.game.table:
+				can_attack = False  # Можно ли подкинуть эту карту
+				for card2 in self.game.table:
+					if card.number == card2.number:
+						can_attack = True
+						break
+			if not can_attack: continue  # Если нет, проверяем следующую
+			sums[-1][1] += 27 - card.weight(self.game.trump_suit)
+			# if card.number < 11 or stage > 75: # до поздней игры бережем крупные карты
 			for card2 in self.hand:  # Ищем пары (тройки)
-				if card.number == card2.number and card2.suit != trump.suit:
-					sums[-1][1] += 9
-			if stage > 50:
-				sums[-1][1] *= (1 - self.probability(
-					card)) / 4 + 0.75  # В поздней игре учитываем вероятность побить карту
+				if card.number == card2.number and card.suit != card2.suit and card2.suit != trump.suit:
+					sums[-1][1] += 10
+			sums[-1][1] *= (1 - self.probability(card)) / (2 - stage / 100)
+			if result is None or result[1] < sums[-1][1]:
+				result = sums[-1]
+		return self.hand.index(result[0])
 
 	def defense(self, card):
 		return None

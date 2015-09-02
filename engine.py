@@ -2,6 +2,8 @@ import random
 
 random.seed()
 
+def difference(list1, list2) -> list:
+	return list(set(list1).difference(list2))
 
 class Card:
 	CLUBS = 1  # ♣
@@ -33,6 +35,9 @@ class Card:
 	def more(self, card2, trump_card_suit) -> bool:
 		return (self.suit == card2.suit and self.number > card2.number) or \
 			   (self.suit == trump_card_suit and card2.suit != trump_card_suit)
+
+	def weight(self, trump_suit):
+		return self.number + 13 if self.suit==trump_suit else 0
 
 
 class Set:
