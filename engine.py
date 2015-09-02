@@ -30,9 +30,9 @@ class Card:
 		elif self.suit == 4:
 			print('H', end='')
 
-	def more(self, card2, trump_card) -> bool:
+	def more(self, card2, trump_card_suit) -> bool:
 		return (self.suit == card2.suit and self.number > card2.number) or \
-			   (self.suit == trump_card.suit and card2.suit != trump_card.suit)
+			   (self.suit == trump_card_suit and card2.suit != trump_card_suit)
 
 
 class Set:
@@ -96,7 +96,7 @@ class Game:
 		card1 = self.hand[not self.turn][card_number]
 		card2 = self.table[card_number_table][0]
 
-		if not card1.more(card2, self.trump_card) or \
+		if not card1.more(card2, self.trump_suit) or \
 				not (self.table[card_number_table][1] is None) or \
 				not (card2 is Card):
 			return False
@@ -108,7 +108,10 @@ class Game:
 	def print_state(self):
 		print('==========================')
 		print('Trump card:', end='\t')
-		self.trump_card.print()
+		if self.trump_suit is None:
+			print('None', end='')
+		else:
+			self.trump_card.print()
 		print('\tRemaining:\t%i' % self.set.remain())
 
 		print('\nAI %s' % ('<-' if self.turn else ''))
@@ -188,7 +191,7 @@ class Game:
 			if tmp[1] is None:
 				tmp2_b = False
 				for card in self.hand[not self.turn]:
-					tmp2_b = tmp2_b or card.more(tmp[0], self.trump_card)
+					tmp2_b = tmp2_b or card.more(tmp[0], self.trump_suit)
 					if tmp2_b: break
 				tmp_b = tmp_b and tmp2_b
 				if not tmp_b: break
