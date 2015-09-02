@@ -1,4 +1,5 @@
 from engine import *
+from math import factorial
 
 
 # from copy import deepcopy
@@ -14,10 +15,10 @@ class AI:
 		self.enemy_cards = []
 		self.table_cards = []
 
-	def update_memory(self, mode='all', card=None, inf=None):
+	def update_memory(self, mode='all', card: Card = None, inf=None):
 		# mode=ALL|OFF|TAKE|TRUMP|TABLE
 
-		# OFF - перед тем, как карты будут скинуту в отбой
+		# OFF - перед тем, как карты будут скинуты в отбой
 		# TAKE  - перед тем, как игрок возьмет карты
 		# TRUMP - игрок берет козырь
 		# TABLE - карты кладутся на стол
@@ -60,6 +61,8 @@ class AI:
 					if card.number == card2.number:
 						can_attack = True
 						break
+					if stage<50 and card2.weight()>20:
+						return -1
 			if not can_attack: continue  # Если нет, проверяем следующую
 
 			sums[-1][1] += 27 - card.weight(self.game.trump_suit)
@@ -70,7 +73,8 @@ class AI:
 					sums[-1][1] += 10
 					print('pair')
 
-			sums[-1][1] *= (1 - self.probability(card)) ** (2 * stage / 100)
+			k = 2
+			sums[-1][1] *= (1 - self.probability(card)) ** (2 * stage / 100) / k + (1 - 1 / k)
 
 			if result is None or result[1] < sums[-1][1]:
 				result = sums[-1]
@@ -80,7 +84,7 @@ class AI:
 		return self.hand.index(result[0])
 
 	def defense(self, card):
-		return None
+		pass
 
 	def probability(self, card1):  # Вероятность побить card1
 		for card in self.enemy_cards:  # Если у противника есть нужная карта, то 100%
@@ -88,9 +92,11 @@ class AI:
 				return 1
 
 		yes = 0
-		all = len(self.game.hand[not self.hand_number])
+		total = len(self.game.hand[not self.hand_number])
 		enemy_cards_count = len(self.game.hand[not self.hand_number])
 		for card in self.unknown_cards:
 			if card.more(card1, self.game.trump_suit):
 				yes += 1
-		return 1 - (1 - yes / all) ** enemy_cards_count
+
+		return factorial(total - yes) * factorial(total - enemy_cards_count) / \
+			   (factorial(total) * factorial(total - yes - enemy_cards_count))

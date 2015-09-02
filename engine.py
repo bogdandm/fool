@@ -23,7 +23,7 @@ class Card:
 		self.suit = suit
 		self.number = card_number
 
-	def print(self): # Выводит значение карты вида 00X
+	def print(self):  # Выводит значение карты вида 00X
 		print(self.number, end='')
 		if self.suit == 1:
 			print('C', end='')
@@ -34,7 +34,7 @@ class Card:
 		elif self.suit == 4:
 			print('H', end='')
 
-	def key(self) -> str: # Возвращает строку, аналогично пр. методу
+	def key(self) -> str:  # Возвращает строку, аналогично пр. методу
 		s = str(self.number)
 		if self.suit == 1:
 			s += 'C'
@@ -46,15 +46,15 @@ class Card:
 			s += 'H'
 		return s
 
-	def more(self, card2, trump_card_suit) -> bool: # Self бьет card2
+	def more(self, card2, trump_card_suit) -> bool:  # Self бьет card2
 		return (self.suit == card2.suit and self.number > card2.number) or \
 			   (self.suit == trump_card_suit and card2.suit != trump_card_suit)
 
-	def weight(self, trump_suit): # Вес карты
+	def weight(self, trump_suit):  # Вес карты
 		return self.number + (13 if self.suit == trump_suit else 0)
 
 
-class Set: # Колода
+class Set:  # Колода
 	def __init__(self):
 		self.cards = []
 		for y in range(2, 15):
@@ -62,7 +62,7 @@ class Set: # Колода
 				self.cards.append(Card(x, y))
 		random.shuffle(self.cards)
 
-	def take_card(self) -> Card: # Выдаем карту из колоды
+	def take_card(self) -> Card:  # Выдаем карту из колоды
 		if not len(self.cards):
 			return None
 		return self.cards.pop()
@@ -86,7 +86,7 @@ class Game:
 
 		self.table = []
 
-	def attack(self, card_number: int, ai=None) -> bool: # Меняет состояние игры
+	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
 		if len(self.hand[self.turn]) <= card_number <= 0:
 			return False
 
@@ -96,7 +96,7 @@ class Game:
 			can_attack = True
 			if ai is not None: ai.update_memory('TABLE', card, self.turn)
 			self.table.append([card, None])
-		else: # Подкидывание
+		else:  # Подкидывание
 			for tmp in self.table:
 				for c in tmp:
 					if c and c.number == card.number:
@@ -111,7 +111,7 @@ class Game:
 			del self.hand[self.turn][card_number]
 		return can_attack
 
-	def defense(self, card_number, card_number_table=-1, ai=None) -> bool: # Меняет состояние игры
+	def defense(self, card_number, card_number_table=-1, ai=None) -> bool:  # Меняет состояние игры
 		if len(self.hand[not self.turn]) <= card_number <= 0:
 			return False
 
@@ -127,7 +127,7 @@ class Game:
 		del self.hand[not self.turn][card_number]
 		return True
 
-	def switch_turn(self, ai=None): # Заканчивает раунд и переключает игрока (если был отбой)
+	def switch_turn(self, ai=None):  # Заканчивает раунд и переключает игрока (если был отбой)
 		not_take = True
 		for c_ in self.table:  # Берем карты или нет
 			if c_[1] is None:
@@ -141,7 +141,7 @@ class Game:
 			if ai is not None: ai.update_memory('OFF')
 		self.table = []
 
-		if self.set.remain() or self.trump_suit is not None: # Если есть что взять
+		if self.set.remain() or self.trump_suit is not None:  # Если есть что взять
 			for i in range(6 - len(self.hand[self.turn])):
 				card = self.set.take_card()
 				if card is not None:
