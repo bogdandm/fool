@@ -2,8 +2,10 @@ import random
 
 random.seed()
 
+
 def difference(list1, list2) -> list:
 	return list(set(list1).difference(list2))
+
 
 class Card:
 	CLUBS = 1  # ♣
@@ -32,12 +34,24 @@ class Card:
 		elif self.suit == 4:
 			print('H', end='')
 
+	def key(self) -> str:
+		s = str(self.number)
+		if self.suit == 1:
+			s += 'C'
+		elif self.suit == 2:
+			s += 'S'
+		elif self.suit == 3:
+			s += 'D'
+		elif self.suit == 4:
+			s += 'H'
+		return s
+
 	def more(self, card2, trump_card_suit) -> bool:
 		return (self.suit == card2.suit and self.number > card2.number) or \
 			   (self.suit == trump_card_suit and card2.suit != trump_card_suit)
 
 	def weight(self, trump_suit):
-		return self.number + 13 if self.suit==trump_suit else 0
+		return self.number + (13 if self.suit == trump_suit else 0)
 
 
 class Set:
@@ -68,7 +82,7 @@ class Game:
 			self.hand[1].append(self.set.take_card())
 		self.trump_card = self.set.take_card()
 		self.trump_suit = self.trump_card.suit
-		self.turn = random.randint(0, 1)
+		self.turn = 1  # random.randint(0, 1)
 
 		self.table = []
 
@@ -79,6 +93,7 @@ class Game:
 		can_attack = False
 		card = self.hand[self.turn][card_number]
 		if not self.table:
+			can_attack = True
 			if ai is not None: ai.update_memory('TABLE', card, self.turn)
 			self.table.append([card, None])
 		else:
@@ -154,6 +169,9 @@ class Game:
 
 	def can_continue_turn(self) -> bool:
 		result = True
+
+		if len(self.hand[not self.turn]) == 0:
+			return False
 
 		tmp_b = False  # Можно атаковать
 		for card in self.hand[self.turn]:
