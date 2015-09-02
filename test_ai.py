@@ -9,7 +9,7 @@ while game.can_play():
 		game.print_state()
 		i = int(input('(a) Card number (0-n): '))
 		game.attack(i, ai=ai)
-		if not game.can_continue_turn():  # Если нельзя отбиться, то не мучаем ИИ)
+		if not game.can_continue_turn():
 			game.print_state()
 			game.switch_turn(ai)
 			continue
