@@ -74,13 +74,13 @@ class Game:
 		can_attack = False
 		card = self.hand[self.turn][card_number]
 		if not self.table:
-			if ai is not None: ai.update_memory('TABLE', card)
+			if ai is not None: ai.update_memory('TABLE', card, self.turn)
 			self.table.append([card, None])
 		else:
 			for tmp in self.table:
 				for c in tmp:
 					if c and c.number == card.number:
-						if ai is not None: ai.update_memory('TABLE', card)
+						if ai is not None: ai.update_memory('TABLE', card, self.turn)
 						self.table.append([card, None])
 						can_attack = True
 						break
@@ -100,40 +100,10 @@ class Game:
 		if not card1.more(card2, self.trump_suit) or self.table[card_number_table][1] is not None or card2 is None:
 			return False
 
-		if ai is not None: ai.update_memory('TABLE', card1)
+		if ai is not None: ai.update_memory('TABLE', card1, not self.turn)
 		self.table[card_number_table][1] = card1
 		del self.hand[not self.turn][card_number]
 		return True
-
-	def print_state(self):
-		print('==========================')
-		print('Trump card:', end='\t')
-		if self.trump_suit is None:
-			print('None', end='')
-		else:
-			self.trump_card.print()
-		print('\tRemaining:\t%i' % self.set.remain())
-
-		print('\nAI %s' % ('<-' if self.turn else ''))
-		for card in self.hand[1]:
-			card.print()
-			print(end='\t')
-
-		print('\n\n')
-		for card in self.hand[0]:
-			card.print()
-			print(end='\t')
-		print('\nPlayer %s' % ('<-' if not self.turn else ''))
-
-		print('\nTable:')
-		for pair in self.table:
-			pair[0].print()
-			print(end='\t')
-		print()
-		for pair in self.table:
-			if pair[1]: pair[1].print()
-			print(end='\t')
-		print('\n==========================')
 
 	def switch_turn(self, ai=None):
 		not_take = True
@@ -152,20 +122,20 @@ class Game:
 		if self.set.remain():
 			for i in range(6 - len(self.hand[self.turn])):
 				card = self.set.take_card()
-				if not (card is None):
+				if card is not None:
 					self.hand[self.turn].append(card)
-				elif not (self.trump_card is None):
-					if ai is not None: ai.update_memory('TRUMP')
+				elif self.trump_card is not None:
+					if ai is not None: ai.update_memory('TRUMP', inf=self.turn)
 					self.hand[self.turn].append(self.trump_card)
 					self.trump_card = None
 				else:
 					break
 			for i in range(6 - len(self.hand[not self.turn])):
 				card = self.set.take_card()
-				if not (card is None):
+				if card is not None:
 					self.hand[not self.turn].append(card)
-				elif not (self.trump_card is None):
-					if ai is not None: ai.update_memory('TRUMP')
+				elif self.trump_card is not None:
+					if ai is not None: ai.update_memory('TRUMP', inf=not self.turn)
 					self.hand[not self.turn].append(self.trump_card)
 					self.trump_card = None
 				else:
@@ -206,3 +176,33 @@ class Game:
 
 	def can_play(self) -> bool:
 		return self.hand[0] and self.hand[1]
+
+	def print_state(self):
+		print('==========================')
+		print('Trump card:', end='\t')
+		if self.trump_suit is None:
+			print('None', end='')
+		else:
+			self.trump_card.print()
+		print('\tRemaining:\t%i' % self.set.remain())
+
+		print('\nAI %s' % ('<-' if self.turn else ''))
+		for card in self.hand[1]:
+			card.print()
+			print(end='\t')
+
+		print('\n\n')
+		for card in self.hand[0]:
+			card.print()
+			print(end='\t')
+		print('\nPlayer %s' % ('<-' if not self.turn else ''))
+
+		print('\nTable:')
+		for pair in self.table:
+			pair[0].print()
+			print(end='\t')
+		print()
+		for pair in self.table:
+			if pair[1]: pair[1].print()
+			print(end='\t')
+		print('\n==========================')

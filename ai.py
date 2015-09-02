@@ -12,10 +12,9 @@ class AI:
 		self.unknown_cards = game.set.cards[:]
 		self.oof_cards = []
 		self.enemy_cards = []
-		self.trump_card = self.game.trump_card
 		self.table_cards = []
 
-	def update_memory(self, mode='all', card=None):
+	def update_memory(self, mode='all', card=None, inf=None):
 		# mode=ALL|OFF|TAKE|TRUMP|TABLE
 
 		# OFF - перед тем, как карты будут скинуту в отбой
@@ -35,8 +34,15 @@ class AI:
 					self.enemy_cards.append(tmp[1])
 
 		if mode == 'TRUMP' or mode == 'ALL':
-			if self.game.turn == self.hand_number:
+			if inf != self.hand_number:
 				self.enemy_cards.append(self.game.trump_card)
+
+		if mode == 'TABLE' or mode == 'ALL':
+			if inf != self.hand_number:
+				for i in range(len(self.enemy_cards)):
+					if card == self.enemy_cards[i]:
+						del self.enemy_cards[i]
+			self.table_cards.append(card)
 
 	def attack(self):
 		trump = self.game.trump_card
