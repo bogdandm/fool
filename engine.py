@@ -67,40 +67,40 @@ class Game:
 
 		self.table = []
 
-	def attack(self, card_number: int):
+	def attack(self, card_number: int, ai=None) -> bool:
 		if card_number >= len(self.hand[self.turn]):
 			return False
 
-		b = False
+		can_attack = False
 		card = self.hand[self.turn][card_number]
 		if not self.table:
+			if ai is not None: ai.update_memory('TABLE', card)
 			self.table.append([card, None])
 		else:
 			for tmp in self.table:
 				for c in tmp:
 					if c and c.number == card.number:
+						if ai is not None: ai.update_memory('TABLE', card)
 						self.table.append([card, None])
-						b = True
+						can_attack = True
 						break
-				if b:
+				if can_attack:
 					break
-			else:
-				return False
-		del self.hand[self.turn][card_number]
-		return True
+		if can_attack:
+			del self.hand[self.turn][card_number]
+		return can_attack
 
-	def defense(self, card_number, card_number_table):
+	def defense(self, card_number, card_number_table=-1, ai=None) -> bool:
 		if card_number >= len(self.hand[not self.turn]):
 			return False
 
 		card1 = self.hand[not self.turn][card_number]
 		card2 = self.table[card_number_table][0]
 
-		if not card1.more(card2, self.trump_suit) or \
-				not (self.table[card_number_table][1] is None) or \
-				not (card2 is Card):
+		if not card1.more(card2, self.trump_suit) or self.table[card_number_table][1] is not None or card2 is None:
 			return False
 
+		if ai is not None: ai.update_memory('TABLE', card1)
 		self.table[card_number_table][1] = card1
 		del self.hand[not self.turn][card_number]
 		return True
@@ -135,15 +135,18 @@ class Game:
 			print(end='\t')
 		print('\n==========================')
 
-	def switch_turn(self):
+	def switch_turn(self, ai=None):
 		not_take = True
-		for c_ in self.table:
+		for c_ in self.table:  # Берем карты или нет
 			if c_[1] is None:
 				not_take = False
+				if ai is not None: ai.update_memory('TAKE')
 				for tmp in self.table:
 					for c in tmp:
 						if c: self.hand[not self.turn].append(c)
 				break
+		if not_take:
+			if ai is not None: ai.update_memory('OFF')
 		self.table = []
 
 		if self.set.remain():
@@ -152,6 +155,7 @@ class Game:
 				if not (card is None):
 					self.hand[self.turn].append(card)
 				elif not (self.trump_card is None):
+					if ai is not None: ai.update_memory('TRUMP')
 					self.hand[self.turn].append(self.trump_card)
 					self.trump_card = None
 				else:
@@ -161,6 +165,7 @@ class Game:
 				if not (card is None):
 					self.hand[not self.turn].append(card)
 				elif not (self.trump_card is None):
+					if ai is not None: ai.update_memory('TRUMP')
 					self.hand[not self.turn].append(self.trump_card)
 					self.trump_card = None
 				else:
@@ -173,9 +178,9 @@ class Game:
 			print('Take cards...')
 
 	def can_continue_turn(self) -> bool:
-		b = True
+		result = True
 
-		tmp_b = False
+		tmp_b = False  # Можно атаковать
 		for card in self.hand[self.turn]:
 			for tmp in self.table:
 				if tmp[1] is None: tmp_b = True
@@ -184,9 +189,9 @@ class Game:
 					if tmp_b: break
 				if tmp_b: break
 			if tmp_b: break
-		b = b and tmp_b
+		result = result and tmp_b
 
-		tmp_b = True
+		tmp_b = True  # Нужно и можно защищаться
 		for tmp in self.table:
 			if tmp[1] is None:
 				tmp2_b = False
@@ -195,9 +200,9 @@ class Game:
 					if tmp2_b: break
 				tmp_b = tmp_b and tmp2_b
 				if not tmp_b: break
-		b = b and tmp_b
+		result = result and tmp_b
 
-		return b
+		return result
 
 	def can_play(self) -> bool:
-		return self.set and (self.hand[0] or self.hand[1])
+		return self.hand[0] and self.hand[1]
