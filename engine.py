@@ -1,4 +1,3 @@
-__author__ = 'Bogdan'
 import random
 
 random.seed()

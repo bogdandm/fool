@@ -1,4 +1,3 @@
-__author__ = 'Bogdan'
 from engine import *
 
 g = Game()
