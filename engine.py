@@ -62,6 +62,7 @@ class Game:
 			self.hand[0].append(self.set.take_card())
 			self.hand[1].append(self.set.take_card())
 		self.trump_card = self.set.take_card()
+		self.trump_suit = self.trump_card.suit
 		self.turn = random.randint(0, 1)
 
 		self.table = []
@@ -132,10 +133,10 @@ class Game:
 		print('\n==========================')
 
 	def switch_turn(self):
-		b = True
+		not_take = True
 		for c_ in self.table:
 			if c_[1] is None:
-				b = False
+				not_take = False
 				for tmp in self.table:
 					for c in tmp:
 						if c: self.hand[not self.turn].append(c)
@@ -144,12 +145,29 @@ class Game:
 
 		if self.set.remain():
 			for i in range(6 - len(self.hand[self.turn])):
-				self.hand[self.turn].append(self.set.take_card())
+				card = self.set.take_card()
+				if not (card is None):
+					self.hand[self.turn].append(card)
+				elif not (self.trump_card is None):
+					self.hand[self.turn].append(self.trump_card)
+					self.trump_card = None
+				else:
+					break
 			for i in range(6 - len(self.hand[not self.turn])):
-				self.hand[not self.turn].append(self.set.take_card())
+				card = self.set.take_card()
+				if not (card is None):
+					self.hand[not self.turn].append(card)
+				elif not (self.trump_card is None):
+					self.hand[not self.turn].append(self.trump_card)
+					self.trump_card = None
+				else:
+					break
 
-		if b: self.turn = not self.turn
-		print('Player switch...')
+		if not_take:
+			self.turn = not self.turn
+			print('Player switch...')
+		else:
+			print('Take cards...')
 
 	def can_continue_turn(self) -> bool:
 		b = True
