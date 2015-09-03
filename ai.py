@@ -54,13 +54,20 @@ class AI:
 		for card in self.hand:
 			sums.append([card, 0])
 
+			can_attack = False
 			if self.game.table:
-				for card2 in self.game.table:
-					if card.number == card2.number:  # Если можно подкидывать
-						break
-					if stage < 50 and card2.weight() > 20:  # В начале игры сливаем крупные карты противника
-						return -1
-				else:
+				for tmp in self.game.table:
+					for card2 in tmp:
+						if card2 is not None and card.number == card2.number:  # Если можно подкидывать
+							can_attack = True
+						"""if stage < 50 and card2.weight(self.game.trump_suit) > 20:
+							# В начале игры сливаем крупные карты противника
+							return -1"""
+						if can_attack: break
+					if can_attack: break
+
+				if not can_attack:
+					sums[-1][1]=-1000
 					continue
 
 			sums[-1][1] += 27 - card.weight(self.game.trump_suit)
@@ -78,9 +85,9 @@ class AI:
 				result = sums[-1]
 
 		for tmp in sums:
-			print('%s|%f' % (tmp[0].key(), tmp[1]))
+			print('%s|%f' % (tmp[0], tmp[1]))
 		r = self.hand.index(result[0])
-		return r if r > 10 or not self.game.table else -1
+		return r if result[1] > 5 or not self.game.table else -1
 
 	def defense(self, card: Card):
 		stage = (1 - self.game.set.remain() / 39) * 100
@@ -110,7 +117,7 @@ class AI:
 				k = 2
 				sums[-1][1] *= (1 - self.probability_throw_up(card)) ** (2 * stage / 100) / k + (1 - 1 / k)
 			else:
-				sums[1] = -1000
+				sums[-1][1] = -1000
 
 			if result is None or result[1] < sums[-1][1]:
 				result = sums[-1]
@@ -118,10 +125,11 @@ class AI:
 		r = self.hand.index(result[0])
 		return r if r > 0 else -1
 
-	def probability(self, card):  # Вероятность побить card1
-		for card_ in self.enemy_cards:  # Если у противника есть нужная карта, то 100%
+	def probability(self, card):
+		# Вероятность того, что противник НЕ сможет побить card
+		for card_ in self.enemy_cards:  # Если у противника есть нужная карта, то 0%
 			if card_.more(card, self.game.trump_suit):
-				return 1
+				return 0
 
 		yes = 0
 		total = len(self.unknown_cards)
@@ -134,12 +142,12 @@ class AI:
 			   (factorial(total) * factorial(total - yes - enemy_cards_count))
 
 	def probability_throw_up(self, card):
-		# Вероятность того, что при защите с помощью card будет подкинута смежная карта
-		for card_ in self.enemy_cards:  # Если у противника есть нужная карта, то 100%
+		# Вероятность того, что при защите с помощью card НЕ будет подкинута смежная карта
+		for card_ in self.enemy_cards:  # Если у противника есть нужная карта, то 0%
 			if card_.more(card, self.game.trump_suit):
-				return 1
+				return 0
 
-		tmp = difference([Card(card.number, x) for x in range(1, 5)], [card, ])  # Три карты того же достоинства
+		tmp = difference([Card(x, card.number) for x in range(1, 5)], [card])  # Три карты того же достоинства
 		for i in range(3):
 			if tmp[i] not in self.unknown_cards:
 				del tmp[i]
