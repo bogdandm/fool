@@ -176,11 +176,10 @@ class Game:
 			print('Take cards...')
 
 	def can_continue_turn(self) -> bool:
-		result = True
-
 		if len(self.hand[not self.turn]) == 0:
 			return False
 
+		result = True
 		tmp_b = False  # Можно атаковать
 		for card in self.hand[self.turn]:
 			for tmp in self.table:
