@@ -50,20 +50,18 @@ class AI:
 	def attack(self):
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
-		can_attack = True
 		result = None
 		for card in self.hand:
 			sums.append([card, 0])
 
 			if self.game.table:
-				can_attack = False  # Можно ли подкинуть эту карту
 				for card2 in self.game.table:
-					if card.number == card2.number:
-						can_attack = True
+					if card.number == card2.number:  # Если можно подкидывать
 						break
-					if stage<50 and card2.weight()>20:
+					if stage < 50 and card2.weight() > 20:  # В начале игры сливаем крупные карты противника
 						return -1
-			if not can_attack: continue  # Если нет, проверяем следующую
+				else:
+					continue
 
 			sums[-1][1] += 27 - card.weight(self.game.trump_suit)
 
@@ -81,22 +79,67 @@ class AI:
 
 		for tmp in sums:
 			print('%s|%f' % (tmp[0].key(), tmp[1]))
-		return self.hand.index(result[0])
+		r = self.hand.index(result[0])
+		return r if r > 10 or not self.game.table else -1
 
-	def defense(self, card):
-		pass
+	def defense(self, card: Card):
+		stage = (1 - self.game.set.remain() / 39) * 100
+		sums = []
+		result = None
+		for card_ in self.hand:
+			sums.append([card_, 0])
 
-	def probability(self, card1):  # Вероятность побить card1
-		for card in self.enemy_cards:  # Если у противника есть нужная карта, то 100%
-			if card.more(card1, self.game.trump_suit):
+			if card_.more(card, self.game.trump_suit):
+				sums[-1][1] += 27 - card.weight(self.game.trump_suit)
+				# if card.number == card_.number: sums[-1][1] += 10
+
+				"""tmp = difference([Card(card_.number, x) for x in range(1, 5)], [card_])  # Три карты того же достоинства
+				if not (set(tmp) & set(self.unknown_cards)):  # Карты того же достоинства найдены
+					tmp2 = set(tmp) & set(self.enemy_cards)  # Карты того же достоинства у противника
+					if not tmp2 and card_.weight() < 19:
+						# Если это карта меньше козырной 6ки и противник не будет подкидывать
+						sums[-1][1] += 20
+					elif tmp2:  # Если карты противник может подкидывать
+						if Card(card_.number, self.game.trump_suit) not in list(tmp2):
+							# Если у противника НЕ козырь того же достоинства
+							sums[-1][1] += -20
+						elif set(difference(tmp, [card_, Card(card_.number, self.game.trump_suit)])) & \
+								set(self.enemy_cards):
+							# Если у него только козырь того же достоинства
+							pass"""
+				k = 2
+				sums[-1][1] *= (1 - self.probability_throw_up(card)) ** (2 * stage / 100) / k + (1 - 1 / k)
+			else:
+				sums[1] = -1000
+
+	def probability(self, card):  # Вероятность побить card1
+		for card_ in self.enemy_cards:  # Если у противника есть нужная карта, то 100%
+			if card_.more(card, self.game.trump_suit):
 				return 1
 
 		yes = 0
-		total = len(self.game.hand[not self.hand_number])
+		total = len(self.unknown_cards)
 		enemy_cards_count = len(self.game.hand[not self.hand_number])
-		for card in self.unknown_cards:
-			if card.more(card1, self.game.trump_suit):
+		for card_ in self.unknown_cards:
+			if card_.more(card, self.game.trump_suit):
 				yes += 1
 
+		return factorial(total - yes) * factorial(total - enemy_cards_count) / \
+			   (factorial(total) * factorial(total - yes - enemy_cards_count))
+
+	def probability_throw_up(self, card):
+		# Вероятность того, что при защите с помощью card будет подкинута смежная карта
+		for card_ in self.enemy_cards:  # Если у противника есть нужная карта, то 100%
+			if card_.more(card, self.game.trump_suit):
+				return 1
+
+		tmp = difference([Card(card.number, x) for x in range(1, 5)], [card, ])  # Три карты того же достоинства
+		for i in range(3):
+			if tmp[i] not in self.unknown_cards:
+				del tmp[i]
+
+		yes = len(tmp)
+		total = len(self.unknown_cards)
+		enemy_cards_count = len(self.game.hand[not self.hand_number])
 		return factorial(total - yes) * factorial(total - enemy_cards_count) / \
 			   (factorial(total) * factorial(total - yes - enemy_cards_count))
