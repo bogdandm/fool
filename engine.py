@@ -87,6 +87,10 @@ class Game:
 		self.table = []
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
+		if card_number == -1:
+			self.switch_turn()
+			return True
+
 		if len(self.hand[self.turn]) <= card_number <= 0:
 			return False
 
@@ -111,7 +115,10 @@ class Game:
 			del self.hand[self.turn][card_number]
 		return can_attack
 
-	def defense(self, card_number, card_number_table=-1, ai=None) -> bool:  # Меняет состояние игры
+	def defense(self, card_number: int, card_number_table: int = -1, ai=None) -> bool:  # Меняет состояние игры
+		if card_number == -1:
+			self.switch_turn()
+			return True
 		if len(self.hand[not self.turn]) <= card_number <= 0:
 			return False
 
