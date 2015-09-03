@@ -112,6 +112,12 @@ class AI:
 			else:
 				sums[1] = -1000
 
+			if result is None or result[1] < sums[-1][1]:
+				result = sums[-1]
+
+		r = self.hand.index(result[0])
+		return r if r > 10 or not self.game.table else -1
+
 	def probability(self, card):  # Вероятность побить card1
 		for card_ in self.enemy_cards:  # Если у противника есть нужная карта, то 100%
 			if card_.more(card, self.game.trump_suit):
