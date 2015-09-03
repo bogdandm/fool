@@ -8,7 +8,7 @@ def difference(list1, list2) -> list:
 
 
 class Card:
-	CLUBS = 1  # ♣
+	"""CLUBS = 1  # ♣
 	SPADES = 2  # ♠
 	DIAMONDS = 3  # ♦
 	HEARTS = 4  # ♥
@@ -16,25 +16,14 @@ class Card:
 	VALET = 11
 	QUEEN = 12
 	KING = 13
-	ACE = 14
+	ACE = 14"""
 
 	def __init__(self, suit, card_number, id_=-1):
 		self.id = id_
 		self.suit = suit
 		self.number = card_number
 
-	def print(self):  # Выводит значение карты вида 00X
-		print(self.number, end='')
-		if self.suit == 1:
-			print('C', end='')
-		elif self.suit == 2:
-			print('S', end='')
-		elif self.suit == 3:
-			print('D', end='')
-		elif self.suit == 4:
-			print('H', end='')
-
-	def key(self) -> str:  # Возвращает строку, аналогично пр. методу
+	def __str__(self) -> str:  # Возвращает строку, аналогично пр. методу
 		s = str(self.number)
 		if self.suit == 1:
 			s += 'C'
@@ -45,6 +34,12 @@ class Card:
 		elif self.suit == 4:
 			s += 'H'
 		return s
+
+	def __eq__(self, other):
+		return self.number == other.number and self.suit == other.suit
+
+	def __hash__(self):
+		return self.number + self.suit * 100
 
 	def more(self, card2, trump_card_suit) -> bool:  # Self бьет card2
 		return (self.suit == card2.suit and self.number > card2.number) or \
@@ -87,7 +82,9 @@ class Game:
 		self.table = []
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
-		if card_number == -1:
+		if card_number == -1 and self.table and self.table[-1][1] is not None:
+			# Можно не атаковать если на столе есть побитая пара
+			print('skip...')
 			self.switch_turn()
 			return True
 
@@ -116,9 +113,11 @@ class Game:
 		return can_attack
 
 	def defense(self, card_number: int, card_number_table: int = -1, ai=None) -> bool:  # Меняет состояние игры
-		if card_number == -1:
+		if card_number == -1 and self.table and self.table[-1][1] is None:
+			# Можно взять карты если стол не пустой и есть не побитая карта
 			self.switch_turn()
 			return True
+
 		if len(self.hand[not self.turn]) <= card_number <= 0:
 			return False
 
@@ -215,26 +214,25 @@ class Game:
 		if self.trump_suit is None:
 			print('None', end='')
 		else:
-			self.trump_card.print()
-		print('\tRemaining:\t%i' % self.set.remain())
+			print(self.trump_card, end='\t')
+		print('Remaining:\t%i' % self.set.remain())
 
 		print('\nAI %s' % ('<-' if self.turn else ''))
 		for card in self.hand[1]:
-			card.print()
-			print(end='\t')
+			print(card, end='\t')
 
 		print('\n\n')
 		for card in self.hand[0]:
-			card.print()
-			print(end='\t')
+			print(card, end='\t')
 		print('\nPlayer %s' % ('<-' if not self.turn else ''))
 
 		print('\nTable:')
 		for pair in self.table:
-			pair[0].print()
-			print(end='\t')
+			print(pair[0], end='\t')
 		print()
 		for pair in self.table:
-			if pair[1]: pair[1].print()
-			print(end='\t')
+			if pair[1]:
+				print(pair[1], end='\t')
+			else:
+				print(end='\t')
 		print('\n==========================')
