@@ -7,27 +7,34 @@ ai = AI(game, 1)
 while game.can_play():
 	if not game.turn:  # Игрок атакует
 		game.print_state()
-		i = int(input('(a) Card number (0-n): '))
-		game.attack(i, ai=ai)
+		r = True
+		while r:
+			i = int(input('(a) Card number (1-n): '))
+			r = not game.attack(i - 1 if i > 0 else -1, ai=ai)
+		game.print_state()
 		if not game.can_continue_turn():
-			game.print_state()
+			input('No choice, press Enter')
 			game.switch_turn(ai)
 			continue
 
 		game.defense(ai.defense(game.table[-1][0]), ai=ai)
 		if not game.can_continue_turn():
 			game.print_state()
+			input('No choice, press Enter')
 			game.switch_turn(ai)
 	else:  # ИИ атакует
 		game.attack(ai.attack(), ai=ai)
+		game.print_state()
 		if not game.can_continue_turn():
-			game.print_state()
+			input('No choice, press Enter')
 			game.switch_turn(ai)
 			continue
-		game.print_state()
 
-		i = int(input('(d) Card number (0-n): '))
-		game.defense(i, ai=ai)
+		r = True
+		while r:
+			i = int(input('(d) Card number (1-n): '))
+			r = not game.defense(i - 1 if i > 0 else -1, ai=ai)
+		game.print_state()
 		if not game.can_continue_turn():
-			game.print_state()
+			input('No choice, press Enter')
 			game.switch_turn(ai)

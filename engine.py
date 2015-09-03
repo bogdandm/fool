@@ -1,7 +1,5 @@
 import random
 
-random.seed()
-
 
 def difference(list1, list2) -> list:
 	return list(set(list1).difference(list2))
@@ -18,8 +16,7 @@ class Card:
 	KING = 13
 	ACE = 14"""
 
-	def __init__(self, suit, card_number, id_=-1):
-		self.id = id_
+	def __init__(self, suit, card_number):
 		self.suit = suit
 		self.number = card_number
 
@@ -37,6 +34,9 @@ class Card:
 
 	def __eq__(self, other):
 		return self.number == other.number and self.suit == other.suit
+
+	def __ne__(self, other):
+		return self.number != other.number or self.suit != other.suit
 
 	def __hash__(self):
 		return self.number + self.suit * 100
@@ -68,6 +68,8 @@ class Set:  # Колода
 
 class Game:
 	def __init__(self):
+		random.seed()
+
 		self.set = Set()
 		self.turn = 1  # random.randint(0, 1)
 		self.hand = []  # user, AI
@@ -80,15 +82,20 @@ class Game:
 		self.trump_suit = self.trump_card.suit
 
 		self.table = []
+		self.continue_turn = True
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
-		if card_number == -1 and self.table and self.table[-1][1] is not None:
-			# Можно не атаковать если на столе есть побитая пара
-			print('skip...')
-			self.switch_turn()
-			return True
+		print('Skip' if card_number == -1 else self.hand[self.turn][card_number])
+		if card_number == -1:
+			if self.table and self.table[-1][1] is not None:
+				# Можно не атаковать если на столе есть побитая пара
+				print('skip...')
+				self.continue_turn = False
+				return True
+			else:
+				return False
 
-		if len(self.hand[self.turn]) <= card_number <= 0:
+		if not (0 <= card_number < len(self.hand[self.turn])):
 			return False
 
 		can_attack = False
@@ -113,18 +120,22 @@ class Game:
 		return can_attack
 
 	def defense(self, card_number: int, card_number_table: int = -1, ai=None) -> bool:  # Меняет состояние игры
-		if card_number == -1 and self.table and self.table[-1][1] is None:
-			# Можно взять карты если стол не пустой и есть не побитая карта
-			self.switch_turn()
-			return True
+		print('Take' if card_number == -1 else self.hand[not self.turn][card_number])
+		if card_number == -1:
+			if self.table and self.table[-1][1] is None:
+				# Можно взять карты если стол не пустой и есть не побитая карта
+				self.continue_turn = False
+				return True
+			else:
+				return False
 
-		if len(self.hand[not self.turn]) <= card_number <= 0:
+		if not (0 <= card_number < len(self.hand[not self.turn])):
 			return False
 
 		card1 = self.hand[not self.turn][card_number]
 		card2 = self.table[card_number_table][0]
 
-		if not card1.more(card2, self.trump_suit) or self.table[card_number_table][1] is not None or card2 is None:
+		if not card1.more(card2, self.trump_suit) or card2 is None:
 			return False
 
 		if ai is not None: ai.update_memory('TABLE', card1, not self.turn)
@@ -135,15 +146,13 @@ class Game:
 
 	def switch_turn(self, ai=None):  # Заканчивает раунд и переключает игрока (если был отбой)
 		not_take = True
-		for c_ in self.table:  # Берем карты или нет
-			if c_[1] is None:
-				not_take = False
-				if ai is not None: ai.update_memory('TAKE')
-				for tmp in self.table:
-					for c in tmp:
-						if c: self.hand[not self.turn].append(c)
-				break
-		if not_take:
+		if self.table[-1][1] is None:  # Берем карты или нет
+			not_take = False
+			if ai is not None: ai.update_memory('TAKE')
+			for tmp in self.table:
+				for c in tmp:
+					if c: self.hand[not self.turn].append(c)
+		else:
 			if ai is not None: ai.update_memory('OFF')
 		self.table = []
 
@@ -176,33 +185,32 @@ class Game:
 			print('Take cards...')
 
 	def can_continue_turn(self) -> bool:
-		if len(self.hand[not self.turn]) == 0:
+		if not len(self.hand[self.turn]) or not len(self.hand[not self.turn]):
+			# Если закончились карты
+			return False
+		if not self.continue_turn:
+			# Если ход остановлен с помощью -1
+			self.continue_turn = True
 			return False
 
-		result = True
-		tmp_b = False  # Можно атаковать
-		for card in self.hand[self.turn]:
-			for tmp in self.table:
-				if tmp[1] is None: tmp_b = True
-				for c in tmp:
-					tmp_b = tmp_b or (c and c.number == card.number)
-					if tmp_b: break
-				if tmp_b: break
-			if tmp_b: break
-		result = result and tmp_b
+		if not self.table:
+			return True
 
-		tmp_b = True  # Нужно и можно защищаться
-		for tmp in self.table:
-			if tmp[1] is None:
-				tmp2_b = False
-				for card in self.hand[not self.turn]:
-					tmp2_b = tmp2_b or card.more(tmp[0], self.trump_suit)
-					if tmp2_b: break
-				tmp_b = tmp_b and tmp2_b
-				if not tmp_b: break
-		result = result and tmp_b
+		if self.table[-1][1] is not None:
+			# Можно атаковать
+			for card in self.hand[self.turn]:
+				for tmp in self.table:
+					for c in tmp:
+						if c is not None and c.number == card.number:
+							return True
+		else:
+			# Возможно защищаться
 
-		return result
+			tmp = self.table[-1]
+			for card in self.hand[not self.turn]:
+				if card.more(tmp[0], self.trump_suit):
+					return True
+		return False
 
 	def can_play(self) -> bool:
 		return self.hand[0] and self.hand[1]
@@ -218,11 +226,11 @@ class Game:
 
 		print('\nAI %s' % ('<-' if self.turn else ''))
 		for card in self.hand[1]:
-			print(card, end='\t')
+			print(card, end='  ')
 
 		print('\n\n')
 		for card in self.hand[0]:
-			print(card, end='\t')
+			print(card, end='  ')
 		print('\nPlayer %s' % ('<-' if not self.turn else ''))
 
 		print('\nTable:')

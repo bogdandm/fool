@@ -1,5 +1,6 @@
-from engine import *
 from math import factorial
+
+from engine import *
 
 
 # from copy import deepcopy
@@ -31,8 +32,10 @@ class AI:
 		if mode == 'TAKE' or mode == 'ALL':
 			if self.game.turn == self.hand_number:
 				for tmp in self.game.table:
-					self.enemy_cards.append(tmp[0])
-					self.enemy_cards.append(tmp[1])
+					if tmp[0] is not None:
+						self.enemy_cards.append(tmp[0])
+					if tmp[1] is not None:
+						self.enemy_cards.append(tmp[1])
 
 		if mode == 'TRUMP' or mode == 'ALL':
 			if inf != self.hand_number:
@@ -60,6 +63,8 @@ class AI:
 					for card2 in tmp:
 						if card2 is not None and card.number == card2.number:  # Если можно подкидывать
 							can_attack = True
+							if card.suit==self.game.trump_suit:
+								sums[-1][1]+=-5
 						"""if stage < 50 and card2.weight(self.game.trump_suit) > 20:
 							# В начале игры сливаем крупные карты противника
 							return -1"""
@@ -67,19 +72,20 @@ class AI:
 					if can_attack: break
 
 				if not can_attack:
-					sums[-1][1]=-1000
+					sums[-1][1] = -1000
 					continue
 
 			sums[-1][1] += 27 - card.weight(self.game.trump_suit)
 
 			# if card.number < 11 or stage > 75: # до поздней игры бережем крупные карты
 			for card2 in self.hand:  # Ищем пары (тройки)
-				if card.number == card2.number and card.suit != card2.suit != self.game.trump_suit:
+				if card != card2 and card.number == card2.number and card2.suit != self.game.trump_suit:
 					sums[-1][1] += 10
 					print('pair')
 
 			k = 2
-			sums[-1][1] *= (1 - self.probability(card)) ** (2 * stage / 100) / k + (1 - 1 / k)
+			sums[-1][1] *= self.probability(card) ** (2 * stage / 100) / k + (1 - 1 / k)
+			# !!! Попробовать 1 - вер-сть при битве ИИ (для надежности)
 
 			if result is None or result[1] < sums[-1][1]:
 				result = sums[-1]
@@ -97,7 +103,8 @@ class AI:
 			sums.append([card_, 0])
 
 			if card_.more(card, self.game.trump_suit):
-				sums[-1][1] += 27 - card.weight(self.game.trump_suit)
+				sums[-1][1] += 27 - card_.weight(self.game.trump_suit) - (
+					5 if card_.suit == self.game.trump_suit else 0)
 				# if card.number == card_.number: sums[-1][1] += 10
 
 				"""tmp = difference([Card(card_.number, x) for x in range(1, 5)], [card_])  # Три карты того же достоинства
@@ -115,15 +122,18 @@ class AI:
 							# Если у него только козырь того же достоинства
 							pass"""
 				k = 2
-				sums[-1][1] *= (1 - self.probability_throw_up(card)) ** (2 * stage / 100) / k + (1 - 1 / k)
+				sums[-1][1] *= self.probability_throw_up(card_) ** (stage / 100 / 2 + 1) / k + (1 - 1 / k)
+			# !!! Попробовать 1 - вер-сть при битве ИИ (для надежности)
 			else:
 				sums[-1][1] = -1000
 
 			if result is None or result[1] < sums[-1][1]:
 				result = sums[-1]
 
+		for tmp in sums:
+			print('%s|%f' % (tmp[0], tmp[1]))
 		r = self.hand.index(result[0])
-		return r if r > 0 else -1
+		return r if (result[1] > 0 or (len(self.table_cards) >= 4 and result[1] > -10)) else -1
 
 	def probability(self, card):
 		# Вероятность того, что противник НЕ сможет побить card
@@ -147,10 +157,8 @@ class AI:
 			if card_.more(card, self.game.trump_suit):
 				return 0
 
-		tmp = difference([Card(x, card.number) for x in range(1, 5)], [card])  # Три карты того же достоинства
-		for i in range(3):
-			if tmp[i] not in self.unknown_cards:
-				del tmp[i]
+		tmp = list(set(difference([Card(x, card.number) for x in range(1, 5)], [card])) & set(self.unknown_cards))
+		# Три карты того же достоинства
 
 		yes = len(tmp)
 		total = len(self.unknown_cards)
