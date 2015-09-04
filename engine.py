@@ -12,7 +12,8 @@ class Card:
 	SPADES = 2  # ♠
 	DIAMONDS = 3  # ♦
 	HEARTS = 4  # ♥
-	# 2-10
+
+	2-10
 	VALET = 11
 	QUEEN = 12
 	KING = 13

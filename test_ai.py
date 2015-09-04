@@ -32,8 +32,8 @@ while game.can_play() is None:
 
 		r = True
 		while r:
-			# i = int(input('(d) Card number (1-n): '))
-			i = -1
+			i = int(input('(d) Card number (1-n): '))
+			# i = -1
 			r = not game.defense(i - 1 if i > 0 else -1, ai=ai)
 		game.print_state()
 		if not game.can_continue_turn():
