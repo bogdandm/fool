@@ -20,7 +20,7 @@ class Card:
 		self.suit = suit
 		self.number = card_number
 
-	def __str__(self) -> str:  # Возвращает строку, аналогично пр. методу
+	def __str__(self) -> str:  # Возвращает строку вида 00X
 		s = str(self.number)
 		if self.suit == 1:
 			s += 'C'
@@ -39,7 +39,7 @@ class Card:
 		return self.number != other.number or self.suit != other.suit
 
 	def __hash__(self):
-		return self.number + self.suit * 100
+		return self.suit * 100 + self.number
 
 	def more(self, card2, trump_card_suit) -> bool:  # Self бьет card2
 		return (self.suit == card2.suit and self.number > card2.number) or \
@@ -213,7 +213,26 @@ class Game:
 		return False
 
 	def can_play(self) -> bool:
-		return self.hand[0] and self.hand[1]
+		l0 = len(self.hand[self.turn])
+		l1 = len(self.hand[not self.turn])
+		need_cards = ((6 - l0) if l0 < 6 else 0) + 1
+		available_cards = self.set.remain() + (self.trump_card is not None)
+		# Если на руках есть карты
+		# ИЛИ
+		# если у защищающегося закончились карты И в колоде достаточно карт (хотя бы 1 защищаемуся)
+		# ИЛИ
+		# если у атакуещего нет карт или есть что взять
+		if l0 and l1 or \
+			   l0 == 0 and l1 and available_cards or \
+			   available_cards and need_cards <= available_cards:
+			return None
+		else:
+			if not l0 and l1:
+				return self.turn
+			elif l0 and not l1:
+				return not self.turn
+			else:
+				return -1
 
 	def print_state(self):
 		print('==========================')

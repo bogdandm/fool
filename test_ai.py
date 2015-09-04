@@ -12,6 +12,13 @@ while game.can_play():
 			i = int(input('(a) Card number (1-n): '))
 			r = not game.attack(i - 1 if i > 0 else -1, ai=ai)
 		game.print_state()
+		a = game.can_play()
+		if a is not None:
+			if a != -1:
+				print('Player %i won!' % (a + 1))
+			else:
+				print('Draw')
+			exit(a)
 		if not game.can_continue_turn():
 			input('No choice, press Enter')
 			game.switch_turn(ai)
