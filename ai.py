@@ -43,9 +43,12 @@ class AI:
 
 		if mode == 'TABLE' or mode == 'ALL':
 			if inf != self.hand_number:
+				buf=[]
 				for i in range(len(self.enemy_cards)):
 					if card == self.enemy_cards[i]:
-						del self.enemy_cards[i]
+						buf.append(i)
+				for i in buf:
+					del self.enemy_cards[i]
 			self.table_cards.append(card)
 
 		self.unknown_cards = difference(self.unknown_cards, self.oof_cards + self.enemy_cards + self.table_cards)

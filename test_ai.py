@@ -2,7 +2,7 @@ __author__ = 'Bogdan'
 from engine import *
 from ai import AI
 
-game = Game()
+game = Game(True)
 ai = AI(game, 1)
 while game.can_play() is None:
 	if not game.turn:  # Игрок атакует
@@ -32,8 +32,7 @@ while game.can_play() is None:
 
 		r = True
 		while r:
-			# i = int(input('(d) Card number (1-n): '))
-			i = -2
+			i = int(input('(d) Card number (1-n): '))
 			r = not game.defense(i - 1 if i > 0 else -1, ai=ai)
 		game.print_state()
 		if not game.can_continue_turn():

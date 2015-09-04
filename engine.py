@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 
 def difference(list1, list2) -> list:
@@ -67,18 +68,34 @@ class Set:  # Колода
 
 
 class Game:
-	def __init__(self):
+	def __init__(self, log_on=False):
 		random.seed()
 
+		self.log_on = log_on
+		# self.log = open('./logs/game_%s.txt' % datetime.now().strftime('%m-%d-%Y %H-%M-%S-%f'), 'w')
+		if log_on:
+			self.log = open('./logs/game_%s.txt' % datetime.now().strftime('%m-%d-%Y %H-%M-%S-%f'), 'w')
+		else:
+			self.log = None
+
 		self.set = Set()
-		self.turn = 1  # random.randint(0, 1)
+		self.turn = random.randint(0, 1)
 		self.hand = []  # user, AI
 		self.hand.append([])
 		self.hand.append([])
+
 		for i in range(6):
 			self.hand[not self.turn].append(self.set.take_card())
 			self.hand[self.turn].append(self.set.take_card())
+			if self.log_on:
+				self.log.write('p%i: get(%s)\n' % (self.turn, self.hand[self.turn][-1]))
+				self.log.write('p%i: get(%s)\n' % (not self.turn, self.hand[not self.turn][-1]))
+				self.log.flush()
+
 		self.trump_card = self.set.take_card()
+		if self.log_on:
+			self.log.write('trump_card: %s\n' % self.trump_card)
+			self.log.flush()
 		self.trump_suit = self.trump_card.suit
 
 		self.table = []
@@ -116,6 +133,9 @@ class Game:
 					break
 
 		if can_attack:
+			if self.log_on:
+				self.log.write('p%i: a(%s)\n' % (self.turn, self.hand[self.turn][card_number]))
+				self.log.flush()
 			del self.hand[self.turn][card_number]
 		return can_attack
 
@@ -141,6 +161,9 @@ class Game:
 		if ai is not None: ai.update_memory('TABLE', card1, not self.turn)
 
 		self.table[card_number_table][1] = card1
+		if self.log_on:
+			self.log.write('p%i: d(%s)\n' % (not self.turn, self.hand[not self.turn][card_number]))
+			self.log.flush()
 		del self.hand[not self.turn][card_number]
 		return True
 
@@ -161,28 +184,51 @@ class Game:
 				card = self.set.take_card()
 				if card is not None:
 					self.hand[self.turn].append(card)
+					if self.log_on:
+						self.log.write('p%i: get(%s)\n' % (self.turn, card))
+						self.log.flush()
+
 				elif self.trump_card is not None:
 					if ai is not None: ai.update_memory('TRUMP', inf=self.turn)
 					self.hand[self.turn].append(self.trump_card)
+					if self.log_on:
+						self.log.write('p%i: get(%s)\n' % (self.turn, self.trump_card))
+						self.log.flush()
 					self.trump_card = None
+
 				else:
 					break
+
 			for i in range(6 - len(self.hand[not self.turn])):
 				card = self.set.take_card()
 				if card is not None:
 					self.hand[not self.turn].append(card)
+					if self.log_on:
+						self.log.write('p%i: get(%s)\n' % (not self.turn, card))
+						self.log.flush()
+
 				elif self.trump_card is not None:
 					if ai is not None: ai.update_memory('TRUMP', inf=not self.turn)
 					self.hand[not self.turn].append(self.trump_card)
+					if self.log_on:
+						self.log.write('p%i: get(%s)\n' % (not self.turn, self.trump_card))
+						self.log.flush()
 					self.trump_card = None
+
 				else:
 					break
 
 		if not_take:
 			self.turn = not self.turn
 			print('Player switch...')
+			if self.log_on:
+				self.log.write('p%i: switch()\n' % self.turn)
+				self.log.flush()
 		else:
 			print('Take cards...')
+			if self.log_on:
+				self.log.write('p%i: take_cards()\n' % (not self.turn))
+				self.log.flush()
 
 	def can_continue_turn(self) -> bool:
 		if not len(self.hand[self.turn]) or not len(self.hand[not self.turn]):
@@ -217,21 +263,29 @@ class Game:
 		l1 = len(self.hand[not self.turn])
 		need_cards = ((6 - l0) if l0 < 6 else 0) + 1
 		available_cards = self.set.remain() + (self.trump_card is not None)
+
 		# Если на руках есть карты
 		# ИЛИ
 		# если у защищающегося закончились карты И в колоде достаточно карт (хотя бы 1 защищаемуся)
 		# ИЛИ
 		# если у атакуещего нет карт или есть что взять
-		if l0 and l1 or \
-			   l0 == 0 and l1 and available_cards or \
-			   available_cards and need_cards <= available_cards:
+		if l0 and l1 or l0 == 0 and l1 and available_cards or available_cards and need_cards <= available_cards:
 			return None
 		else:
 			if not l0 and l1:
+				if self.log_on:
+					self.log.write('p%i: win()\n' % (self.turn))
+					self.log.flush()
 				return self.turn
 			elif l0 and not l1:
+				if self.log_on:
+					self.log.write('p%i: win()\n' % (not self.turn))
+					self.log.flush()
 				return not self.turn
 			else:
+				if self.log_on:
+					self.log.write('__: draw()\n')
+					self.log.flush()
 				return -1
 
 	def print_state(self):
@@ -244,10 +298,11 @@ class Game:
 		print('Remaining:\t%i' % self.set.remain())
 
 		print('\nAI %s' % ('<-' if self.turn else ''))
-		for card in self.hand[1]:
-			print(card, end='  ')
+		print(len(self.hand[1]))
+		# for card in self.hand[1]:
+		# 	print(card, end='  ')
 
-		print('\n\n')
+		print('\n')
 		for card in self.hand[0]:
 			print(card, end='  ')
 		print('\nPlayer %s' % ('<-' if not self.turn else ''))
