@@ -63,8 +63,8 @@ class AI:
 					for card2 in tmp:
 						if card2 is not None and card.number == card2.number:  # Если можно подкидывать
 							can_attack = True
-							if card.suit==self.game.trump_suit:
-								sums[-1][1]+=-5
+							if card.suit == self.game.trump_suit:
+								sums[-1][1] += -5
 						"""if stage < 50 and card2.weight(self.game.trump_suit) > 20:
 							# В начале игры сливаем крупные карты противника
 							return -1"""
@@ -148,8 +148,11 @@ class AI:
 			if card_.more(card, self.game.trump_suit):
 				yes += 1
 
-		return factorial(total - yes) * factorial(total - enemy_cards_count) / \
-			   (factorial(total) * factorial(total - yes - enemy_cards_count))
+		if (total - yes) >= enemy_cards_count:
+			return factorial(total - yes) * factorial(total - enemy_cards_count) / \
+				   (factorial(total) * factorial(total - yes - enemy_cards_count))
+		else:
+			return 0
 
 	def probability_throw_up(self, card):
 		# Вероятность того, что при защите с помощью card НЕ будет подкинута смежная карта
@@ -163,5 +166,8 @@ class AI:
 		yes = len(tmp)
 		total = len(self.unknown_cards)
 		enemy_cards_count = len(self.game.hand[not self.hand_number])
-		return factorial(total - yes) * factorial(total - enemy_cards_count) / \
-			   (factorial(total) * factorial(total - yes - enemy_cards_count))
+		if (total - yes) >= enemy_cards_count:
+			return factorial(total - yes) * factorial(total - enemy_cards_count) / \
+				   (factorial(total) * factorial(total - yes - enemy_cards_count))
+		else:
+			return 0

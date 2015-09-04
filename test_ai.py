@@ -4,7 +4,7 @@ from ai import AI
 
 game = Game()
 ai = AI(game, 1)
-while game.can_play():
+while game.can_play() is None:
 	if not game.turn:  # Игрок атакует
 		game.print_state()
 		r = True
@@ -12,13 +12,6 @@ while game.can_play():
 			i = int(input('(a) Card number (1-n): '))
 			r = not game.attack(i - 1 if i > 0 else -1, ai=ai)
 		game.print_state()
-		a = game.can_play()
-		if a is not None:
-			if a != -1:
-				print('Player %i won!' % (a + 1))
-			else:
-				print('Draw')
-			exit(a)
 		if not game.can_continue_turn():
 			input('No choice, press Enter')
 			game.switch_turn(ai)
@@ -39,9 +32,17 @@ while game.can_play():
 
 		r = True
 		while r:
-			i = int(input('(d) Card number (1-n): '))
+			# i = int(input('(d) Card number (1-n): '))
+			i = -2
 			r = not game.defense(i - 1 if i > 0 else -1, ai=ai)
 		game.print_state()
 		if not game.can_continue_turn():
 			input('No choice, press Enter')
 			game.switch_turn(ai)
+a = game.can_play()
+if a is not None:
+	if a != -1:
+		print('%s won!' % ('AI' if a else 'Player'))
+	else:
+		print('Draw')
+	exit(a)
