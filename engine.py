@@ -1,4 +1,5 @@
 import random
+import time
 from datetime import datetime
 
 
@@ -68,13 +69,15 @@ class Set:  # Колода
 
 
 class Game:
-	def __init__(self, log_on=False):
-		random.seed()
+	def __init__(self, log_on=False, seed: int = time.time() * 256):
+		random.seed(seed)
 
 		self.log_on = log_on
-		# self.log = open('./logs/game_%s.txt' % datetime.now().strftime('%m-%d-%Y %H-%M-%S-%f'), 'w')
 		if log_on:
 			self.log = open('./logs/game_%s.txt' % datetime.now().strftime('%m-%d-%Y %H-%M-%S-%f'), 'w')
+			self.log.write('*Start at %s*\n' % datetime.now().strftime('%H-%M-%S-%f'))
+			self.log.write('seed: %i\n' % seed)
+			self.log.flush()
 		else:
 			self.log = None
 
@@ -94,12 +97,13 @@ class Game:
 
 		self.trump_card = self.set.take_card()
 		if self.log_on:
-			self.log.write('trump_card: %s\n' % self.trump_card)
+			self.log.write('__: trump_card(%s)\n' % self.trump_card)
 			self.log.flush()
 		self.trump_suit = self.trump_card.suit
 
 		self.table = []
 		self.continue_turn = True
+		self.result = None
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
 		print('Skip' if card_number == -1 else self.hand[self.turn][card_number])
@@ -272,20 +276,26 @@ class Game:
 		if l0 and l1 or l0 == 0 and l1 and available_cards or available_cards and need_cards <= available_cards:
 			return None
 		else:
+			if self.log_on:
+				self.log.write('*End at %s*\n' % datetime.now().strftime('%H-%M-%S-%f'))
+				self.log.flush()
 			if not l0 and l1:
 				if self.log_on:
-					self.log.write('p%i: win()\n' % (self.turn))
+					self.log.write('p%i: win()\n' % self.turn)
 					self.log.flush()
+				self.result = self.turn
 				return self.turn
 			elif l0 and not l1:
 				if self.log_on:
 					self.log.write('p%i: win()\n' % (not self.turn))
 					self.log.flush()
+				self.result = int(not self.turn)
 				return not self.turn
 			else:
 				if self.log_on:
 					self.log.write('__: draw()\n')
 					self.log.flush()
+				self.result = -1
 				return -1
 
 	def print_state(self):

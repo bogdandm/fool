@@ -32,13 +32,15 @@ while game.can_play() is None:
 
 		r = True
 		while r:
-			i = int(input('(d) Card number (1-n): '))
+			# i = int(input('(d) Card number (1-n): '))
+			i = -1
 			r = not game.defense(i - 1 if i > 0 else -1, ai=ai)
 		game.print_state()
 		if not game.can_continue_turn():
 			input('No choice, press Enter')
 			game.switch_turn(ai)
-a = game.can_play()
+
+a = game.result
 if a is not None:
 	if a != -1:
 		print('%s won!' % ('AI' if a else 'Player'))
