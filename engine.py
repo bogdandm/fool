@@ -51,14 +51,20 @@ class Card:
 	def weight(self, trump_suit):  # Вес карты
 		return self.number + (13 if self.suit == trump_suit else 0)
 
+	def copy(self):
+		return Card(self.suit, self.number)
+
 
 class Set:  # Колода
-	def __init__(self):
-		self.cards = []
-		for y in range(2, 15):
-			for x in range(1, 5):
-				self.cards.append(Card(x, y))
-		random.shuffle(self.cards)
+	def __init__(self, set_to_copy=None):
+		if set_to_copy is not None:
+			self.cards = set_to_copy.cards[:]
+		else:
+			self.cards = []
+			for y in range(2, 15):
+				for x in range(1, 5):
+					self.cards.append(Card(x, y))
+			random.shuffle(self.cards)
 
 	def take_card(self) -> Card:  # Выдаем карту из колоды
 		if not len(self.cards):
@@ -70,55 +76,67 @@ class Set:  # Колода
 
 
 class Game:
-	def __init__(self, log_on=False, seed: int = time.time() * 256):
-		random.seed(seed)
-
+	def __init__(self, log_on=False, seed: int = int(time.time() * 256*1000), game=None):
 		self.log_on = log_on
-		if log_on:
-			self.log = open('./logs/game_%s.txt' % datetime.now().strftime('%m-%d-%Y %H-%M-%S-%f'), 'w')
-			self.log.write('*Start at %s*\n' % datetime.now().strftime('%H-%M-%S-%f'))
-			self.log.write('seed: %i\n' % seed)
-			self.log.flush()
+		if game is not None:
+			self.set = Set(game.set)
+			self.turn = game.turn
+			self.hand = [game.hand[0][:], game.hand[1][:]]
+			self.trump_card = None if game.trump_card is None else game.trump_card.copy()
+			self.trump_suit = game.trump_suit
+			self.table = []
+			for tmp in game.table[:]:
+				self.table.append([])
+				for c in tmp:
+					self.table[-1].append(None if c is None else c.copy())
+			self.continue_turn = game.continue_turn
+			self.result = game.result
+
 		else:
-			self.log = None
-
-		self.set = Set()
-		self.turn = random.randint(0, 1)
-		self.hand = []  # user, AI
-		self.hand.append([])
-		self.hand.append([])
-
-		for i in range(6):
-			self.hand[not self.turn].append(self.set.take_card())
-			self.hand[self.turn].append(self.set.take_card())
-			if self.log_on:
-				self.log.write('p%i: get(%s)\n' % (self.turn, self.hand[self.turn][-1]))
-				self.log.write('p%i: get(%s)\n' % (not self.turn, self.hand[not self.turn][-1]))
+			random.seed(seed)
+			if log_on:
+				self.log = open('./logs/game %s.txt' % datetime.now().strftime('%m-%d-%Y %H-%M-%S-%f'), 'w')
+				self.log.write('*Start at %s*\n' % datetime.now().strftime('%H-%M-%S-%f'))
+				self.log.write('seed: %i\n' % seed)
 				self.log.flush()
+			else:
+				self.log = None
 
-		self.trump_card = self.set.take_card()
-		if self.log_on:
-			self.log.write('__: trump_card(%s)\n' % self.trump_card)
-			self.log.flush()
-		self.trump_suit = self.trump_card.suit
+			self.set = Set()
+			self.turn = random.randint(0, 1)
+			self.hand = []  # user, AI
+			self.hand.append([])
+			self.hand.append([])
 
-		self.table = []
-		self.continue_turn = True
-		self.result = None
+			for i in range(6):
+				self.hand[not self.turn].append(self.set.take_card())
+				self.hand[self.turn].append(self.set.take_card())
+				if self.log_on:
+					self.log.write('p%i: get(%s)\n' % (self.turn, self.hand[self.turn][-1]))
+					self.log.write('p%i: get(%s)\n' % (not self.turn, self.hand[not self.turn][-1]))
+					self.log.flush()
+
+			self.trump_card = self.set.take_card()
+			if self.log_on:
+				self.log.write('__: trump_card(%s)\n' % self.trump_card)
+				self.log.flush()
+			self.trump_suit = self.trump_card.suit
+
+			self.table = []
+			self.continue_turn = True
+			self.result = None
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
-		print('Skip' if card_number == -1 else self.hand[self.turn][card_number])
+		if not (0 <= card_number < len(self.hand[self.turn]) or card_number == -1):
+			return False
 		if card_number == -1:
 			if self.table and self.table[-1][1] is not None:
 				# Можно не атаковать если на столе есть побитая пара
-				print('skip...')
+				# print('skip...')
 				self.continue_turn = False
 				return True
 			else:
 				return False
-
-		if not (0 <= card_number < len(self.hand[self.turn])):
-			return False
 
 		can_attack = False
 		card = self.hand[self.turn][card_number]
@@ -150,7 +168,7 @@ class Game:
 		return can_attack
 
 	def defense(self, card_number: int, card_number_table: int = -1, ai=None) -> bool:  # Меняет состояние игры
-		print('Take' if card_number == -1 else self.hand[not self.turn][card_number])
+		# print('Take' if card_number == -1 else self.hand[not self.turn][card_number])
 		if card_number == -1:
 			if self.table and self.table[-1][1] is None:
 				# Можно взять карты если стол не пустой и есть не побитая карта
@@ -200,6 +218,10 @@ class Game:
 				card = self.set.take_card()
 				if card is not None:
 					self.hand[self.turn].append(card)
+					if ai is not None:
+						for a in ai:
+							if a.hand_number == self.turn:
+								a.update_memory('MY', card)
 					if self.log_on:
 						self.log.write('p%i: get(%s)\n' % (self.turn, card))
 						self.log.flush()
@@ -208,6 +230,8 @@ class Game:
 					if ai is not None:
 						for a in ai:
 							a.update_memory('TRUMP', inf=self.turn)
+							if a.hand_number == self.turn:
+								a.update_memory('MY', card)
 					self.hand[self.turn].append(self.trump_card)
 					if self.log_on:
 						self.log.write('p%i: get(%s)\n' % (self.turn, self.trump_card))
@@ -221,6 +245,10 @@ class Game:
 				card = self.set.take_card()
 				if card is not None:
 					self.hand[not self.turn].append(card)
+					if ai is not None:
+						for a in ai:
+							if a.hand_number == (not self.turn):
+								a.update_memory('MY', card)
 					if self.log_on:
 						self.log.write('p%i: get(%s)\n' % (not self.turn, card))
 						self.log.flush()
@@ -229,6 +257,8 @@ class Game:
 					if ai is not None:
 						for a in ai:
 							a.update_memory('TRUMP', inf=not self.turn)
+							if a.hand_number == (not self.turn):
+								a.update_memory('MY', card)
 					self.hand[not self.turn].append(self.trump_card)
 					if self.log_on:
 						self.log.write('p%i: get(%s)\n' % (not self.turn, self.trump_card))
@@ -240,12 +270,12 @@ class Game:
 
 		if not_take:
 			self.turn = not self.turn
-			print('Player switch...')
+			# print('Player switch...')
 			if self.log_on:
 				self.log.write('p%i: switch()\n' % self.turn)
 				self.log.flush()
 		else:
-			print('Take cards...')
+			# print('Take cards...')
 			if self.log_on:
 				self.log.write('p%i: take_cards()\n' % (not self.turn))
 				self.log.flush()
@@ -314,7 +344,7 @@ class Game:
 				self.result = -1
 				return -1
 
-	def print_state(self):
+	def print_state(self, player=-1):
 		print('==========================')
 		print('Trump card:', end='\t')
 		if self.trump_suit is None:
@@ -324,12 +354,14 @@ class Game:
 		print('Remaining:\t%i' % self.set.remain())
 
 		print('\nAI %s' % ('<-' if self.turn else ''))
-		print(len(self.hand[1]))
-		# for card in self.hand[1]:
-		# 	print(card, end='  ')
+		if player == -1:
+			for card in self.hand[not player]:
+				print(card, end='  ')
+		else:
+			print(len(self.hand[1]))
 
 		print('\n')
-		for card in self.hand[0]:
+		for card in self.hand[player]:
 			print(card, end='  ')
 		print('\nPlayer %s' % ('<-' if not self.turn else ''))
 

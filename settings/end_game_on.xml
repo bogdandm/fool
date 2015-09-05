@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<settings>
+    <all>
+        <trump_suit_penalty>-5</trump_suit_penalty>
+        <enable_end_game>1</enable_end_game>
+    </all>
+    <attack>
+        <pair_bonus>10</pair_bonus>
+        <coefficient_of_probability>2</coefficient_of_probability>
+        <limit>5</limit>
+    </attack>
+    <defense>
+        <coefficient_of_probability>2</coefficient_of_probability>
+        <coefficient_of_stage>1</coefficient_of_stage>
+
+        <limit>0</limit>
+
+        <limit2>-10</limit2>
+        <count_of_cards>4</count_of_cards>
+    </defense>
+</settings>

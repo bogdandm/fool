@@ -62,6 +62,7 @@ class AI:
 	def update_memory(self, mode='all', card: Card = None, inf=None):
 		# mode=ALL|OFF|TAKE|TRUMP|TABLE
 
+		# MY
 		# OFF - перед тем, как карты будут скинуты в отбой
 		# TAKE  - перед тем, как игрок возьмет карты
 		# TRUMP - игрок берет козырь
@@ -71,6 +72,7 @@ class AI:
 			for tmp in self.game.table:
 				self.oof_cards.append(tmp[0])
 				self.oof_cards.append(tmp[1])
+			self.table_cards = []
 
 		if mode == 'TAKE' or mode == 'ALL':
 			if self.game.turn == self.hand_number:
@@ -79,6 +81,7 @@ class AI:
 						self.enemy_cards.append(tmp[0])
 					if tmp[1] is not None:
 						self.enemy_cards.append(tmp[1])
+			self.table_cards = []
 
 		if mode == 'TRUMP' or mode == 'ALL':
 			if inf != self.hand_number:
@@ -94,11 +97,12 @@ class AI:
 					del self.enemy_cards[i]
 			self.table_cards.append(card)
 
-		self.unknown_cards = difference(self.unknown_cards, self.oof_cards + self.enemy_cards + self.table_cards)
+		self.unknown_cards = difference(self.unknown_cards,
+										self.oof_cards + self.enemy_cards + self.table_cards + self.hand)
 
 	def attack(self):
-		if self.settings['all']['end_game_ai'] and not self.game.set.remain() and self.game.trump_card is None:
-			return self.end_game_ai('A')
+		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
+			return self.end_game_ai('D')
 
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
@@ -131,7 +135,7 @@ class AI:
 				if card != card2 and card.number == card2.number:
 					if card.suit != self.game.trump_suit and card2.suit != self.game.trump_suit:
 						sums[-1][1] += self.settings['attack']['pair_bonus']
-						# print('pair')
+					# print('pair')
 
 			k = self.settings['attack']['coefficient_of_probability']
 			sums[-1][1] *= self.probability(card) ** (2 * stage / 100) / k + (1 - 1 / k)
@@ -146,8 +150,8 @@ class AI:
 		return r if not self.game.table or result[1] > self.settings['attack']['limit'] else -1
 
 	def defense(self, card: Card):
-		if self.settings['all']['end_game_ai'] and not self.game.set.remain() and self.game.trump_card is None:
-			return self.end_game_ai('D')
+		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
+			return self.end_game_ai('A')
 
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
@@ -182,7 +186,12 @@ class AI:
 	def end_game_ai(self, mode, i=None):
 		# mode = 'A' | 'D' | 'U'
 		if self.turns_tree is None and mode != 'U':
-			self.turns_tree = Turn(self.hand_number, type=mode, game=self.game, ai=self)
+			t=time.time()
+			self.turns_tree = Turn(not self.hand_number, turn_type=mode, game=self.game, ai=self)
+			for turn in self.turns_tree.next:
+				print("%s: %i/%i" % (turn, turn.win, turn.lose))
+			print(time.time()-t)
+			exit(100)
 		if mode == 'A' or mode == 'D':
 			return self.turns_tree.get_next()
 		elif mode == 'U' and self.turns_tree is not None:
