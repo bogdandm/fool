@@ -1,4 +1,3 @@
-__author__ = 'Bogdan'
 from engine import *
 from ai import AI
 

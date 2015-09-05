@@ -8,7 +8,7 @@ from engine import *
 
 
 class AI:
-	def __init__(self, game: Game, hand_number: int, settings_path='./settings/template.xml'):
+	def __init__(self, game: Game, hand_number: int, settings_path='./settings/template.xml', enable_end_game=False):
 		xml = dom.parse(settings_path)
 		self.settings = {
 			'all': {
@@ -123,7 +123,7 @@ class AI:
 				if card != card2 and card.number == card2.number:
 					if card.suit != self.game.trump_suit and card2.suit != self.game.trump_suit:
 						sums[-1][1] += self.settings['attack']['pair_bonus']
-						print('pair')
+						# print('pair')
 
 			k = self.settings['attack']['coefficient_of_probability']
 			sums[-1][1] *= self.probability(card) ** (2 * stage / 100) / k + (1 - 1 / k)
@@ -132,8 +132,8 @@ class AI:
 			if result is None or result[1] < sums[-1][1]:
 				result = sums[-1]
 
-		for tmp in sums:
-			print('%s|%f' % (tmp[0], tmp[1]))
+		# for tmp in sums:
+		# 	print('%s|%f' % (tmp[0], tmp[1]))
 		r = self.hand.index(result[0])
 		return r if not self.game.table or result[1] > self.settings['attack']['limit'] else -1
 
@@ -159,8 +159,8 @@ class AI:
 			if result is None or result[1] < sums[-1][1]:
 				result = sums[-1]
 
-		for tmp in sums:
-			print('%s|%f' % (tmp[0], tmp[1]))
+		# for tmp in sums:
+		# 	print('%s|%f' % (tmp[0], tmp[1]))
 		r = self.hand.index(result[0])
 		return r if (
 			result[1] > self.settings['defense']['limit'] or (
