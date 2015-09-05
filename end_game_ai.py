@@ -25,45 +25,45 @@ class Turn:
 		return self.win / (self.win + self.lose) - other.win / (other.win + other.lose)
 
 	def next_turns(self):
-		if self.game.can_play() is not None:  # Если этот ход последний, то начинаем возрат по дереву
+		if self.game.can_play() is not None:  # Р•СЃР»Рё СЌС‚РѕС‚ С…РѕРґ РїРѕСЃР»РµРґРЅРёР№, С‚Рѕ РЅР°С‡РёРЅР°РµРј РІРѕР·СЂР°С‚ РїРѕ РґРµСЂРµРІСѓ
 			self.return_to_root(self.game.can_play())
 			return
 
 		if self.type == 'A':
-			for i in range(self.ai.game.hand[not self.player]):  # Пробуем защищаться всем подряд
+			for i in range(self.ai.game.hand[not self.player]):  # РџСЂРѕР±СѓРµРј Р·Р°С‰РёС‰Р°С‚СЊСЃСЏ РІСЃРµРј РїРѕРґСЂСЏРґ
 				turn = Turn(not self.player, 'D', i, self)
 				if turn.game.defense(i):
 					self.next.append(turn)
 					turn.next_turns()
 
-			turn = Turn(not self.player, 'T', -1, self)  # Так же пробуем взять карты
+			turn = Turn(not self.player, 'T', -1, self)  # РўР°Рє Р¶Рµ РїСЂРѕР±СѓРµРј РІР·СЏС‚СЊ РєР°СЂС‚С‹
 			turn.game.defense(-1)
 			turn.game.switch_turn()
 			self.next.append(turn)
 			turn.next_turns()
 
 		elif self.type == 'D':
-			for i in range(self.ai.game.hand[not self.player]):  # Атакуем всем подряд
+			for i in range(self.ai.game.hand[not self.player]):  # РђС‚Р°РєСѓРµРј РІСЃРµРј РїРѕРґСЂСЏРґ
 				turn = Turn(not self.player, 'A', i, self)
 				if turn.game.attack(i):
 					self.next.append(turn)
 					turn.next_turns()
 
-			turn = Turn(not self.player, 'T', -1, self)  # Так же пробуем не подкидывать
+			turn = Turn(not self.player, 'T', -1, self)  # РўР°Рє Р¶Рµ РїСЂРѕР±СѓРµРј РЅРµ РїРѕРґРєРёРґС‹РІР°С‚СЊ
 			turn.game.attack(-1)
 			turn.game.switch_turn()
 			self.next.append(turn)
 			turn.next_turns()
 
 		elif self.type == 'T':
-			for i in range(self.ai.game.hand[not self.player]):  # Атакуем всем подряд
+			for i in range(self.ai.game.hand[not self.player]):  # РђС‚Р°РєСѓРµРј РІСЃРµРј РїРѕРґСЂСЏРґ
 				turn = Turn(self.player, 'A', i, self)
 				if turn.game.attack(i):
 					self.next.append(turn)
 					turn.next_turns()
 
 		elif self.type == 'S':
-			for i in range(self.ai.game.hand[not self.player]):  # Атакуем всем подряд
+			for i in range(self.ai.game.hand[not self.player]):  # РђС‚Р°РєСѓРµРј РІСЃРµРј РїРѕРґСЂСЏРґ
 				turn = Turn(not self.player, 'A', i, self)
 				if turn.game.attack(i):
 					self.next.append(turn)
