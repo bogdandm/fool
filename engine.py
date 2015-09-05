@@ -124,13 +124,18 @@ class Game:
 		card = self.hand[self.turn][card_number]
 		if not self.table:
 			can_attack = True
-			if ai is not None: ai.update_memory('TABLE', card, self.turn)
+			if ai is not None:
+				if ai is not None:
+					for a in ai:
+						a.update_memory('TABLE', card, self.turn)
 			self.table.append([card, None])
 		else:  # Подкидывание
 			for tmp in self.table:
 				for c in tmp:
 					if c and c.number == card.number:
-						if ai is not None: ai.update_memory('TABLE', card, self.turn)
+						if ai is not None:
+							for a in ai:
+								a.update_memory('TABLE', card, self.turn)
 						self.table.append([card, None])
 						can_attack = True
 						break
@@ -163,7 +168,9 @@ class Game:
 		if not card1.more(card2, self.trump_suit) or card2 is None:
 			return False
 
-		if ai is not None: ai.update_memory('TABLE', card1, not self.turn)
+		if ai is not None:
+			for a in ai:
+				a.update_memory('TABLE', card1, not self.turn)
 
 		self.table[card_number_table][1] = card1
 		if self.log_on:
@@ -176,12 +183,16 @@ class Game:
 		not_take = True
 		if self.table[-1][1] is None:  # Берем карты или нет
 			not_take = False
-			if ai is not None: ai.update_memory('TAKE')
+			if ai is not None:
+				for a in ai:
+					a.update_memory('TAKE')
 			for tmp in self.table:
 				for c in tmp:
 					if c: self.hand[not self.turn].append(c)
 		else:
-			if ai is not None: ai.update_memory('OFF')
+			if ai is not None:
+				for a in ai:
+					a.update_memory('OFF')
 		self.table = []
 
 		if self.set.remain() or self.trump_suit is not None:  # Если есть что взять
@@ -194,7 +205,9 @@ class Game:
 						self.log.flush()
 
 				elif self.trump_card is not None:
-					if ai is not None: ai.update_memory('TRUMP', inf=self.turn)
+					if ai is not None:
+						for a in ai:
+							a.update_memory('TRUMP', inf=self.turn)
 					self.hand[self.turn].append(self.trump_card)
 					if self.log_on:
 						self.log.write('p%i: get(%s)\n' % (self.turn, self.trump_card))
@@ -213,7 +226,9 @@ class Game:
 						self.log.flush()
 
 				elif self.trump_card is not None:
-					if ai is not None: ai.update_memory('TRUMP', inf=not self.turn)
+					if ai is not None:
+						for a in ai:
+							a.update_memory('TRUMP', inf=not self.turn)
 					self.hand[not self.turn].append(self.trump_card)
 					if self.log_on:
 						self.log.write('p%i: get(%s)\n' % (not self.turn, self.trump_card))

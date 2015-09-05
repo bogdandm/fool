@@ -2,19 +2,23 @@ import xml.dom.minidom as dom
 from math import factorial
 
 from engine import *
+from end_game_ai import Turn
 
 
 # from copy import deepcopy
 
 
 class AI:
-	def __init__(self, game: Game, hand_number: int, settings_path='./settings/template.xml', enable_end_game=False):
+	def __init__(self, game: Game, hand_number: int, settings_path='./settings/template.xml'):
 		xml = dom.parse(settings_path)
 		self.settings = {
 			'all': {
 				'trump_suit_penalty':
 					int(xml.getElementsByTagName('all')[0].
-						getElementsByTagName('trump_suit_penalty')[0].childNodes[0].data)
+						getElementsByTagName('trump_suit_penalty')[0].childNodes[0].data),
+				'enable_end_game':
+					int(xml.getElementsByTagName('all')[0].
+						getElementsByTagName('enable_end_game')[0].childNodes[0].data)
 			},
 			'attack': {
 				'pair_bonus':
@@ -53,6 +57,7 @@ class AI:
 		self.oof_cards = []
 		self.enemy_cards = []
 		self.table_cards = []
+		self.turns_tree = None
 
 	def update_memory(self, mode='all', card: Card = None, inf=None):
 		# mode=ALL|OFF|TAKE|TRUMP|TABLE
@@ -92,6 +97,9 @@ class AI:
 		self.unknown_cards = difference(self.unknown_cards, self.oof_cards + self.enemy_cards + self.table_cards)
 
 	def attack(self):
+		if self.settings['all']['end_game_ai'] and not self.game.set.remain() and self.game.trump_card is None:
+			return self.end_game_ai('A')
+
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
 		result = None
@@ -138,6 +146,9 @@ class AI:
 		return r if not self.game.table or result[1] > self.settings['attack']['limit'] else -1
 
 	def defense(self, card: Card):
+		if self.settings['all']['end_game_ai'] and not self.game.set.remain() and self.game.trump_card is None:
+			return self.end_game_ai('D')
+
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
 		result = None
@@ -167,6 +178,16 @@ class AI:
 				len(self.table_cards) >= self.settings['defense']['count_of_cards'] and
 				result[1] > self.settings['defense']['limit2'])
 		) else -1
+
+	def end_game_ai(self, mode, i=None):
+		# mode = 'A' | 'D' | 'U'
+		if self.turns_tree is None and mode != 'U':
+			self.turns_tree = Turn(self.hand_number, type=mode, game=self.game, ai=self)
+		if mode == 'A' or mode == 'D':
+			return self.turns_tree.get_next()
+		elif mode == 'U' and self.turns_tree is not None:
+			self.turns_tree = self.turns_tree.get_next_by_card(i)
+			return None
 
 	def probability(self, card):
 		# Вероятность того, что противник НЕ сможет побить card

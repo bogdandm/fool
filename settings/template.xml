@@ -2,6 +2,7 @@
 <settings>
     <all>
         <trump_suit_penalty>-5</trump_suit_penalty>
+        <enable_end_game>0</enable_end_game>
     </all>
     <attack>
         <pair_bonus>10</pair_bonus>

@@ -24,6 +24,14 @@ class Turn:
 	def __cmp__(self, other):
 		return self.win / (self.win + self.lose) - other.win / (other.win + other.lose)
 
+	def get_next(self):
+		return max(self.next).card
+
+	def get_next_by_card(self, card):
+		for turn in self.next:
+			if turn.card==card:
+				return turn
+
 	def next_turns(self):
 		if self.game.can_play() is not None:  # Если этот ход последний, то начинаем возрат по дереву
 			self.return_to_root(self.game.can_play())
