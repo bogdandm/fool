@@ -6,9 +6,10 @@ from ai import Game
 
 # Turn(self.hand_number, type='A'|'D', game=self.game, ai=self)
 class Turn:
-	def __init__(self, player, turn_type, card=None, prev=None, game: Game = None, ai=None):
+	def __init__(self, player, turn_type, card=None, prev=None, game: Game = None, ai=None, hashes=None):
 		self.logging = prev is None
 		self.ai = prev.ai if prev is not None else ai
+		self.hashes = prev.hashes if prev is not None else hashes
 		self.player = player
 		self.type = turn_type  # A | D | T | S
 		self.card = card
@@ -52,7 +53,8 @@ class Turn:
 		if self.type == 'A':
 			for i in range(len(self.game.hand[not self.player])):  # Пробуем защищаться всем подряд
 				turn = Turn(not self.player, 'D', i, self)
-				if turn not in self.next and turn.game.defense(i):
+				if turn.game.defense(i) and turn.game.__hash__() not in turn.hashes:
+					turn.hashes.append(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 				else:
@@ -62,31 +64,36 @@ class Turn:
 				turn = Turn(not self.player, 'T', -1, self)  # Берем, если не можем отбиться
 				turn.game.defense(-1)
 				turn.game.switch_turn()
-				if turn not in self.next:
+				if turn.game.__hash__() not in turn.hashes:
+					turn.hashes.append(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 
 		elif self.type == 'D':
 			for i in range(len(self.game.hand[not self.player])):  # Атакуем всем подряд
 				turn = Turn(not self.player, 'A', i, self)
-				if turn not in self.next and turn.game.attack(i):
+				if turn.game.attack(i) and turn.game.__hash__() not in turn.hashes:
+					turn.hashes.append(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 				else:
 					del turn
 
 			turn = Turn(not self.player, 'S', -1, self)  # Так же пробуем не подкидывать
-			if turn not in self.next and turn.game.attack(-1):
+			if turn.game.attack(-1):
 				turn.game.switch_turn()
-				self.next.append(turn)
-				turn.next_turns()
+				if turn.game.__hash__() not in turn.hashes:
+					turn.hashes.append(turn.game.__hash__())
+					self.next.append(turn)
+					turn.next_turns()
 			else:
 				del turn
 
 		elif self.type == 'T':
 			for i in range(len(self.game.hand[not self.player])):  # Атакуем всем подряд
 				turn = Turn(not self.player, 'A', i, self)
-				if turn not in self.next and turn.game.attack(i):
+				if turn.game.attack(i) and turn.game.__hash__() not in turn.hashes:
+					turn.hashes.append(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 				else:
@@ -95,7 +102,8 @@ class Turn:
 		elif self.type == 'S':
 			for i in range(len(self.game.hand[not self.player])):  # Атакуем всем подряд
 				turn = Turn(not self.player, 'A', i, self)
-				if turn not in self.next and turn.game.attack(i):
+				if turn.game.attack(i) and turn.game.__hash__() not in turn.hashes:
+					turn.hashes.append(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 				else:

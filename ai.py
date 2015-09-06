@@ -186,11 +186,12 @@ class AI:
 	def end_game_ai(self, mode, i=None):
 		# mode = 'A' | 'D' | 'U'
 		if self.turns_tree is None and mode != 'U':
-			t=time.time()
-			self.turns_tree = Turn(not self.hand_number, turn_type=mode, game=self.game, ai=self)
+			t = time.time()
+			games_hashes = []
+			self.turns_tree = Turn(not self.hand_number, turn_type=mode, game=self.game, ai=self, hashes=games_hashes)
 			for turn in self.turns_tree.next:
-				print("%s: %i/%i" % (turn, turn.win, turn.lose))
-			print(time.time()-t)
+				print("%s: %i/%i" % (turn, turn.win, turn.win + turn.lose))
+			print(time.time() - t)
 			exit(100)
 		if mode == 'A' or mode == 'D':
 			return self.turns_tree.get_next()

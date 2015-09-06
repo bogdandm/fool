@@ -138,7 +138,7 @@ class Game:
 		for i in range(len(self.table)):
 			result += self.table[i][0].__hash__() * 10 ** offset
 			offset += 3
-			result += self.table[i][1].__hash__() * 10 ** offset if self.table[i][0] is not None else 0
+			result += (self.table[i][1].__hash__() * 10 ** offset) if self.table[i][0] is not None else 0
 			offset += 3
 
 		result += self.trump_suit * offset + self.turn * (offset + 1) + self.set.remain() * (offset + 2)
