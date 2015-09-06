@@ -2,7 +2,7 @@ def tree_log(root):
 	import time
 	print(get_leaf_count(root))
 	t = time.time()
-	log = open('./logs/log %i.txt' % int(time.time() * 256 * 1000), 'w')
+	log = open('./../logs/log %i.txt' % int(time.time() * 256 * 1000), 'w')
 	M = [['-\t' for g in range(get_leaf_count(root))]
 		 for i in range(get_max_length_of_chain(root) + 1)]
 	tree_to_list(root, M, 0, 0)
@@ -22,7 +22,7 @@ def tree_to_list(root, M, row, column):
 		sum += get_leaf_count(r)
 
 
-def get_leaf_count(root: Turn):
+def get_leaf_count(root):
 	res = 0
 	for r in root.next:
 		if len(r.next):

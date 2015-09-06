@@ -134,14 +134,17 @@ class Game:
 			for g in range(len(self.hand[i])):
 				result += self.hand[i][g].__hash__() * 10 ** offset
 				offset += 3
+			offset += 1
+		offset += 1
 
 		for i in range(len(self.table)):
 			result += self.table[i][0].__hash__() * 10 ** offset
 			offset += 3
 			result += (self.table[i][1].__hash__() * 10 ** offset) if self.table[i][0] is not None else 0
 			offset += 3
+		offset += 1
 
-		result += self.trump_suit * offset + self.turn * (offset + 1) + self.set.remain() * (offset + 2)
+		result += self.trump_suit * offset + (self.turn + 1) * (offset + 2) + (self.set.remain() + 1) * (offset + 4)
 		return result
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
