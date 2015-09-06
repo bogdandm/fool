@@ -56,7 +56,8 @@ class Card:
 
 
 class Set:  # Колода
-	def __init__(self, set_to_copy=None):
+	def __init__(self, set_to_copy=None, seed=None):
+		random.seed(seed)
 		if set_to_copy is not None:
 			self.cards = set_to_copy.cards[:]
 		else:
@@ -76,7 +77,7 @@ class Set:  # Колода
 
 
 class Game:
-	def __init__(self, log_on=False, seed: int = int(time.time() * 256*1000), game=None):
+	def __init__(self, log_on=False, seed: int = int(time.time() * 256 * 1000), game=None):
 		self.log_on = log_on
 		if game is not None:
 			self.set = Set(game.set)
@@ -102,7 +103,7 @@ class Game:
 			else:
 				self.log = None
 
-			self.set = Set()
+			self.set = Set(seed=seed)
 			self.turn = random.randint(0, 1)
 			self.hand = []  # user, AI
 			self.hand.append([])
@@ -125,6 +126,23 @@ class Game:
 			self.table = []
 			self.continue_turn = True
 			self.result = None
+
+	def __hash__(self):
+		result = 0
+		offset = 0
+		for i in range(len(self.hand)):
+			for g in range(len(self.hand[i])):
+				result += self.hand[i][g].__hash__() * 10 ** offset
+				offset += 3
+
+		for i in range(len(self.table)):
+			result += self.table[i][0].__hash__() * 10 ** offset
+			offset += 3
+			result += self.table[i][1].__hash__() * 10 ** offset if self.table[i][0] is not None else 0
+			offset += 3
+
+		result += self.trump_suit * offset + self.turn * (offset + 1) + self.set.remain() * (offset + 2)
+		return result
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
 		if not (0 <= card_number < len(self.hand[self.turn]) or card_number == -1):

@@ -1,5 +1,5 @@
-import time
-import random
+# import time
+# import random
 
 from ai import Game
 
@@ -110,47 +110,7 @@ class Turn:
 			# test.append(pointer)
 			pointer.win += win
 			pointer.lose += lose
-			if pointer.logging and random.randint(1, 10000) == 1000:
-				print(get_leaf_count(pointer))
-				t=time.time()
-				log = open('./logs/log %i.txt' % int(time.time() * 256 * 1000), 'w')
-				M = [['\t' for g in range(get_max_length_of_chain(pointer) + 1)]
-					 for i in range(get_leaf_count(pointer)) ]
-				tree_to_list(pointer, M, 0, 0)
-				for row in M:
-					for s in row:
-						log.write(s + '\t')
-					log.write('\n')
-				log.close()
-				print((time.time()-t))
 			pointer = pointer.prev
+		del self.game
 
 
-def tree_to_list(root, M, row, column):
-	M[row][column] = root.__str__()
-	sum = 0
-	for r in root.next:
-		tree_to_list(r, M, row + sum, column + 1)
-		sum += get_leaf_count(r)
-
-
-def get_leaf_count(root: Turn):
-	res = 0
-	for r in root.next:
-		if len(r.next):
-			res += get_leaf_count(r)
-		else:
-			res += 1
-	if not root.next:
-		res += 1
-	return res
-
-
-def get_max_length_of_chain(root):
-	res = []
-	for r in root.next:
-		if len(r.next):
-			res.append(get_max_length_of_chain(r) + 1)
-		else:
-			res.append(1)
-	return max(res)
