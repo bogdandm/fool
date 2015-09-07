@@ -2,6 +2,7 @@
 # import random
 
 from ai import Game
+from math import log
 
 
 # Turn(self.hand_number, type='A'|'D', game=self.game, ai=self)
@@ -54,7 +55,7 @@ class Turn:
 			for i in range(len(self.game.hand[not self.player])):  # Пробуем защищаться всем подряд
 				turn = Turn(not self.player, 'D', i, self)
 				if turn.game.defense(i) and turn.game.__hash__() not in turn.hashes:
-					turn.hashes.append(turn.game.__hash__())
+					turn.hashes.add(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 				else:
@@ -65,7 +66,7 @@ class Turn:
 				turn.game.defense(-1)
 				turn.game.switch_turn()
 				if turn.game.__hash__() not in turn.hashes:
-					turn.hashes.append(turn.game.__hash__())
+					turn.hashes.add(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 
@@ -73,7 +74,7 @@ class Turn:
 			for i in range(len(self.game.hand[not self.player])):  # Атакуем всем подряд
 				turn = Turn(not self.player, 'A', i, self)
 				if turn.game.attack(i) and turn.game.__hash__() not in turn.hashes:
-					turn.hashes.append(turn.game.__hash__())
+					turn.hashes.add(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 				else:
@@ -83,7 +84,7 @@ class Turn:
 			if turn.game.attack(-1):
 				turn.game.switch_turn()
 				if turn.game.__hash__() not in turn.hashes:
-					turn.hashes.append(turn.game.__hash__())
+					turn.hashes.add(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 			else:
@@ -93,7 +94,7 @@ class Turn:
 			for i in range(len(self.game.hand[not self.player])):  # Атакуем всем подряд
 				turn = Turn(not self.player, 'A', i, self)
 				if turn.game.attack(i) and turn.game.__hash__() not in turn.hashes:
-					turn.hashes.append(turn.game.__hash__())
+					turn.hashes.add(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 				else:
@@ -103,7 +104,7 @@ class Turn:
 			for i in range(len(self.game.hand[not self.player])):  # Атакуем всем подряд
 				turn = Turn(not self.player, 'A', i, self)
 				if turn.game.attack(i) and turn.game.__hash__() not in turn.hashes:
-					turn.hashes.append(turn.game.__hash__())
+					turn.hashes.add(turn.game.__hash__())
 					self.next.append(turn)
 					turn.next_turns()
 				else:

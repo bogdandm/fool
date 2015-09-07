@@ -148,8 +148,9 @@ class Game:
 		return result
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
-		if not (0 <= card_number < len(self.hand[self.turn]) or card_number == -1):
-			return False
+		# if not (0 <= card_number < len(self.hand[self.turn]) or card_number == -1):
+		# 	return False
+
 		if card_number == -1:
 			if self.table and self.table[-1][1] is not None:
 				# Можно не атаковать если на столе есть побитая пара
@@ -164,9 +165,8 @@ class Game:
 		if not self.table:
 			can_attack = True
 			if ai is not None:
-				if ai is not None:
-					for a in ai:
-						a.update_memory('TABLE', card, self.turn)
+				for a in ai:
+					a.update_memory('TABLE', card, self.turn)
 			self.table.append([card, None])
 		else:  # Подкидывание
 			for tmp in self.table:
