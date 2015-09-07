@@ -57,10 +57,10 @@ class Card:
 
 class Set:  # Колода
 	def __init__(self, set_to_copy=None, seed=None):
-		random.seed(seed)
 		if set_to_copy is not None:
-			self.cards = set_to_copy.cards[:]
+			self.cards = []  # set_to_copy.cards[:]
 		else:
+			random.seed(seed)
 			self.cards = []
 			for y in range(2, 15):
 				for x in range(1, 5):
