@@ -2,7 +2,9 @@ from engine import *
 from ai import AI
 from end_game_ai import *
 
+log = open('./logs/log__.txt', 'w')
 res = []
+t_ = []
 for i in range(1, 100):
 	seed = i * int(time.time())
 	g = Game(seed=seed)
@@ -12,21 +14,26 @@ for i in range(1, 100):
 	g.trump_card = None
 	g.trump_suit = 4
 	g.hand = [
-		[s.take_card() for x in range(4)],
-		[s.take_card() for y in range(4)]
+		[s.take_card() for x in range(5)],
+		[s.take_card() for y in range(5)]
 	]
 
-	ai = AI(g, 0, './../settings/end_game_on.xml')
-	games_hashes = []
+	ai = AI(g, 0, './settings/end_game_on.xml')
+
+	games_hashes = set()
 	t = time.time()
 	turns_tree = Turn(not g.turn, turn_type='D', game=g, ai=ai, hashes=games_hashes)
-	# print(g.__hash__())
-	print('%i%% (%i/%i), %isec' % (
-		((turns_tree.win / (turns_tree.lose + turns_tree.win)) if not (turns_tree.lose + turns_tree.win) else 0) * 100,
+	t_.append((time.time() - t))
+	res.append(turns_tree.lose + turns_tree.win)
+	log.write(('%i\t%f\n' % (res[-1], t_[-1])).replace('.', ','))
+	log.flush()
+
+	print('%i%% (%i/%i), %.3f sec' % (
+		turns_tree.win / (turns_tree.lose + turns_tree.win) * 100,
 		turns_tree.win,
 		turns_tree.lose + turns_tree.win,
-		(time.time() - t) * 1000
+		t_[-1]
 	))
-	res.append(turns_tree.lose + turns_tree.win)
 
-print(sum(res) / len(res))
+print('%.2f, %.2f sec per 1k el.' % (sum(res) / len(res),
+									 sum([t_[i] / res[i] * 1000 for i in range(len(res))]) / len(res)))

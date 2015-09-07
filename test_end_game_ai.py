@@ -4,7 +4,7 @@ from end_game_ai import *
 
 
 def main():
-	seed = 1441647431  # int(time.time())
+	seed = int(time.time())
 	g = Game(seed=seed)
 	s = Set(seed=seed)
 	print('s: %i' % seed)
@@ -18,8 +18,8 @@ def main():
 	g.print_state()
 
 	ai = AI(g, 0, './settings/end_game_on.xml')
-	games_hashes = set()
 
+	games_hashes = set()
 	t = time.time()
 	turns_tree = Turn(not g.turn, turn_type='D', game=g, ai=ai, hashes=games_hashes)
 	print('%f sec' % (time.time() - t))
