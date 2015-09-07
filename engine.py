@@ -42,7 +42,7 @@ class Card:
 		return self.number != other.number or self.suit != other.suit
 
 	def __hash__(self):
-		return self.suit * 100 + self.number
+		return (((self.suit - 1) << 4) | (self.number - 1)) << 1
 
 	def more(self, card2, trump_card_suit) -> bool:  # Self бьет card2
 		return (self.suit == card2.suit and self.number > card2.number) or \
@@ -132,19 +132,20 @@ class Game:
 		offset = 0
 		for i in range(len(self.hand)):
 			for g in range(len(self.hand[i])):
-				result += self.hand[i][g].__hash__() * 10 ** offset
-				offset += 3
-			offset += 1
-		offset += 1
+				result |= self.hand[i][g].__hash__() << offset
+				offset += 8
+			offset += 16
+		offset += 16
 
 		for i in range(len(self.table)):
-			result += self.table[i][0].__hash__() * 10 ** offset
-			offset += 3
-			result += (self.table[i][1].__hash__() * 10 ** offset) if self.table[i][0] is not None else 0
-			offset += 3
-		offset += 1
+			result |= self.table[i][0].__hash__() << offset
+			offset += 8
+			result |= (self.table[i][1].__hash__() << offset) if self.table[i][1] is not None else 0
+			offset += 8
+		# offset += 16
 
-		result += self.trump_suit * offset + (self.turn + 1) * (offset + 2) + (self.set.remain() + 1) * (offset + 4)
+		result |= ((self.trump_suit - 1) << offset) | (self.turn << (offset + 2)) | (
+			(self.set.remain()) << (offset + 4))
 		return result
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
