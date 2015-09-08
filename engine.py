@@ -146,7 +146,7 @@ class Game:
 		# offset += 16
 
 		result |= ((self.trump_suit - 1) << offset) | (self.turn << (offset + 2)) | (
-		(self.set.remain() << (offset + 4)) if self.set is not None else 0)
+			(self.set.remain() << (offset + 4)) if self.set is not None else 0)
 		return result
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
@@ -226,14 +226,14 @@ class Game:
 			not_take = False
 			if ai is not None:
 				for a in ai:
-					a.update_memory('TAKE')
+					a.update_memory('TAKE', card=-1)
 			for tmp in self.table:
 				for c in tmp:
 					if c: self.hand[not self.turn].append(c)
 		else:
 			if ai is not None:
 				for a in ai:
-					a.update_memory('OFF')
+					a.update_memory('OFF', card=-1)
 		self.table = []
 
 		if self.set is not None and self.set.remain() or self.trump_card is not None:  # Если есть что взять
@@ -331,7 +331,7 @@ class Game:
 					return True
 		return False
 
-	def can_play(self, easy: False) -> bool:
+	def can_play(self, easy=False) -> bool:
 		l0 = len(self.hand[self.turn])
 		l1 = len(self.hand[not self.turn])
 		if not easy:
@@ -379,17 +379,21 @@ class Game:
 			print(self.trump_card, end='\t')
 		print('Remaining:\t%i' % self.set.remain())
 
-		print('\nAI %s' % ('<-' if self.turn else ''))
+		print('\nPlayer 1 %s' % ('<-' if self.turn else ''))
 		if player == -1:
-			for card in self.hand[not player]:
+			for card in self.hand[1]:
 				print(card, end='  ')
 		else:
 			print(len(self.hand[1]))
 
 		print('\n')
-		for card in self.hand[player]:
-			print(card, end='  ')
-		print('\nPlayer %s' % ('<-' if not self.turn else ''))
+		if player == -1:
+			for card in self.hand[0]:
+				print(card, end='  ')
+		else:
+			for card in self.hand[player]:
+				print(card, end='  ')
+		print('\nPlayer 0 %s' % ('<-' if not self.turn else ''))
 
 		print('\nTable:')
 		for pair in self.table:

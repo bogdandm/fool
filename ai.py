@@ -18,7 +18,10 @@ class AI:
 						getElementsByTagName('trump_suit_penalty')[0].childNodes[0].data),
 				'enable_end_game':
 					int(xml.getElementsByTagName('all')[0].
-						getElementsByTagName('enable_end_game')[0].childNodes[0].data)
+						getElementsByTagName('enable_end_game')[0].childNodes[0].data),
+				'hashes_in_tree':
+					int(xml.getElementsByTagName('all')[0].
+						getElementsByTagName('hashes_in_tree')[0].childNodes[0].data)
 			},
 			'attack': {
 				'pair_bonus':
@@ -83,18 +86,22 @@ class AI:
 						self.enemy_cards.append(tmp[1])
 			self.table_cards = []
 
+			if self.turns_tree is not None:
+				self.turns_tree = self.turns_tree.get_next_by_card(-1)
+
 		if mode == 'TRUMP' or mode == 'ALL':
 			if inf != self.hand_number:
 				self.enemy_cards.append(self.game.trump_card)
 
 		if mode == 'TABLE' or mode == 'ALL':
 			if inf != self.hand_number:
-				buf = []
-				for i in range(len(self.enemy_cards)):
-					if card == self.enemy_cards[i]:
-						buf.append(i)
-				for i in buf:
-					del self.enemy_cards[i]
+				# if self.settings['all']['enable_end_game'] and not self.game.set.remain():
+				# 	if self.game.trump_card is None and self.turns_tree is not None:
+				# 		self.turns_tree = self.turns_tree.get_next_by_card(card)
+
+				for c in self.enemy_cards:
+					if card == c:
+						self.enemy_cards.remove(c)
 			self.table_cards.append(card)
 
 		self.unknown_cards = difference(self.unknown_cards,
@@ -102,7 +109,9 @@ class AI:
 
 	def attack(self):
 		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
-			return self.end_game_ai('D')
+			if len(self.game.hand[0]) <= 5 and len(self.game.hand[1]) <= 5:
+				if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= 10:
+					return self.end_game_ai('A')
 
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
@@ -151,7 +160,8 @@ class AI:
 
 	def defense(self, card: Card):
 		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
-			return self.end_game_ai('A')
+			if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= 10:
+				return self.end_game_ai('A')
 
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
@@ -186,15 +196,14 @@ class AI:
 	def end_game_ai(self, mode, i=None):
 		# mode = 'A' | 'D' | 'U'
 		if self.turns_tree is None and mode != 'U':
-			t = time.time()
-			games_hashes = []
-			self.turns_tree = Turn(not self.hand_number, turn_type=mode, game=self.game, ai=self, hashes=games_hashes)
-			for turn in self.turns_tree.next:
-				print("%s: %i/%i" % (turn, turn.win, turn.win + turn.lose))
-			print(time.time() - t)
-			exit(100)
+			print('tree_enable')
+			games_hashes = set()
+			m = 'A' if mode == 'D' else 'D' if mode == 'A' else ''
+			self.turns_tree = Turn(not self.game.turn, turn_type=m, game=self.game, ai=self, hashes=games_hashes)
+
 		if mode == 'A' or mode == 'D':
-			return self.turns_tree.get_next()
+			self.turns_tree = self.turns_tree.get_next()
+			return self.turns_tree.card
 		elif mode == 'U' and self.turns_tree is not None:
 			self.turns_tree = self.turns_tree.get_next_by_card(i)
 			return None

@@ -1,15 +1,17 @@
 # import time
 # import random
 
-from ai import Game
+from ai import Game, Card
 
 
 # Turn(self.hand_number, type='A'|'D', game=self.game, ai=self)
 class Turn:
 	def __init__(self, player, turn_type, card=None, prev=None, game: Game = None, ai=None, hashes=None):
-		self.logging = prev is None
 		self.ai = prev.ai if prev is not None else ai
+
+		self.hash = self.ai.settings['all']['hashes_in_tree']
 		self.hashes = prev.hashes if prev is not None else hashes
+
 		self.player = player
 		self.type = turn_type  # A | D | T | S
 		self.card = card
@@ -19,25 +21,25 @@ class Turn:
 		self.next = []
 
 		self.game = Game(game=(prev.game if (prev is not None) else game))
-		self.card_str = self.game.hand[self.player][self.card] if (card is not None and card != -1) else '___'
+		self.card_obj = self.game.hand[self.player][self.card] if (card is not None and card != -1) else '___'
 		self.game.log_on = False
 
 		if prev is None:
 			self.next_turns()
 
 	def __str__(self):
-		return '%s %s' % (self.type, self.card_str)
+		return '%s %s' % (self.type, self.card_obj)
 
 	def __cmp__(self, other):
 		return self.win / (self.win + self.lose) - other.win / (other.win + other.lose)
 
 	def __gt__(self, other):
 		return ((self.win / (self.win + self.lose)) if self.win != 0 else 0 - (
-		other.win / (other.win + other.lose)) if other.win != 0 else 0) > 0
+			other.win / (other.win + other.lose)) if other.win != 0 else 0) > 0
 
 	def __lt__(self, other):
 		return ((self.win / (self.win + self.lose)) if self.win != 0 else 0 - (
-		other.win / (other.win + other.lose)) if other.win != 0 else 0) < 0
+			other.win / (other.win + other.lose)) if other.win != 0 else 0) < 0
 
 	def next_turns(self):
 		if self.game.can_play(True) is not None:  # Если этот ход последний, то начинаем возрат по дереву
@@ -49,8 +51,8 @@ class Turn:
 				turn = Turn(not self.player, 'D', i, self)
 				if turn.game.defense(i):
 					h = turn.game.__hash__()
-					if h not in turn.hashes:
-						turn.hashes.add(h)
+					if not self.hash or h not in turn.hashes:
+						if self.hash: turn.hashes.add(h)
 						self.next.append(turn)
 						turn.next_turns()
 					else:
@@ -61,8 +63,8 @@ class Turn:
 				turn.game.defense(-1)
 				turn.game.switch_turn()
 				h = turn.game.__hash__()
-				if h not in turn.hashes:
-					turn.hashes.add(h)
+				if not self.hash or h not in turn.hashes:
+					if self.hash: turn.hashes.add(h)
 					self.next.append(turn)
 					turn.next_turns()
 
@@ -71,8 +73,8 @@ class Turn:
 				turn = Turn(not self.player, 'A', i, self)
 				if turn.game.attack(i):
 					h = turn.game.__hash__()
-					if h not in turn.hashes:
-						turn.hashes.add(h)
+					if not self.hash or h not in turn.hashes:
+						if self.hash: turn.hashes.add(h)
 						self.next.append(turn)
 						turn.next_turns()
 				else:
@@ -82,8 +84,8 @@ class Turn:
 			if turn.game.attack(-1):
 				turn.game.switch_turn()
 				h = turn.game.__hash__()
-				if h not in turn.hashes:
-					turn.hashes.add(h)
+				if not self.hash or h not in turn.hashes:
+					if self.hash: turn.hashes.add(h)
 					self.next.append(turn)
 					turn.next_turns()
 			else:
@@ -94,8 +96,8 @@ class Turn:
 				turn = Turn(not self.player, 'A', i, self)
 				if turn.game.attack(i):
 					h = turn.game.__hash__()
-					if h not in turn.hashes:
-						turn.hashes.add(h)
+					if not self.hash or h not in turn.hashes:
+						if self.hash: turn.hashes.add(h)
 						self.next.append(turn)
 						turn.next_turns()
 				else:
@@ -106,8 +108,8 @@ class Turn:
 				turn = Turn(not self.player, 'A', i, self)
 				if turn.game.attack(i):
 					h = turn.game.__hash__()
-					if h not in turn.hashes:
-						turn.hashes.add(h)
+					if not self.hash or h not in turn.hashes:
+						if self.hash: turn.hashes.add(h)
 						self.next.append(turn)
 						turn.next_turns()
 				else:
@@ -128,23 +130,31 @@ class Turn:
 		del self.game
 
 	def get_next(self):
-		return max(self.next).card
+		return max(self.next) if self.next else None
 
 	def get_next_by_card(self, card):
 		for turn in self.next:
-			if turn.card == card:
-				return turn
+			if isinstance(card, int):
+				if turn.card == card:
+					return turn
+			elif isinstance(card, Card):
+				if turn.card_obj == card:
+					return turn
+
+		print('Error in get_next_by_card [%s|%s]' % (self, card))
 
 	def cleaning(self):
-		if self.player != self.ai.hand_number:
+		if self.player == self.ai.hand_number:
 			return
 		max = None
 		for g in self.next:
 			if max is None or g > max:
+				if max is not None:
+					self.next.remove(max)
 				max = g
 			else:
 				self.next.remove(g)
-				# g.delete()
+			# g.delete()
 
 	def delete(self):
 		for g in self.next:

@@ -2,7 +2,7 @@ from engine import *
 from ai import AI
 from end_game_ai import *
 
-log = open('./logs/log_6.txt', 'w')
+log = open('./logs/log_5.txt', 'w')
 res = []
 t_ = []
 for i in range(1, 100):
@@ -14,8 +14,8 @@ for i in range(1, 100):
 	g.trump_card = None
 	g.trump_suit = 4
 	g.hand = [
-		[s.take_card() for x in range(6)],
-		[s.take_card() for y in range(6)]
+		[s.take_card() for x in range(5)],
+		[s.take_card() for y in range(5)]
 	]
 
 	ai = AI(g, 0, './settings/end_game_on.xml')
