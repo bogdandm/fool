@@ -2,7 +2,7 @@ from engine import *
 from ai import AI
 from end_game_ai import *
 
-log = open('./logs/log__.txt', 'w')
+log = open('./logs/log_6.txt', 'w')
 res = []
 t_ = []
 for i in range(1, 100):
@@ -14,8 +14,8 @@ for i in range(1, 100):
 	g.trump_card = None
 	g.trump_suit = 4
 	g.hand = [
-		[s.take_card() for x in range(5)],
-		[s.take_card() for y in range(5)]
+		[s.take_card() for x in range(6)],
+		[s.take_card() for y in range(6)]
 	]
 
 	ai = AI(g, 0, './settings/end_game_on.xml')
@@ -25,7 +25,7 @@ for i in range(1, 100):
 	turns_tree = Turn(not g.turn, turn_type='D', game=g, ai=ai, hashes=games_hashes)
 	t_.append((time.time() - t))
 	res.append(turns_tree.lose + turns_tree.win)
-	log.write(('%i\t%f\n' % (res[-1], t_[-1])).replace('.', ','))
+	log.write(('%f\t%f\n' % (res[-1]/1000, t_[-1])).replace('.', ','))
 	log.flush()
 
 	print('%i%% (%i/%i), %.3f sec' % (

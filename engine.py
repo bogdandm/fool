@@ -80,13 +80,13 @@ class Game:
 	def __init__(self, log_on=False, seed: int = int(time.time() * 256 * 1000), game=None):
 		self.log_on = log_on
 		if game is not None:
-			self.set = Set(game.set)
+			self.set = None
 			self.turn = game.turn
 			self.hand = [game.hand[0][:], game.hand[1][:]]
-			self.trump_card = None if game.trump_card is None else game.trump_card.copy()
+			self.trump_card = None
 			self.trump_suit = game.trump_suit
 			self.table = []
-			for tmp in game.table[:]:
+			for tmp in game.table:
 				self.table.append([])
 				for c in tmp:
 					self.table[-1].append(None if c is None else c.copy())
@@ -145,7 +145,7 @@ class Game:
 		# offset += 16
 
 		result |= ((self.trump_suit - 1) << offset) | (self.turn << (offset + 2)) | (
-			(self.set.remain()) << (offset + 4))
+			(self.set.remain() if self.set is not None else 0) << (offset + 4))
 		return result
 
 	def attack(self, card_number: int, ai=None) -> bool:  # Меняет состояние игры
@@ -235,7 +235,7 @@ class Game:
 					a.update_memory('OFF')
 		self.table = []
 
-		if self.set.remain() or self.trump_suit is not None:  # Если есть что взять
+		if self.set is not None and self.set.remain() or self.trump_card is not None:  # Если есть что взять
 			for i in range(6 - len(self.hand[self.turn])):
 				card = self.set.take_card()
 				if card is not None:
@@ -330,18 +330,21 @@ class Game:
 					return True
 		return False
 
-	def can_play(self) -> bool:
+	def can_play(self, easy: False) -> bool:
 		l0 = len(self.hand[self.turn])
 		l1 = len(self.hand[not self.turn])
-		need_cards = ((6 - l0) if l0 < 6 else 0) + 1
-		available_cards = self.set.remain() + (self.trump_card is not None)
+		if not easy:
+			need_cards = ((6 - l0) if l0 < 6 else 0) + 1
+			available_cards = self.set.remain() + (self.trump_card is not None)
 
 		# Если на руках есть карты
 		# ИЛИ
 		# если у защищающегося закончились карты И в колоде достаточно карт (хотя бы 1 защищаемуся)
 		# ИЛИ
 		# если у атакуещего нет карт или есть что взять
-		if l0 and l1 or l0 == 0 and l1 and available_cards or available_cards and need_cards <= available_cards:
+		if not easy and (l0 and l1 or l0 == 0 and l1 and available_cards or
+								 available_cards and need_cards <= available_cards) or \
+								easy and l0 and l1:
 			return None
 		else:
 			if self.log_on:

@@ -40,8 +40,8 @@ class Turn:
 				return turn
 
 	def next_turns(self):
-		if self.game.can_play() is not None:  # Если этот ход последний, то начинаем возрат по дереву
-			self.return_to_root(self.game.can_play())
+		if self.game.can_play(True) is not None:  # Если этот ход последний, то начинаем возрат по дереву
+			self.return_to_root(self.game.can_play(True))
 			return
 
 		if self.type == 'A':

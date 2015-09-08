@@ -4,7 +4,7 @@ from end_game_ai import *
 
 
 def main():
-	seed = int(time.time())
+	seed = 1441647431#int(time.time())
 	g = Game(seed=seed)
 	s = Set(seed=seed)
 	print('s: %i' % seed)
