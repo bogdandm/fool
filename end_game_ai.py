@@ -24,7 +24,6 @@ class Turn:
 
 		if prev is None:
 			self.next_turns()
-			input()
 
 	def __str__(self):
 		return '%s %s' % (self.type, self.card_str)
