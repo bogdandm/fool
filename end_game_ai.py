@@ -24,6 +24,7 @@ class Turn:
 
 		if prev is None:
 			self.next_turns()
+			input()
 
 	def __str__(self):
 		return '%s %s' % (self.type, self.card_str)
@@ -31,13 +32,13 @@ class Turn:
 	def __cmp__(self, other):
 		return self.win / (self.win + self.lose) - other.win / (other.win + other.lose)
 
-	def get_next(self):
-		return max(self.next).card
+	def __gt__(self, other):
+		return ((self.win / (self.win + self.lose)) if self.win != 0 else 0 - (
+		other.win / (other.win + other.lose)) if other.win != 0 else 0) > 0
 
-	def get_next_by_card(self, card):
-		for turn in self.next:
-			if turn.card == card:
-				return turn
+	def __lt__(self, other):
+		return ((self.win / (self.win + self.lose)) if self.win != 0 else 0 - (
+		other.win / (other.win + other.lose)) if other.win != 0 else 0) < 0
 
 	def next_turns(self):
 		if self.game.can_play(True) is not None:  # Если этот ход последний, то начинаем возрат по дереву
@@ -113,6 +114,8 @@ class Turn:
 				else:
 					del turn
 
+		self.cleaning()
+
 	def return_to_root(self, res):
 		# test=[]
 		pointer = self
@@ -124,3 +127,28 @@ class Turn:
 			pointer.lose += lose
 			pointer = pointer.prev
 		del self.game
+
+	def get_next(self):
+		return max(self.next).card
+
+	def get_next_by_card(self, card):
+		for turn in self.next:
+			if turn.card == card:
+				return turn
+
+	def cleaning(self):
+		if self.player != self.ai.hand_number:
+			return
+		max = None
+		for g in self.next:
+			if max is None or g > max:
+				max = g
+			else:
+				self.next.remove(g)
+				# g.delete()
+
+	def delete(self):
+		for g in self.next:
+			g.delete()
+			self.next.remove(g)
+			del g
