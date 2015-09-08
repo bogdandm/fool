@@ -1,7 +1,10 @@
 from engine import *
 from ai import AI
 
-game = Game(True, 369015950712298)
+seed = 1441744515#int(time.time())
+print(seed)
+
+game = Game(True, seed=seed)
 ai0 = AI(game, 0, './settings/end_game_on.xml')
 ai1 = AI(game, 1)
 while game.can_play() is None:
@@ -21,6 +24,7 @@ while game.can_play() is None:
 			game.print_state()
 			game.switch_turn([ai0, ai1])
 	else:
+		game.print_state()
 		x = ai0.attack()
 		ai1.end_game_ai('U', x)
 		game.attack(x, ai=[ai0, ai1])
