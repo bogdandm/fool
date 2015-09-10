@@ -14,8 +14,8 @@ for i in range(1, 100):
 	g.trump_card = None
 	g.trump_suit = 4
 	g.hand = [
-		[s.take_card() for x in range(5)],
-		[s.take_card() for y in range(5)]
+		[s.take_card() for x in range(3)],
+		[s.take_card() for y in range(3)]
 	]
 
 	ai = AI(g, 0, './settings/end_game_on.xml')

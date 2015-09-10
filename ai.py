@@ -5,9 +5,6 @@ from engine import *
 from end_game_ai import Turn
 
 
-# from copy import deepcopy
-
-
 class AI:
 	def __init__(self, game: Game, hand_number: int, settings_path='./settings/template.xml'):
 		xml = dom.parse(settings_path)
@@ -72,12 +69,18 @@ class AI:
 		# TABLE - карты кладутся на стол
 
 		if mode == 'OFF' or mode == 'ALL':
+			if self.turns_tree is not None:
+				self.turns_tree = self.turns_tree.get_next_by_card(-1)
+
 			for tmp in self.game.table:
 				self.oof_cards.append(tmp[0])
 				self.oof_cards.append(tmp[1])
 			self.table_cards = []
 
 		if mode == 'TAKE' or mode == 'ALL':
+			if self.turns_tree is not None:
+				self.turns_tree = self.turns_tree.get_next_by_card(-1)
+
 			if self.game.turn == self.hand_number:
 				for tmp in self.game.table:
 					if tmp[0] is not None:
@@ -85,9 +88,6 @@ class AI:
 					if tmp[1] is not None:
 						self.enemy_cards.append(tmp[1])
 			self.table_cards = []
-
-			if self.turns_tree is not None:
-				self.turns_tree = self.turns_tree.get_next_by_card(-1)
 
 		if mode == 'TRUMP' or mode == 'ALL':
 			if inf != self.hand_number:
@@ -109,9 +109,11 @@ class AI:
 
 	def attack(self):
 		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
+			if self.turns_tree is not None:
+				return self.end_game_ai('D')
 			if len(self.game.hand[0]) <= 5 and len(self.game.hand[1]) <= 5:
 				if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= 10:
-					return self.end_game_ai('A')
+					return self.end_game_ai('D')
 
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
@@ -160,6 +162,8 @@ class AI:
 
 	def defense(self, card: Card):
 		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
+			if self.turns_tree is not None:
+				return self.end_game_ai('A')
 			if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= 10:
 				return self.end_game_ai('A')
 
@@ -198,8 +202,7 @@ class AI:
 		if self.turns_tree is None and mode != 'U':
 			print('tree_enable')
 			games_hashes = set()
-			m = 'A' if mode == 'D' else 'D' if mode == 'A' else ''
-			self.turns_tree = Turn(not self.game.turn, turn_type=m, game=self.game, ai=self, hashes=games_hashes)
+			self.turns_tree = Turn(not self.hand_number, turn_type=mode, game=self.game, ai=self, hashes=games_hashes)
 
 		if mode == 'A' or mode == 'D':
 			self.turns_tree = self.turns_tree.get_next()

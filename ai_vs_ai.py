@@ -1,7 +1,7 @@
 from engine import *
 from ai import AI
 
-seed = 1441744515#int(time.time())
+seed = 1441913277#int(time.time())
 print(seed)
 
 game = Game(True, seed=seed)
@@ -20,8 +20,8 @@ while game.can_play() is None:
 		x = ai0.defense(game.table[-1][0])
 		ai1.end_game_ai('U', x)
 		game.defense(x, ai=[ai0, ai1])
+		game.print_state()
 		if not game.can_continue_turn():
-			game.print_state()
 			game.switch_turn([ai0, ai1])
 	else:
 		game.print_state()

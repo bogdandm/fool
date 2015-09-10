@@ -334,6 +334,8 @@ class Game:
 	def can_play(self, easy=False) -> bool:
 		l0 = len(self.hand[self.turn])
 		l1 = len(self.hand[not self.turn])
+
+		available_cards = need_cards = 0
 		if not easy:
 			need_cards = ((6 - l0) if l0 < 6 else 0) + 1
 			available_cards = self.set.remain() + (self.trump_card is not None)
@@ -343,9 +345,15 @@ class Game:
 		# если у защищающегося закончились карты И в колоде достаточно карт (хотя бы 1 защищаемуся)
 		# ИЛИ
 		# если у атакуещего нет карт или есть что взять
+		# ИЛИ
+		# На столе есть не побитые карты, хоть и у нападающего карт нету
 		if not easy and (l0 and l1 or l0 == 0 and l1 and available_cards or
-								 available_cards and need_cards <= available_cards) or \
-								easy and l0 and l1:
+								 available_cards and need_cards <= available_cards):
+			return None
+		elif easy and l0 and l1:
+			return None
+		elif self.table and self.table[0][0] is not None and self.table[0][1] is None and \
+				(l0 and self.turn or l1 and not self.turn):
 			return None
 		else:
 			if self.log_on:
@@ -372,11 +380,10 @@ class Game:
 
 	def print_state(self, player=-1):
 		print('==========================')
-		print('Trump card:', end='\t')
-		if self.trump_suit is None:
-			print('None', end='')
+		if self.trump_card is not None:
+			print('Trump card:\t%s' % self.trump_card, end='\t')
 		else:
-			print(self.trump_card, end='\t')
+			print('Trump suit:\t%s' % (str(Card(self.trump_suit, 2))[-1]), end='\t')
 		print('Remaining:\t%i' % self.set.remain())
 
 		print('\nPlayer 1 %s' % ('<-' if self.turn else ''))

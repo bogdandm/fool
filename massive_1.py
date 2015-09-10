@@ -1,7 +1,7 @@
 from engine import *
 from ai import AI
 for i in range(100):
-	seed = int(time.time())
+	seed = i*int(time.time())
 
 	game = Game(True, seed=seed)
 	ai0 = AI(game, 0, './settings/end_game_on.xml')

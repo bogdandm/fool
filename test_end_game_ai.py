@@ -12,8 +12,8 @@ def main():
 	g.trump_card = None
 	g.trump_suit = 4
 	g.hand = [
-		[s.take_card() for x in range(5)],
-		[s.take_card() for y in range(5)]
+		[s.take_card() for x in range(2)],
+		[s.take_card() for y in range(2)]
 	]
 	g.print_state()
 

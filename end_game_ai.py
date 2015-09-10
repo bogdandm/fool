@@ -31,19 +31,23 @@ class Turn:
 		return '%s %s' % (self.type, self.card_obj)
 
 	def __cmp__(self, other):
-		return self.win / (self.win + self.lose) - other.win / (other.win + other.lose)
+		return (((self.win / (self.win + self.lose)) if self.win != 0 else 0) - (
+			(other.win / (other.win + other.lose)) if other.win != 0 else 0))
 
 	def __gt__(self, other):
-		return ((self.win / (self.win + self.lose)) if self.win != 0 else 0 - (
-			other.win / (other.win + other.lose)) if other.win != 0 else 0) > 0
+		return (((self.win / (self.win + self.lose)) if self.win != 0 else 0) - (
+			(other.win / (other.win + other.lose)) if other.win != 0 else 0)) > 0
 
 	def __lt__(self, other):
-		return ((self.win / (self.win + self.lose)) if self.win != 0 else 0 - (
-			other.win / (other.win + other.lose)) if other.win != 0 else 0) < 0
+		return (((self.win / (self.win + self.lose)) if self.win != 0 else 0) - (
+			(other.win / (other.win + other.lose)) if other.win != 0 else 0)) < 0
 
 	def next_turns(self):
 		if self.game.can_play(True) is not None:  # Если этот ход последний, то начинаем возрат по дереву
-			self.return_to_root(self.game.can_play(True))
+			res = self.game.can_play(True)
+			turn = Turn(res, 'R', prev=self)
+			self.next.append(turn)
+			self.return_to_root(res)
 			return
 
 		if self.type == 'A':
@@ -57,6 +61,8 @@ class Turn:
 						turn.next_turns()
 					else:
 						del turn
+				else:
+					del turn
 
 			if not self.next:
 				turn = Turn(not self.player, 'T', -1, self)  # Берем, если не можем отбиться
@@ -115,7 +121,7 @@ class Turn:
 				else:
 					del turn
 
-		self.cleaning()
+				# self.cleaning()
 
 	def return_to_root(self, res):
 		# test=[]
@@ -130,18 +136,34 @@ class Turn:
 		del self.game
 
 	def get_next(self):
-		return max(self.next) if self.next else None
+		if self.next:
+			return max(self.next)
+		else:
+			self.hashes = set()
+			self.next_turns()
+			return self.get_next()
 
 	def get_next_by_card(self, card):
+		if card == -1 and (self.type == 'S' or self.type == 'T'):
+			return self
 		for turn in self.next:
+			if turn.type == 'R':
+				return False
 			if isinstance(card, int):
 				if turn.card == card:
 					return turn
+				else:
+					del turn
 			elif isinstance(card, Card):
 				if turn.card_obj == card:
 					return turn
+				else:
+					del turn
 
 		print('Error in get_next_by_card [%s|%s]' % (self, card))
+		self.hashes = set()
+		self.next_turns()
+		return self.get_next_by_card(card)
 
 	def cleaning(self):
 		if self.player == self.ai.hand_number:
