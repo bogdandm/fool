@@ -1,7 +1,7 @@
 from engine import *
 from ai import AI
 
-seed = 1441913277#int(time.time())
+seed = 115366111360#int(time.time())
 print(seed)
 
 game = Game(True, seed=seed)

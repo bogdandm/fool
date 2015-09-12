@@ -304,7 +304,15 @@ class Game:
 				self.log.flush()
 
 	def can_continue_turn(self) -> bool:
-		if not len(self.hand[self.turn]) or not len(self.hand[not self.turn]):
+		if self.table:
+			if self.table[-1][1] is None:
+				if not self.hand[not self.turn]:
+					return False
+			elif not self.hand[self.turn]:
+				# Если закончились карты
+				return False
+
+		elif not self.hand[self.turn] or not self.hand[not self.turn]:
 			# Если закончились карты
 			return False
 		if not self.continue_turn:

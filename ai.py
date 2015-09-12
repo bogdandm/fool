@@ -18,7 +18,10 @@ class AI:
 						getElementsByTagName('enable_end_game')[0].childNodes[0].data),
 				'hashes_in_tree':
 					int(xml.getElementsByTagName('all')[0].
-						getElementsByTagName('hashes_in_tree')[0].childNodes[0].data)
+						getElementsByTagName('hashes_in_tree')[0].childNodes[0].data),
+				'card_to_enable_end_game':
+					int(xml.getElementsByTagName('all')[0].
+						getElementsByTagName('card_to_enable_end_game')[0].childNodes[0].data)
 			},
 			'attack': {
 				'pair_bonus':
@@ -111,8 +114,10 @@ class AI:
 		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
 			if self.turns_tree is not None:
 				return self.end_game_ai('D')
-			if len(self.game.hand[0]) <= 5 and len(self.game.hand[1]) <= 5:
-				if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= 10:
+			if len(self.game.hand[0]) <= self.settings['all']['card_to_enable_end_game'] / 2 and \
+							len(self.game.hand[1]) <= self.settings['all']['card_to_enable_end_game'] / 2:
+				if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= \
+						self.settings['all']['card_to_enable_end_game']:
 					return self.end_game_ai('D')
 
 		stage = (1 - self.game.set.remain() / 39) * 100
@@ -164,7 +169,8 @@ class AI:
 		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
 			if self.turns_tree is not None:
 				return self.end_game_ai('A')
-			if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= 10:
+			if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= \
+					self.settings['all']['card_to_enable_end_game']:
 				return self.end_game_ai('A')
 
 		stage = (1 - self.game.set.remain() / 39) * 100
@@ -206,7 +212,10 @@ class AI:
 
 		if mode == 'A' or mode == 'D':
 			self.turns_tree = self.turns_tree.get_next()
-			return self.turns_tree.card
+			if self.turns_tree is not None:
+				return self.turns_tree.card
+			else:
+				return 0
 		elif mode == 'U' and self.turns_tree is not None:
 			self.turns_tree = self.turns_tree.get_next_by_card(i)
 			return None

@@ -28,7 +28,7 @@ class Turn:
 			self.next_turns()
 
 	def __str__(self):
-		return '%s %s' % (self.type, self.card_obj)
+		return '%s%i %s' % (self.type,self.player, self.card_obj)
 
 	def __cmp__(self, other):
 		return (((self.win / (self.win + self.lose)) if self.win != 0 else 0) - (
@@ -121,7 +121,7 @@ class Turn:
 				else:
 					del turn
 
-				# self.cleaning()
+		self.cleaning()
 
 	def return_to_root(self, res):
 		# test=[]
@@ -137,7 +137,10 @@ class Turn:
 
 	def get_next(self):
 		if self.next:
-			return max(self.next)
+			if self.next[-1] is not None and self.next[-1].type != 'R':
+				return self.next[-1]
+			else:
+				return None
 		else:
 			self.hashes = set()
 			self.next_turns()
@@ -148,7 +151,7 @@ class Turn:
 			return self
 		for turn in self.next:
 			if turn.type == 'R':
-				return False
+				return None
 			if isinstance(card, int):
 				if turn.card == card:
 					return turn
@@ -169,14 +172,18 @@ class Turn:
 		if self.player == self.ai.hand_number:
 			return
 		max = None
-		for g in self.next:
-			if max is None or g > max:
+		trash=[]
+		for i in range(len(self.next)):
+			if max is None or self.next[i] > self.next[max]:
 				if max is not None:
-					self.next.remove(max)
-				max = g
+					trash.append(max)
+				max = i
 			else:
-				self.next.remove(g)
-			# g.delete()
+				trash.append(i)
+
+		trash.sort(reverse=True)
+		for i in trash:
+			del self.next[i]
 
 	def delete(self):
 		for g in self.next:

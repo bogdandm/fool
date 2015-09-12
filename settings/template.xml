@@ -4,6 +4,7 @@
         <trump_suit_penalty>-5</trump_suit_penalty>
         <enable_end_game>0</enable_end_game>
         <hashes_in_tree>0</hashes_in_tree>
+        <card_to_enable_end_game>10</card_to_enable_end_game>
     </all>
     <attack>
         <pair_bonus>10</pair_bonus>
