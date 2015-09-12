@@ -1,0 +1,2 @@
+AI0         AI1         W       L       D   %
+end_game_on template    5045    4256   699  54.24

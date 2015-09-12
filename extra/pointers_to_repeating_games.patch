@@ -1,0 +1,207 @@
+Index: end_game_ai.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- end_game_ai.py	(revision 4c5138673e0d771579617cb04de434a5d0a30d5d)
++++ end_game_ai.py	(revision )
+@@ -6,11 +6,15 @@
+ 
+ # Turn(self.hand_number, type='A'|'D', game=self.game, ai=self)
+ class Turn:
+-	def __init__(self, player, turn_type, card=None, prev=None, game: Game = None, ai=None, hashes=None):
++	def __init__(self, player, turn_type, card=None, prev=None,
++				 game: Game = None, ai=None,
++				 hashes: set = None, turns: list = None
++				 ):
+ 		self.ai = prev.ai if prev is not None else ai
+ 
+ 		self.hash = self.ai.settings['all']['hashes_in_tree']
+ 		self.hashes = prev.hashes if prev is not None else hashes
++		self.turns = prev.turns if prev is not None else turns
+ 
+ 		self.player = player
+ 		self.type = turn_type  # A | D | T | S
+@@ -28,7 +32,7 @@
+ 			self.next_turns()
+ 
+ 	def __str__(self):
+-		return '%s%i %s' % (self.type,self.player, self.card_obj)
++		return '%s%i %s' % (self.type, self.player, self.card_obj)
+ 
+ 	def __cmp__(self, other):
+ 		return (((self.win / (self.win + self.lose)) if self.win != 0 else 0) - (
+@@ -55,11 +59,17 @@
+ 				turn = Turn(not self.player, 'D', i, self)
+ 				if turn.game.defense(i):
+ 					h = turn.game.__hash__()
+-					if not self.hash or h not in turn.hashes:
+-						if self.hash: turn.hashes.add(h)
++					if not self.hash or h not in self.hashes:
++						if self.hash:
++							turn.hashes.add(h)
++						if self.turns is not None:
++							turn.turns.append(turn)
+ 						self.next.append(turn)
+ 						turn.next_turns()
+ 					else:
++						for t in self.turns:
++							if t.game.__hash__() == turn.game.__hash__():
++								self.next.append(t)
+ 						del turn
+ 				else:
+ 					del turn
+@@ -69,57 +79,98 @@
+ 				turn.game.defense(-1)
+ 				turn.game.switch_turn()
+ 				h = turn.game.__hash__()
+-				if not self.hash or h not in turn.hashes:
+-					if self.hash: turn.hashes.add(h)
++				if not self.hash or h not in self.hashes:
++					if self.hash:
++						turn.hashes.add(h)
++					if self.turns is not None:
++						turn.turns.append(turn)
+ 					self.next.append(turn)
+ 					turn.next_turns()
++				else:
++					for t in self.turns:
++						if t.game.__hash__() == turn.game.__hash__():
++							self.next.append(t)
++					del turn
+ 
+ 		elif self.type == 'D':
+ 			for i in range(len(self.game.hand[not self.player])):  # Атакуем всем подряд
+ 				turn = Turn(not self.player, 'A', i, self)
+ 				if turn.game.attack(i):
+ 					h = turn.game.__hash__()
+-					if not self.hash or h not in turn.hashes:
+-						if self.hash: turn.hashes.add(h)
++					if not self.hash or h not in self.hashes:
++						if self.hash:
++							turn.hashes.add(h)
++						if self.turns is not None:
++							turn.turns.append(turn)
+ 						self.next.append(turn)
+ 						turn.next_turns()
+-				else:
++					else:
++						for t in self.turns:
++							if t.game.__hash__() == turn.game.__hash__():
++								self.next.append(t)
+-					del turn
++						del turn
++				else:
++					del turn
+ 
+ 			turn = Turn(not self.player, 'S', -1, self)  # Так же пробуем не подкидывать
+ 			if turn.game.attack(-1):
+ 				turn.game.switch_turn()
+ 				h = turn.game.__hash__()
+-				if not self.hash or h not in turn.hashes:
+-					if self.hash: turn.hashes.add(h)
++				if not self.hash or h not in self.hashes:
++					if self.hash:
++						turn.hashes.add(h)
++					if self.turns is not None:
++						turn.turns.append(turn)
+ 					self.next.append(turn)
+ 					turn.next_turns()
+-			else:
++				else:
++					if self.turns:
++						for t in self.turns:
++							if t.game.__hash__() == turn.game.__hash__():
++								self.next.append(t)
+-				del turn
++					del turn
++			else:
++				del turn
+ 
+ 		elif self.type == 'T':
+ 			for i in range(len(self.game.hand[not self.player])):  # Атакуем всем подряд
+ 				turn = Turn(not self.player, 'A', i, self)
+ 				if turn.game.attack(i):
+ 					h = turn.game.__hash__()
+-					if not self.hash or h not in turn.hashes:
+-						if self.hash: turn.hashes.add(h)
++					if not self.hash or h not in self.hashes:
++						if self.hash:
++							turn.hashes.add(h)
++						if self.turns is not None:
++							turn.turns.append(turn)
+ 						self.next.append(turn)
+ 						turn.next_turns()
+-				else:
++					else:
++						for t in self.turns:
++							if t.game.__hash__() == turn.game.__hash__():
++								self.next.append(t)
+-					del turn
++						del turn
++				else:
++					del turn
+ 
+ 		elif self.type == 'S':
+ 			for i in range(len(self.game.hand[not self.player])):  # Атакуем всем подряд
+ 				turn = Turn(not self.player, 'A', i, self)
+ 				if turn.game.attack(i):
+ 					h = turn.game.__hash__()
+-					if not self.hash or h not in turn.hashes:
+-						if self.hash: turn.hashes.add(h)
++					if not self.hash or h not in self.hashes:
++						if self.hash:
++							turn.hashes.add(h)
++						if self.turns is not None:
++							turn.turns.append(turn)
+ 						self.next.append(turn)
+ 						turn.next_turns()
+-				else:
++					else:
++						for t in self.turns:
++							if t.game.__hash__() == turn.game.__hash__():
++								self.next.append(t)
+-					del turn
++						del turn
++				else:
++					del turn
+ 
+ 		self.cleaning()
+ 
+@@ -133,7 +184,7 @@
+ 			pointer.win += win
+ 			pointer.lose += lose
+ 			pointer = pointer.prev
+-		del self.game
++		# del self.game
+ 
+ 	def get_next(self):
+ 		if self.next:
+@@ -172,7 +223,7 @@
+ 		if self.player == self.ai.hand_number:
+ 			return
+ 		max = None
+-		trash=[]
++		trash = []
+ 		for i in range(len(self.next)):
+ 			if max is None or self.next[i] > self.next[max]:
+ 				if max is not None:
+Index: ai.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- ai.py	(revision 4c5138673e0d771579617cb04de434a5d0a30d5d)
++++ ai.py	(revision )
+@@ -208,7 +208,10 @@
+ 		if self.turns_tree is None and mode != 'U':
+ 			print('tree_enable')
+ 			games_hashes = set()
+-			self.turns_tree = Turn(not self.hand_number, turn_type=mode, game=self.game, ai=self, hashes=games_hashes)
++			turns=[]
++			self.turns_tree = Turn(not self.hand_number, turn_type=mode,
++								   game=self.game, ai=self,
++								   hashes=games_hashes, turns=turns)
+ 
+ 		if mode == 'A' or mode == 'D':
+ 			self.turns_tree = self.turns_tree.get_next()

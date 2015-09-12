@@ -2,9 +2,9 @@ from engine import *
 from ai import AI
 
 result = [0, 0, 0]
-for i in range(1000):
+for i in range(10000):
 	seed = i * int(time.time())
-	print(seed)
+	# print(seed)
 
 	game = Game(seed=seed)
 	ai0 = AI(game, 0, './settings/end_game_on.xml')
@@ -41,10 +41,9 @@ for i in range(1000):
 	if a is not None:
 		if a != -1:
 			result[int(a)] += 1
-			print('AI%i won!' % int(a))
 		else:
 			result[2] += 1
-			print('Draw')
-	print('==================')
+
+	print('%.4f%%' % (result[0] / (result[0] + result[1])))
 
 print('AI0: %i, AI1: %i, Draw: %i' % (result[0], result[1], result[2]))

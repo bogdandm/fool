@@ -31,7 +31,7 @@ class AI:
 					int(xml.getElementsByTagName('attack')[0].
 						getElementsByTagName('coefficient_of_probability')[0].childNodes[0].data),
 				'limit':
-					int(xml.getElementsByTagName('attack')[0].
+					float(xml.getElementsByTagName('attack')[0].
 						getElementsByTagName('limit')[0].childNodes[0].data),
 			},
 			'defense': {
@@ -42,13 +42,13 @@ class AI:
 					int(xml.getElementsByTagName('defense')[0].
 						getElementsByTagName('coefficient_of_stage')[0].childNodes[0].data),
 				'limit':
-					int(xml.getElementsByTagName('defense')[0].
+					float(xml.getElementsByTagName('defense')[0].
 						getElementsByTagName('limit')[0].childNodes[0].data),
 				'count_of_cards':
 					int(xml.getElementsByTagName('defense')[0].
 						getElementsByTagName('count_of_cards')[0].childNodes[0].data),
 				'limit2':
-					int(xml.getElementsByTagName('defense')[0].
+					float(xml.getElementsByTagName('defense')[0].
 						getElementsByTagName('limit2')[0].childNodes[0].data),
 			}
 		}
@@ -206,7 +206,6 @@ class AI:
 	def end_game_ai(self, mode, i=None):
 		# mode = 'A' | 'D' | 'U'
 		if self.turns_tree is None and mode != 'U':
-			print('tree_enable')
 			games_hashes = set()
 			self.turns_tree = Turn(not self.hand_number, turn_type=mode, game=self.game, ai=self, hashes=games_hashes)
 
