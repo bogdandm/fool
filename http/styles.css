@@ -1,0 +1,128 @@
+html{
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #146921;
+}
+
+body {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.hidden {
+    display: none;
+}
+
+.card_border {
+    overflow: hidden;
+    position: relative;
+    width: calc(0.2967 * 300px + 1px);
+    height: calc(0.3012 * 424px + 1px);
+}
+
+.card_border > img {
+    position: absolute;
+    left: calc(-0.3494 * 300px);
+    top: calc(-0.3517 * 424px);
+    width: 300px;
+    height: 424px;
+}
+
+#table {
+    padding: 10px;
+    box-sizing: border-box;
+    width: 60%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.hand {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.hand > .card {
+    display: inline-block;
+    position: relative;
+    width: calc(0.4 * 0.2967 * 300px);
+    margin: 0;
+    padding: 0;
+}
+
+#right {
+    box-sizing: border-box;
+    padding-right: 25px;
+    height: 100%;
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+#set {
+    height: calc(0.3012 * 424px);
+}
+
+#set > .card {
+    display: inline-block;
+    position: relative;
+    width: calc(0.01 * 0.2967 * 300px);
+    margin: 0;
+    padding: 0;
+}
+
+#set > .set_patch {
+    display: inline-block;
+    position: relative;
+    width: calc(0.99 * 0.2967 * 300px);
+    margin: 0;
+    padding: 0;
+}
+
+#trump {
+    position: absolute;
+    height: 100%;
+    top: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+#trump > .card{
+    transform: rotate(90deg) translate(0,50%);
+    display: inline-block;
+    position: relative;
+    width: calc(0.2967 * 300px);
+    margin: 0;
+    padding: 0;
+}
+
+#left {
+    box-sizing: border-box;
+    height: 100%;
+    width: 10%;
+}
+
+#open_menu {
+    height: 100%;
+    background-color: #cdcdcd;
+    border: none;
+}
+
+#menu{
+    display: none;
+}

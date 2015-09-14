@@ -1,2 +1,2 @@
-del .\..\logs\log*.txt
+del .\..\engine\logs\*.txt
 exit
