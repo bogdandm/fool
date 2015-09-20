@@ -60,6 +60,26 @@ body {
     padding: 0;
 }
 
+#arena {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 50px;
+}
+
+.pair {
+    margin: 0 20px;
+}
+
+.pair > .card {
+    height: calc(0.3 * 0.3012 * 424px);
+}
+
+.pair > .card:nth-child(2) {
+    position: relative;
+    left: calc(0.1 * 0.2967 * 300px);
+}
+
 #right {
     box-sizing: border-box;
     padding-right: 25px;

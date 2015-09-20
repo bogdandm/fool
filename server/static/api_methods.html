@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+	<meta charset="UTF-8">
+	<title></title>
+	<style>
+		pre {
+			padding: 10px;
+			background-color: lightgrey;
+		}
+	</style>
+</head>
+<body>Все методы возращают json-файл вида:
+<pre><code>{ data: [< Change >, ...]}
+< Change > = {
+	"card": Card,
+	"inf": int,
+	"player": 0|1,
+	"type": < Type >
+}
+< Type > = player_switch | take_cards | get_card | trump_card | attack | defense | table_clear
+</code></pre>
+<ul>
+	<li>api.init()</li>
+	<li>api.attack(card: int)</li>
+	<li>api.defense(card: int)</li>
+</ul>
+</body>

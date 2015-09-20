@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+	<meta charset="UTF-8">
+	<title></title>
+	<link href="./static_/styles.css" rel="stylesheet">
+	<script src="./static_/jquery-2.1.4.min.js"></script>
+	<script>
+		var data = {
+			'hand1': 0,
+			'hand2': [],
+			'arena': []
+		};
+
+		function attack(str) {
+			var arena = $('#arena');
+			var pair = $('.hidden > .pair').clone();
+			var card = $('.hidden > .card').clone();
+			card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+			card.attr({value: str});
+			pair.append(card);
+			arena.append(pair);
+		}
+
+		function defense(str) {
+			var pair = $('#arena').find('.pair').last();
+			var card = $('.hidden > .card').clone();
+			card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+			card.attr({value: str});
+			pair.append(card);
+		}
+
+		function delCard1() {
+			$('#hand1').find('.card').last().remove();
+		}
+
+		function delCard2(str) {
+			$('#hand2').find('.card[value=' + str + ']').remove();
+		}
+
+		function addCard1() {
+			var hand = $('#hand1');
+			var card = $('.hidden > .card').clone();
+			card.find('img').attr({src: "./static_/svg/Blue_Back.svg"});
+			card.attr({value: 0});
+			hand.append(card);
+		}
+
+		function addCard2(str) {
+			var hand = $('#hand2');
+			var card = $('.hidden > .card').clone();
+			card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+			card.attr({value: str});
+			hand.append(card);
+		}
+
+		$(document).ready(
+				function () {
+					for (var i = 0; i < 6; i++) {
+						addCard1();
+					}
+
+					addCard2('7S');
+					addCard2('9C');
+					addCard2('14H');
+					addCard2('12D');
+
+					attack('6C');
+					defense('7C');
+					attack('6C');
+					defense('7C');
+					attack('6C');
+					defense('7C');
+				}
+		)
+	</script>
+</head>
+<body>
+<div class="hidden">
+	<div class="pair"></div>
+	<div class="card">
+		<div class="card_border">
+			<img src="">
+		</div>
+	</div>
+</div>
+<div id="left">
+	<button type="button" id="open_menu"></button>
+	<div id="menu">
+		1234
+	</div>
+</div>
+<div id="table">
+	<div id="hand1" class="hand"></div>
+	<div id="arena"></div>
+	<div id="hand2" class="hand"></div>
+</div>
+<div id="right">
+	<div id="trump">
+		<div class="card">
+			<div class="card_border">
+				<img src="./static_/svg/14C.svg">
+			</div>
+		</div>
+	</div>
+	<div id="set">
+		<div class="card">
+			<div class="card_border">
+				<img src="./static_/svg/Blue_Back.svg">
+			</div>
+		</div>
+		<div class="card">
+			<div class="card_border">
+				<img src="./static_/svg/Blue_Back.svg">
+			</div>
+		</div>
+		<div class="card">
+			<div class="card_border">
+				<img src="./static_/svg/Blue_Back.svg">
+			</div>
+		</div>
+		<div class="set_patch"></div>
+	</div>
+</div>
+</body>
+</html>

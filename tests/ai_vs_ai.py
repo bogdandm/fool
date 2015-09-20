@@ -1,4 +1,4 @@
-from engine.ai import AI
+from engine.ai import AI, Game
 
 seed = 115366111360#int(time.time())
 print(seed)
