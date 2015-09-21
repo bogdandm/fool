@@ -6,7 +6,7 @@ from engine.engine import Game, Card, difference
 
 
 class AI:
-	def __init__(self, game: Game, hand_number: int, settings_path='./../engine/settings/template.xml'):
+	def __init__(self, game, hand_number: int, settings_path='./engine/settings/template.xml'):
 		xml = dom.parse(settings_path)
 		self.settings = {
 			'all': {

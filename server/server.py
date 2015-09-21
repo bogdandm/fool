@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from re import search
 
 from flask import Flask, make_response, request, jsonify
@@ -8,24 +9,28 @@ from engine.ai import AI
 
 
 class Server:
-	staticFolder = './static/'
+	serverFolder = '/server'
+	staticFolder = '/static'
 	playerHand = 0
 
 	def __init__(self):
-		self.game = Game(log_on=True)
-		self.ai = AI(self.game, not self.playerHand)
-
+		self.game = None
+		self.ai = None
 		self.app = Flask(__name__)
 
 		@self.app.route('/')
 		def send_root():
-			response = make_response(open('./index.html', encoding='utf-8').read())
+			response = make_response(open(
+				'.' + self.serverFolder + '/index.html',
+				encoding='utf-8'
+			).read())
 			response.headers["Content-type"] = "text/html"
 			return response
 
 		@self.app.route('/static_/<path:path>')
 		def send_static_file(path):
-			response = make_response(open(self.staticFolder + path, encoding='utf-8').read())
+			response = make_response(
+				open('.' + self.serverFolder + self.staticFolder + '/' + path, encoding='utf-8').read())
 			if search('^.*\.html$', path):
 				response.headers["Content-type"] = "text/html"
 			elif search('^.*\.css$', path):
@@ -38,14 +43,17 @@ class Server:
 
 		@self.app.route('/api')
 		def send_api_methods():
-			response = make_response(open(self.staticFolder + 'api_methods.html', encoding='utf-8').read())
+			response = make_response(
+				open('.' + self.serverFolder + self.staticFolder + '/api_methods.html', encoding='utf-8').read())
 			response.headers["Content-type"] = "text/html"
 			return response
 
 		@self.app.route('/api/<path:method>')
 		def send_api_response(method):
 			if method == 'init':
-				if self.game.turn!=self.playerHand:
+				self.game = Game(log_on=True, seed=int(time.time() * 256 * 1000))
+				self.ai = AI(self.game, not self.playerHand)
+				if self.game.turn != self.playerHand:
 					x = self.ai.attack()
 					self.game.attack(x, ai=[self.ai])
 
@@ -75,6 +83,8 @@ class Server:
 
 			changes = self.game.changes[:]
 			self.game.changes = []
+			for change in changes:
+				change.filter(self.playerHand)
 			json = {'data': [ch.to_dict() for ch in changes]}
 			text = jsonify(json)
 			response = make_response(text)
@@ -83,6 +93,3 @@ class Server:
 
 	def run(self):
 		self.app.run(debug=True, port=80)
-
-
-Server().run()

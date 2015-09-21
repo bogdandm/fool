@@ -38,6 +38,9 @@ class Change:
 			'inf': self.inf
 		}
 
+	def filter(self, player):
+		if self.type=='get_card' and self.player!=player:
+			self.card=None
 
 class Card:
 	"""CLUBS = 1  # ♣
@@ -131,7 +134,7 @@ class Game:
 				self.changes = []
 			random.seed(seed)
 			if log_on:
-				self.log = open('./../engine/logs/game %s.txt' % datetime.now().strftime('%m-%d-%Y %H-%M-%S-%f'), 'w')
+				self.log = open('./engine/logs/game %s.txt' % datetime.now().strftime('%m-%d-%Y %H-%M-%S-%f'), 'w')
 				self.log.write('*Start at %s*\n' % datetime.now().strftime('%H-%M-%S-%f'))
 				self.log.write('seed: %i\n' % seed)
 				self.log.flush()
@@ -149,9 +152,11 @@ class Game:
 			for i in range(6):
 				card = self.set.take_card()
 				if self.save_changes:
+					self.changes.append(Change('set_decr', None, None, None))
 					self.changes.append(Change('get_card', int(not self.turn), card.__str__(), None))
 				self.hand[not self.turn].append(card)
 				if self.save_changes:
+					self.changes.append(Change('set_decr', None, None, None))
 					self.changes.append(Change('get_card', int(self.turn), card.__str__(), None))
 				card = self.set.take_card()
 				self.hand[self.turn].append(card)
@@ -162,6 +167,7 @@ class Game:
 
 			self.trump_card = self.set.take_card()
 			if self.save_changes:
+				self.changes.append(Change('set_decr', None, None, None))
 				self.changes.append(Change('trump_card', None, self.trump_card.__str__(), None))
 			if self.log_on:
 				self.log.write('__: trump_card(%s)\n' % self.trump_card)
@@ -298,70 +304,40 @@ class Game:
 		if self.save_changes:
 			self.changes.append(Change('table_clear', None, None, None))
 
-		if self.set is not None and self.set.remain() or self.trump_card is not None:  # Если есть что взять
-			for i in range(6 - len(self.hand[self.turn])):
-				card = self.set.take_card()
-				if card is not None:
-					self.hand[self.turn].append(card)
-					if ai is not None:
-						for a in ai:
-							if a.hand_number == self.turn:
-								a.update_memory('MY', card)
-					if self.save_changes:
-						self.changes.append(Change('get_card', int(self.turn), card.__str__(), None))
-					if self.log_on:
-						self.log.write('p%i: get(%s)\n' % (self.turn, card))
-						self.log.flush()
+		for turn in [self.turn, not self.turn]:
+			if self.set is not None and self.set.remain() or self.trump_card is not None:  # Если есть что взять
+				for i in range(6 - len(self.hand[turn])):
+					card = self.set.take_card()
+					if card is not None:
+						self.hand[turn].append(card)
+						if ai is not None:
+							for a in ai:
+								if a.hand_number == turn:
+									a.update_memory('MY', card)
+						if self.save_changes:
+							self.changes.append(Change('set_decr', None, None, None))
+							self.changes.append(Change('get_card', int(turn), card.__str__(), None))
+						if self.log_on:
+							self.log.write('p%i: get(%s)\n' % (turn, card))
+							self.log.flush()
 
-				elif self.trump_card is not None:
-					self.hand[self.turn].append(self.trump_card)
-					if ai is not None:
-						for a in ai:
-							a.update_memory('TRUMP', inf=self.turn)
-							if a.hand_number == self.turn:
-								a.update_memory('MY', self.trump_card)
-					if self.save_changes:
-						self.changes.append(Change('get_card', int(self.turn), self.trump_card.__str__(), None))
-						self.changes.append(Change('trump_card', None, 'None', None))
-					if self.log_on:
-						self.log.write('p%i: get(%s)\n' % (self.turn, self.trump_card))
-						self.log.flush()
-					self.trump_card = None
+					elif self.trump_card is not None:
+						self.hand[turn].append(self.trump_card)
+						if ai is not None:
+							for a in ai:
+								a.update_memory('TRUMP', inf=turn)
+								if a.hand_number == turn:
+									a.update_memory('MY', self.trump_card)
+						if self.save_changes:
+							self.changes.append(Change('get_card', int(turn), self.trump_card.__str__(), None))
+							self.changes.append(Change('trump_card', None, 'None', None))
+						if self.log_on:
+							self.log.write('p%i: get(%s)\n' % (turn, self.trump_card))
+							self.log.flush()
+						self.trump_card = None
 
-				else:
-					break
-
-			for i in range(6 - len(self.hand[not self.turn])):
-				card = self.set.take_card()
-				if card is not None:
-					self.hand[not self.turn].append(card)
-					if ai is not None:
-						for a in ai:
-							if a.hand_number == (not self.turn):
-								a.update_memory('MY', card)
-					if self.save_changes:
-						self.changes.append(Change('get_card', int(not self.turn), card.__str__(), None))
-					if self.log_on:
-						self.log.write('p%i: get(%s)\n' % (not self.turn, card))
-						self.log.flush()
-
-				elif self.trump_card is not None:
-					self.hand[not self.turn].append(self.trump_card)
-					if ai is not None:
-						for a in ai:
-							a.update_memory('TRUMP', inf=not self.turn)
-							if a.hand_number == (not self.turn):
-								a.update_memory('MY', self.trump_card)
-					if self.save_changes:
-						self.changes.append(Change('get_card', int(not self.turn), self.trump_card.__str__(), None))
-						self.changes.append(Change('trump_card', None, 'None', None))
-					if self.log_on:
-						self.log.write('p%i: get(%s)\n' % (not self.turn, self.trump_card))
-						self.log.flush()
-					self.trump_card = None
-
-				else:
-					break
+					else:
+						break
 
 		if not_take:
 			self.turn = not self.turn
