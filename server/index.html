@@ -9,6 +9,7 @@
 		var myHand = 0;
 		var data = {
 			'trump': null,
+			'trump_suit': '',
 			'turn': null,
 			'hand1': 0,
 			'hand2': [],
@@ -16,6 +17,23 @@
 			'defense': [],
 			'set': 52
 		};
+
+		function getCardValue(card) {
+			return parseInt(new RegExp('[0-9]{1,2}').exec(card)[0], 10);
+		}
+
+		function getCardSuit(card) {
+			return new RegExp('[A-Z]').exec(card)[0];
+		}
+
+		function more(Card1, Card2) {
+			var Card1_v = getCardValue(Card1);
+			var Card2_v = getCardValue(Card2);
+			var Card1_s = getCardSuit(Card1);
+			var Card2_s = getCardSuit(Card2);
+			return (Card1_v > Card2_v && Card1_s == Card2_s ||
+					Card1_s == data['trump_suit'] && Card2_s != data['trump_suit'])
+		}
 
 		function init() {
 			$.ajax({
@@ -25,6 +43,8 @@
 							 for (var i = 0; i < jsondata.data.length; i++) {
 								 applyChange(jsondata.data[i]);
 							 }
+							 if (data.turn == myHand) animateHand('A');
+							 else animateHand('D');
 						 }
 					 });
 		}
@@ -51,8 +71,8 @@
 					addCard1();
 				}
 			} else if (change['type'] == 'attack') {
-				if (myHand == change['player']){
-					data['hand2'].splice(data['hand2'].indexOf(change['card']),1);
+				if (myHand == change['player']) {
+					data['hand2'].splice(data['hand2'].indexOf(change['card']), 1);
 					delCard2(change['card']);
 				}
 				else {
@@ -62,6 +82,38 @@
 				attack(change['card']);
 				data['attack'].push(change['card']);
 			}
+		}
+
+		function animateHand(mode) { // A | D
+			$('#hand2').find('.card').each(function (index, card) {
+				var res = false;
+				if (mode == 'A') {
+					var cards = $('#arena').find('.card');
+					if (cards.length) {
+						var card_v = getCardValue($(card).attr('value'));
+						for (var i = 0; i < cards.length; i++) {
+							if (card_v == getCardValue(cards.eq(i).attr('value'))) {
+								res = true;
+								break;
+							}
+						}
+					} else {
+						res = true;
+					}
+				} else {
+					var card_str = $(card).attr('value');
+					if (more(card_str, $('#arena').find('.pair:last > .card:last').attr('value'))) {
+						res = true;
+					}
+				}
+				if (res) {
+					$(card).animate({top: '-15', opacity: '1'});
+					//TODO(): click
+				} else {
+					$(card).animate({top: '0', opacity: '0.7'});
+					//TODO(): de_click
+				}
+			})
 		}
 
 		function attack(str) {
@@ -112,6 +164,7 @@
 				card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
 			else
 				card.hide();
+			data['trump_suit'] = new RegExp('[A-Z]').exec(str)[0]
 		}
 
 		function decrSet(n) {

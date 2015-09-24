@@ -21,6 +21,10 @@ body {
     display: none;
 }
 
+.card {
+    position: relative;
+}
+
 .card_border {
     overflow: hidden;
     position: relative;

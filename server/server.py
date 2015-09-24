@@ -17,20 +17,18 @@ class Server:
 		self.game = None
 		self.ai = None
 		self.app = Flask(__name__)
+		self.cache = ServerCache(self.staticFolder, self.serverFolder)
 
 		@self.app.route('/')
 		def send_root():
-			response = make_response(open(
-				'.' + self.serverFolder + '/index.html',
-				encoding='utf-8'
-			).read())
+			response = make_response(self.cache.get('.' + self.serverFolder + '/index.html'))
 			response.headers["Content-type"] = "text/html"
 			return response
 
 		@self.app.route('/static_/<path:path>')
 		def send_static_file(path):
 			response = make_response(
-				open('.' + self.serverFolder + self.staticFolder + '/' + path, encoding='utf-8').read())
+				self.cache.get('.' + self.serverFolder + self.staticFolder + '/' + path))
 			if search('^.*\.html$', path):
 				response.headers["Content-type"] = "text/html"
 			elif search('^.*\.css$', path):
@@ -44,7 +42,7 @@ class Server:
 		@self.app.route('/api')
 		def send_api_methods():
 			response = make_response(
-				open('.' + self.serverFolder + self.staticFolder + '/api_methods.html', encoding='utf-8').read())
+				self.cache.get('.' + self.serverFolder + self.staticFolder + '/api_methods.html'))
 			response.headers["Content-type"] = "text/html"
 			return response
 
@@ -93,3 +91,17 @@ class Server:
 
 	def run(self):
 		self.app.run(debug=True, port=80)
+
+
+class ServerCache:
+	def __init__(self, static_folder, serverFolder):
+		self.data = {}
+		for s in ['D', 'H', 'S', 'C']:
+			for v in range(2, 15):
+				path = '.' + serverFolder + static_folder + '/svg/' + str(v) + s + '.svg'
+				self.data[path] = open(path, encoding='utf-8').read()
+
+	def get(self, path):
+		if (path not in self.data):
+			self.data[path] = open(path, encoding='utf-8').read()
+		return self.data[path]
