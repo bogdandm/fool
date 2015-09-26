@@ -135,6 +135,12 @@ body {
     padding: 0;
 }
 
+#cancel_card {
+    position: absolute;
+    top: 75%;
+    right: 25px;
+}
+
 #left {
     box-sizing: border-box;
     height: 100%;

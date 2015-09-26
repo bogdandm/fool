@@ -142,7 +142,7 @@ class Game:
 				self.log = None
 
 			self.set = Set(seed=seed)
-			self.turn = random.randint(0, 1)
+			self.turn = 0#random.randint(0, 1)
 			if self.save_changes:
 				self.changes.append(Change('player_switch', int(self.turn), None, None))
 			self.hand = []  # user, AI
@@ -155,10 +155,10 @@ class Game:
 					self.changes.append(Change('set_decr', None, None, None))
 					self.changes.append(Change('get_card', int(not self.turn), card.__str__(), None))
 				self.hand[not self.turn].append(card)
+				card = self.set.take_card()
 				if self.save_changes:
 					self.changes.append(Change('set_decr', None, None, None))
 					self.changes.append(Change('get_card', int(self.turn), card.__str__(), None))
-				card = self.set.take_card()
 				self.hand[self.turn].append(card)
 				if self.log_on:
 					self.log.write('p%i: get(%s)\n' % (self.turn, self.hand[self.turn][-1]))

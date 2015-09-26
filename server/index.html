@@ -1,188 +1,228 @@
 <!DOCTYPE html>
 <html>
 <head lang="en">
-	<meta charset="UTF-8">
-	<title></title>
-	<link href="./static_/styles.css" rel="stylesheet">
-	<script src="./static_/jquery-2.1.4.min.js"></script>
-	<script>
-		var myHand = 0;
-		var data = {
-			'trump': null,
-			'trump_suit': '',
-			'turn': null,
-			'hand1': 0,
-			'hand2': [],
-			'attack': [],
-			'defense': [],
-			'set': 52
-		};
+<meta charset="UTF-8">
+<title></title>
+<link href="./static_/styles.css" rel="stylesheet">
+<script src="./static_/jquery-2.1.4.min.js"></script>
+<script>
+var myHand = 0;
+var data = {
+	'trump': null,
+	'trump_suit': '',
+	'turn': null,
+	'hand1': 0,
+	'hand2': [],
+	'attack': [],
+	'defense': [],
+	'set': 52
+};
 
-		function getCardValue(card) {
-			return parseInt(new RegExp('[0-9]{1,2}').exec(card)[0], 10);
+function getCardValue(card) {
+	return parseInt(new RegExp('[0-9]{1,2}').exec(card)[0], 10);
+}
+
+function getCardSuit(card) {
+	return new RegExp('[A-Z]').exec(card)[0];
+}
+
+function more(Card1, Card2) {
+	var Card1_v = getCardValue(Card1);
+	var Card2_v = getCardValue(Card2);
+	var Card1_s = getCardSuit(Card1);
+	var Card2_s = getCardSuit(Card2);
+	return (Card1_v > Card2_v && Card1_s == Card2_s ||
+			Card1_s == data['trump_suit'] && Card2_s != data['trump_suit'])
+}
+
+function ajaxSuccess(jsondata) {
+	for (var i = 0; i < jsondata.data.length; i++) {
+		applyChange(jsondata.data[i]);
+	}
+	if (data.turn == myHand) readyAttack();
+	else readyDefense();
+}
+
+function init() {
+	$.ajax({
+				 dataType: 'json',
+				 url: './api/init',
+				 success: ajaxSuccess
+			 });
+}
+
+function applyChange(change) {
+	console.log(change);
+	if (change['type'] == 'player_switch') {
+		data['turn'] = change['player'];
+	} else if (change['type'] == 'take_cards') {
+		console.log('take_cards');
+	}
+	else if (change['type'] == 'set_decr') {
+		data.set--;
+		decrSet(data.set);
+	}
+	else if (change['type'] == 'trump_card') {
+		data.trump = change['card'];
+		setTrump(change['card']);
+	}
+	else if (change['type'] == 'get_card') {
+		if (change['player'] == myHand) {
+			data['hand2'].push(change['card']);
+			addCard2(change['card']);
 		}
-
-		function getCardSuit(card) {
-			return new RegExp('[A-Z]').exec(card)[0];
+		else {
+			data.hand1++;
+			addCard1();
 		}
-
-		function more(Card1, Card2) {
-			var Card1_v = getCardValue(Card1);
-			var Card2_v = getCardValue(Card2);
-			var Card1_s = getCardSuit(Card1);
-			var Card2_s = getCardSuit(Card2);
-			return (Card1_v > Card2_v && Card1_s == Card2_s ||
-					Card1_s == data['trump_suit'] && Card2_s != data['trump_suit'])
+	} else if (change['type'] == 'attack') {
+		if (myHand == change['player']) {
+			data['hand2'].splice(data['hand2'].indexOf(change['card']), 1);
+			delCard2(change['card']);
 		}
-
-		function init() {
-			$.ajax({
-						 dataType: 'json',
-						 url: './api/init',
-						 success: function (jsondata) {
-							 for (var i = 0; i < jsondata.data.length; i++) {
-								 applyChange(jsondata.data[i]);
-							 }
-							 if (data.turn == myHand) animateHand('A');
-							 else animateHand('D');
-						 }
-					 });
+		else {
+			data['hand1']--;
+			delCard1();
 		}
+		attack(change['card']);
+		data['attack'].push(change['card']);
+	} else if (change['type'] == 'defense') {
+		if (myHand == change['player']) {
+			data['hand2'].splice(data['hand2'].indexOf(change['card']), 1);
+			delCard2(change['card']);
+		}
+		else {
+			data['hand1']--;
+			delCard1();
+		}
+		defense(change['card']);
+		data['defense'].push(change['card']);
+	} else if (change['type'] == 'table_clear') {
+		$('#arena').empty();
+	}
+}
 
-		function applyChange(change) {
-			if (change['type'] == 'player_switch') {
-				data['turn'] = change['player'];
+function readyAttack() {
+	function onCardClick(eventObject) {
+		console.log('click ' + eventObject.data.card);
+		$.ajax({
+					 dataType: 'json',
+					 url: './api/attack?card=' + eventObject.data.card,
+					 success: ajaxSuccess
+				 });
+	}
+
+	$('#hand2').find('.card').each(function (index, card) {
+		var res = false;
+		var cards = $('#arena').find('.card');
+		if (cards.length) {
+			var card_v = getCardValue($(card).attr('value'));
+			for (var i = 0; i < cards.length; i++) {
+				if (card_v == getCardValue(cards.eq(i).attr('value'))) {
+					res = true;
+					break;
+				}
 			}
-			else if (change['type'] == 'set_decr') {
-				data.set--;
-				decrSet(data.set);
-			}
-			else if (change['type'] == 'trump_card') {
-				data.trump = change['card'];
-				setTrump(change['card']);
-			}
-			else if (change['type'] == 'get_card') {
-				if (change['player'] == myHand) {
-					data['hand2'].push(change['card']);
-					addCard2(change['card']);
-				}
-				else {
-					data.hand1++;
-					addCard1();
-				}
-			} else if (change['type'] == 'attack') {
-				if (myHand == change['player']) {
-					data['hand2'].splice(data['hand2'].indexOf(change['card']), 1);
-					delCard2(change['card']);
-				}
-				else {
-					data['hand1']--;
-					delCard1();
-				}
-				attack(change['card']);
-				data['attack'].push(change['card']);
-			}
+		} else {
+			res = true;
 		}
+		$(card).animate({top: '0', opacity: '0.7'}).unbind('click');
+		if (res)
+			$(card).animate({top: '-15', opacity: '1.0'}).click({card: index}, onCardClick);
+	})
+}
 
-		function animateHand(mode) { // A | D
-			$('#hand2').find('.card').each(function (index, card) {
-				var res = false;
-				if (mode == 'A') {
-					var cards = $('#arena').find('.card');
-					if (cards.length) {
-						var card_v = getCardValue($(card).attr('value'));
-						for (var i = 0; i < cards.length; i++) {
-							if (card_v == getCardValue(cards.eq(i).attr('value'))) {
-								res = true;
-								break;
-							}
-						}
-					} else {
-						res = true;
-					}
-				} else {
-					var card_str = $(card).attr('value');
-					if (more(card_str, $('#arena').find('.pair:last > .card:last').attr('value'))) {
-						res = true;
-					}
-				}
-				if (res) {
-					$(card).animate({top: '-15', opacity: '1'});
-					//TODO(): click
-				} else {
-					$(card).animate({top: '0', opacity: '0.7'});
-					//TODO(): de_click
-				}
-			})
+function readyDefense() {
+	function onCardClick(eventObject) {
+		console.log('click ' + eventObject.data.card);
+		$.ajax({
+					 dataType: 'json',
+					 url: './api/attack?card=' + eventObject.data.card,
+					 success: ajaxSuccess
+				 });
+	}
+
+	$('#hand2').find('.card').each(function (index, card) {
+		var res = false;
+		var arena = $('#arena');
+		var card_str = $(card).attr('value');
+		if (more(card_str, arena.find('.pair:last > .card:last').attr('value'))) {
+			res = true;
 		}
+		$(card).animate({top: '0', opacity: '0.7'}).unbind('click');
+		if (res)
+			$(card).animate({top: '-15', opacity: '1.0'}).click({card: index}, onCardClick);
 
-		function attack(str) {
-			var arena = $('#arena');
-			var pair = $('.hidden > .pair').clone();
-			var card = $('.hidden > .card').clone();
-			card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
-			card.attr({value: str});
-			pair.append(card);
-			arena.append(pair);
+	})
+}
+
+function attack(str) {
+	var arena = $('#arena');
+	var pair = $('.hidden > .pair').clone();
+	var card = $('.hidden > .card').clone();
+	card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+	card.attr({value: str});
+	pair.append(card);
+	arena.append(pair);
+}
+
+function defense(str) {
+	var pair = $('#arena').find('.pair').last();
+	var card = $('.hidden > .card').clone();
+	card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+	card.attr({value: str});
+	pair.append(card);
+}
+
+function delCard1() {
+	$('#hand1').find('.card').last().remove();
+}
+
+function delCard2(str) {
+	$('#hand2').find('.card[value=' + str + ']').remove();
+}
+
+function addCard1() {
+	var hand = $('#hand1');
+	var card = $('.hidden > .card').clone();
+	card.find('img').attr({src: "./static_/svg/Blue_Back.svg"});
+	card.attr({value: 0});
+	hand.append(card).hide().fadeIn();
+}
+
+function addCard2(str) {
+	var hand = $('#hand2');
+	var card = $('.hidden > .card').clone();
+	card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+	card.attr({value: str});
+	hand.append(card).hide().fadeIn();
+}
+
+function setTrump(str) {
+	var card = $('#trump').find('.card');
+	if (str != 'None')
+		card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+	else
+		card.hide();
+	data['trump_suit'] = new RegExp('[A-Z]').exec(str)[0]
+}
+
+function decrSet(n) {
+	if (n == 0) {
+		$('#set').find('.card').hide();
+	} else if (n <= (39 - 39 / 3 * 2)) {
+		$('#set').find('.card:not(:last)').hide();
+	} else if (n <= (39 - 39 / 3)) {
+		$('#set').find('.card:last').hide();
+	}
+}
+
+$(document).ready(
+		function () {
+			init();
 		}
-
-		function defense(str) {
-			var pair = $('#arena').find('.pair').last();
-			var card = $('.hidden > .card').clone();
-			card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
-			card.attr({value: str});
-			pair.append(card);
-		}
-
-		function delCard1() {
-			$('#hand1').find('.card').last().remove();
-		}
-
-		function delCard2(str) {
-			$('#hand2').find('.card[value=' + str + ']').remove();
-		}
-
-		function addCard1() {
-			var hand = $('#hand1');
-			var card = $('.hidden > .card').clone();
-			card.find('img').attr({src: "./static_/svg/Blue_Back.svg"});
-			card.attr({value: 0});
-			hand.append(card);
-		}
-
-		function addCard2(str) {
-			var hand = $('#hand2');
-			var card = $('.hidden > .card').clone();
-			card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
-			card.attr({value: str});
-			hand.append(card);
-		}
-
-		function setTrump(str) {
-			var card = $('#trump').find('.card');
-			if (str != 'None')
-				card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
-			else
-				card.hide();
-			data['trump_suit'] = new RegExp('[A-Z]').exec(str)[0]
-		}
-
-		function decrSet(n) {
-			if (n == 0) {
-				$('#set').find('.card').hide();
-			} else if (n <= (39 - 39 / 3 * 2)) {
-				$('#set').find('.card:not(:last)').hide();
-			} else if (n <= (39 - 39 / 3)) {
-				$('#set').find('.card:last').hide();
-			}
-		}
-
-		$(document).ready(
-				function () {
-					init();
-				}
-		)
-	</script>
+)
+</script>
 </head>
 <body>
 <div class="hidden">
@@ -229,6 +269,13 @@
 			</div>
 		</div>
 		<div class="set_patch"></div>
+	</div>
+	<div id="cancel_card">
+		<div class="card">
+			<div class="card_border">
+				<img src="./static_/svg/cancel.svg">
+			</div>
+		</div>
 	</div>
 </div>
 </body>
