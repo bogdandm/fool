@@ -2,7 +2,7 @@ import xml.dom.minidom as dom
 from math import factorial
 
 from engine.end_game_ai import Turn
-from engine.engine import Game, Card, difference
+from engine.engine import Card, difference
 
 
 class AI:
@@ -57,7 +57,7 @@ class AI:
 		self.hand = game.hand[hand_number]
 		self.hand_number = hand_number
 		self.unknown_cards = game.set.cards[:] + self.game.hand[not hand_number]
-		self.oof_cards = []
+		self.off_cards = []
 		self.enemy_cards = []
 		self.table_cards = []
 		self.turns_tree = None
@@ -76,8 +76,8 @@ class AI:
 				self.turns_tree = self.turns_tree.get_next_by_card(-1)
 
 			for tmp in self.game.table:
-				self.oof_cards.append(tmp[0])
-				self.oof_cards.append(tmp[1])
+				self.off_cards.append(tmp[0])
+				self.off_cards.append(tmp[1])
 			self.table_cards = []
 
 		if mode == 'TAKE' or mode == 'ALL':
@@ -108,7 +108,7 @@ class AI:
 			self.table_cards.append(card)
 
 		self.unknown_cards = difference(self.unknown_cards,
-										self.oof_cards + self.enemy_cards + self.table_cards + self.hand)
+										self.off_cards + self.enemy_cards + self.table_cards + self.hand)
 
 	def attack(self):
 		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
@@ -162,8 +162,11 @@ class AI:
 
 		# for tmp in sums:
 		# 	print('%s|%f' % (tmp[0], tmp[1]))
-		r = self.hand.index(result[0])
-		return r if not self.game.table or result[1] > self.settings['attack']['limit'] else -1
+		if result is not None:
+			r = self.hand.index(result[0])
+			return r if not self.game.table or result[1] > self.settings['attack']['limit'] else -1
+		else:
+			return -1
 
 	def defense(self, card: Card):
 		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:

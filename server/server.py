@@ -49,7 +49,7 @@ class Server:
 		@self.app.route('/api/<path:method>')
 		def send_api_response(method):
 			if method == 'init':
-				seed=int(time.time() * 256 * 1000)
+				seed=369543176963121#int(time.time() * 256 * 1000)
 				print(seed)
 				self.game = Game(log_on=True, seed=seed)
 				self.ai = AI(self.game, not self.playerHand)
@@ -82,11 +82,10 @@ class Server:
 				if x == -1:
 					self.game.switch_turn(ai=[self.ai])
 
-			changes = self.game.changes[:]
-			self.game.changes = []
-			for change in changes:
+			for change in self.game.changes:
 				change.filter(self.playerHand)
-			json = {'data': [ch.to_dict() for ch in changes]}
+			json = {'data': [ch.to_dict() for ch in self.game.changes]}
+			self.game.changes = []
 			text = jsonify(json)
 			response = make_response(text)
 			response.headers["Content-type"] = "text/plain"
@@ -105,6 +104,6 @@ class ServerCache:
 				self.data[path] = open(path, encoding='utf-8').read()
 
 	def get(self, path):
-		# if (path not in self.data):
-		self.data[path] = open(path, encoding='utf-8').read()
+		if (path not in self.data):
+			self.data[path] = open(path, encoding='utf-8').read()
 		return self.data[path]
