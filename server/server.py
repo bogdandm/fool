@@ -27,8 +27,7 @@ class Server:
 
 		@self.app.route('/static_/<path:path>')
 		def send_static_file(path):
-			response = make_response(
-				self.cache.get('.' + self.serverFolder + self.staticFolder + '/' + path))
+			response = make_response(self.cache.get('.' + self.serverFolder + self.staticFolder + '/' + path))
 			if search('^.*\.html$', path):
 				response.headers["Content-type"] = "text/html"
 			elif search('^.*\.css$', path):
@@ -49,7 +48,7 @@ class Server:
 		@self.app.route('/api/<path:method>')
 		def send_api_response(method):
 			if method == 'init':
-				seed=369543176963121#int(time.time() * 256 * 1000)
+				seed = int(time.time() * 256 * 1000)
 				print(seed)
 				self.game = Game(log_on=True, seed=seed)
 				self.ai = AI(self.game, not self.playerHand)
@@ -92,18 +91,19 @@ class Server:
 			return response
 
 	def run(self):
-		self.app.run(debug=True, port=80)
+		self.app.run(host='192.168.0.111' ,debug=True, port=80)
 
 
 class ServerCache:
-	def __init__(self, static_folder, serverFolder):
+	def __init__(self, static_folder, server_folder):
 		self.data = {}
 		for s in ['D', 'H', 'S', 'C']:
 			for v in range(2, 15):
-				path = '.' + serverFolder + static_folder + '/svg/' + str(v) + s + '.svg'
+				path = '.' + server_folder + static_folder + '/svg/' + str(v) + s + '.svg'
 				self.data[path] = open(path, encoding='utf-8').read()
 
 	def get(self, path):
-		if (path not in self.data):
-			self.data[path] = open(path, encoding='utf-8').read()
-		return self.data[path]
+		# if (path not in self.data):
+		# 	self.data[path] = open(path, encoding='utf-8').read()
+		# return self.data[path]
+		return open(path, encoding='utf-8').read()

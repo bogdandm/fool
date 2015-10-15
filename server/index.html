@@ -19,15 +19,26 @@
 			'set': 52
 		};
 
-		function getCardValue(card) {
+		function preCacheImages() {
+			var constPath = "./static_/svg/";
+			var suits = ['H', 'C', 'S', 'D'];
+			for (var j in suits) {
+				for (var i = 2; i <= 14; i++) {
+					var img = new Image();
+					img.src = constPath + i + suits[j] + '.svg';
+				}
+			}
+		}
+
+		function getCardValue(card) { //data
 			return parseInt(new RegExp('[0-9]{1,2}').exec(card)[0], 10);
 		}
 
-		function getCardSuit(card) {
+		function getCardSuit(card) { //data
 			return new RegExp('[A-Z]').exec(card)[0];
 		}
 
-		function more(Card1, Card2) {
+		function more(Card1, Card2) { //data
 			var Card1_v = getCardValue(Card1);
 			var Card2_v = getCardValue(Card2);
 			var Card1_s = getCardSuit(Card1);
@@ -36,7 +47,15 @@
 					Card1_s == data['trump_suit'] && Card2_s != data['trump_suit'])
 		}
 
-		function ajaxSuccess(jsondata) {
+		function init() { //ajax
+			$.ajax({
+						 dataType: 'json',
+						 url: './api/init',
+						 success: ajaxSuccess
+					 });
+		}
+
+		function ajaxSuccess(jsondata) { //ajax
 			for (var i = 0; i < jsondata.data.length; i++) {
 				applyChange(jsondata.data[i]);
 			}
@@ -45,21 +64,7 @@
 			else readyDefense();
 		}
 
-		function init() {
-			$.ajax({
-						 dataType: 'json',
-						 url: './api/init',
-						 success: ajaxSuccess
-					 });
-		}
-
-		function clearCards() {
-			$(".cards").each(function (index, card) {
-				$(card).unbind('click');
-			});
-		}
-
-		function applyChange(change) {
+		function applyChange(change) { //data
 			console.log(change);
 			if (change['type'] == 'player_switch') {
 				data['turn'] = change['player'];
@@ -92,8 +97,8 @@
 					data['hand1']--;
 					delCard1();
 				}
-				attack(change['card']);
 				data['attack'].push(change['card']);
+				attack(change['card']);
 			} else if (change['type'] == 'defense') {
 				if (myHand == change['player']) {
 					data['hand2'].splice(data['hand2'].indexOf(change['card']), 1);
@@ -103,14 +108,22 @@
 					data['hand1']--;
 					delCard1();
 				}
-				defense(change['card']);
 				data['defense'].push(change['card']);
+				defense(change['card']);
 			} else if (change['type'] == 'table_clear') {
+				data.attack = [];
+				data.defense = [];
 				$('#arena').empty();
 			}
 		}
 
-		function readyAttack() {
+		function clearCards() { //handlers
+			$(".cards").each(function (index, card) {
+				$(card).unbind('click');
+			});
+		}
+
+		function readyAttack() { //ajax & handlers & visual
 			function onCardClick(eventObject) {
 				console.log('click ' + eventObject.data.card);
 				$.ajax({
@@ -120,13 +133,15 @@
 						 });
 			}
 
-			$('#hand2').find('.card').each(function (index, card) {
+			data.hand2.forEach(function (card, index) {
 				var res = false;
-				var cards = $('#arena').find('.card');
+				var cards = data.attack.concat(data.defense);
+				var card_jQ = $('#hand2').find('.card').eq(index);
+				card_jQ.animate({top: '0', opacity: '0.7'}).removeClass('on');;
 				if (cards.length) {
-					var card_v = getCardValue($(card).attr('value'));
+					var card_v = getCardValue(card);
 					for (var i = 0; i < cards.length; i++) {
-						if (card_v == getCardValue(cards.eq(i).attr('value'))) {
+						if (card_v == getCardValue(cards[i])) {
 							res = true;
 							break;
 						}
@@ -134,19 +149,18 @@
 				} else {
 					res = true;
 				}
-				$(card).animate({top: '0', opacity: '0.7'});
 				if (res)
-					$(card).animate({top: '-15', opacity: '1.0'}).click({card: index}, onCardClick);
+					card_jQ.animate({top: '-15', opacity: '1.0'}).click({card: index}, onCardClick).addClass('on');
 			});
 
 			var cancelCard = $("#cancel_card");
 			cancelCard.unbind('click');
-			if ($("#arena").find(".card").length) {
+			if (data.attack.concat(data.defense).length) {
 				cancelCard.click({card: -1}, onCardClick);
 			}
 		}
 
-		function readyDefense() {
+		function readyDefense() { //ajax & handlers & visual
 			function onCardClick(eventObject) {
 				console.log('click ' + eventObject.data.card);
 				$.ajax({
@@ -156,28 +170,22 @@
 						 });
 			}
 
-			$('#hand2').find('.card').each(function (index, card) {
-				var res = false;
-				var arena = $('#arena');
-				var card_str = $(card).attr('value');
-				if (more(card_str, arena.find('.pair:last > .card:last').attr('value'))) {
-					res = true;
+			data.hand2.forEach(function (card, index) {
+				var card_jQ = $('#hand2').find('.card').eq(index);
+				card_jQ.animate({top: '0', opacity: '0.7'}).unbind('click').removeClass('on');
+				if (more(card, data.attack[data.attack.length - 1])) {
+					card_jQ.animate({top: '-15', opacity: '1.0'}).click({card: index}, onCardClick).addClass('on');
 				}
-				$(card).animate({top: '0', opacity: '0.7'}).unbind('click');
-				if (res)
-					$(card).animate({top: '-15', opacity: '1.0'}).click({card: index}, onCardClick);
-
 			});
 
 			var cancelCard = $("#cancel_card");
 			cancelCard.unbind('click');
-			if ($("#arena").find(".card").length) {
-				cancelCard.click({card: -1}, onCardClick);
-			}
+			cancelCard.click({card: -1}, onCardClick);
 		}
 
-		$(document).ready(
+		$(document).ready( //init
 				function () {
+					preCacheImages();
 					init();
 				}
 		)
