@@ -48,7 +48,7 @@ class Server:
 		@self.app.route('/api/<path:method>')
 		def send_api_response(method):
 			if method == 'init':
-				seed = int(time.time() * 256 * 1000)
+				seed = 369942366670219#int(time.time() * 256 * 1000)
 				print(seed)
 				self.game = Game(log_on=True, seed=seed)
 				self.ai = AI(self.game, not self.playerHand)
@@ -91,7 +91,7 @@ class Server:
 			return response
 
 	def run(self):
-		self.app.run(host='192.168.0.111' ,debug=True, port=80)
+		self.app.run(host='192.168.0.111', debug=True, port=80)
 
 
 class ServerCache:

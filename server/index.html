@@ -1,249 +1,263 @@
 <!DOCTYPE html>
 <html>
 <head lang="en">
-	<meta charset="UTF-8">
-	<title></title>
-	<link href="./static_/styles.css" rel="stylesheet">
-	<script src="./static_/jquery-2.1.4.min.js"></script>
-	<script src="./static_/card_manipulations.js"></script>
-	<script>
-		var myHand = 0;
-		var data = {
-			'trump': null,
-			'trump_suit': '',
-			'turn': null,
-			'hand1': 0,
-			'hand2': [],
-			'attack': [],
-			'defense': [],
-			'set': 52
-		};
+    <meta charset="UTF-8">
+    <title></title>
+    <link href="./static_/styles.css" rel="stylesheet">
+    <script src="./static_/jquery-2.1.4.min.js"></script>
+    <script src="./static_/card_manipulations.js"></script>
+    <script>
+        var myHand = 0;
+        var data = {
+            'trump': null,
+            'trump_suit': '',
+            'turn': null,
+            'hand1': 0,
+            'hand2': [],
+            'attack': [],
+            'defense': [],
+            'set': 52
+        };
+        var take_cards = false;
+        var card_deleted = 100;
 
-		function preCacheImages() {
-			var constPath = "./static_/svg/";
-			var suits = ['H', 'C', 'S', 'D'];
-			for (var j in suits) {
-				for (var i = 2; i <= 14; i++) {
-					var img = new Image();
-					img.src = constPath + i + suits[j] + '.svg';
-				}
-			}
-		}
+        function preCacheImages() {
+            var constPath = "./static_/svg/";
+            var suits = ['H', 'C', 'S', 'D'];
+            for (var j = 0; j < 4; j++)
+                for (var i = 2; i <= 14; i++) {
+                    var img = new Image();
+                    img.src = constPath + i + suits[j] + '.svg';
+                }
+        }
 
-		function getCardValue(card) { //data
-			return parseInt(new RegExp('[0-9]{1,2}').exec(card)[0], 10);
-		}
+        function getCardValue(card) { //data
+            return parseInt(new RegExp('[0-9]{1,2}').exec(card)[0], 10);
+        }
 
-		function getCardSuit(card) { //data
-			return new RegExp('[A-Z]').exec(card)[0];
-		}
+        function getCardSuit(card) { //data
+            return new RegExp('[A-Z]').exec(card)[0];
+        }
 
-		function more(Card1, Card2) { //data
-			var Card1_v = getCardValue(Card1);
-			var Card2_v = getCardValue(Card2);
-			var Card1_s = getCardSuit(Card1);
-			var Card2_s = getCardSuit(Card2);
-			return (Card1_v > Card2_v && Card1_s == Card2_s ||
-					Card1_s == data['trump_suit'] && Card2_s != data['trump_suit'])
-		}
+        function more(Card1, Card2) { //data
+            var Card1_v = getCardValue(Card1);
+            var Card2_v = getCardValue(Card2);
+            var Card1_s = getCardSuit(Card1);
+            var Card2_s = getCardSuit(Card2);
+            return (Card1_v > Card2_v && Card1_s == Card2_s ||
+            Card1_s == data['trump_suit'] && Card2_s != data['trump_suit'])
+        }
 
-		function init() { //ajax
-			$.ajax({
-						 dataType: 'json',
-						 url: './api/init',
-						 success: ajaxSuccess
-					 });
-		}
+        function init() { //ajax
+            $.ajax({
+                dataType: 'json',
+                url: './api/init',
+                success: ajaxSuccess
+            });
+        }
 
-		function ajaxSuccess(jsondata) { //ajax
-			for (var i = 0; i < jsondata.data.length; i++) {
-				applyChange(jsondata.data[i]);
-			}
-			clearCards();
-			if (data.turn == myHand) readyAttack();
-			else readyDefense();
-		}
+        function ajaxSuccess(jsondata) { //ajax
+            for (var i = 0; i < jsondata.data.length; i++) {
+                applyChange(jsondata.data[i]);
+            }
+            clearCards();
+            take_cards = false;
+            /*if (data.turn == myHand) setTimeout(readyAttack, 600);
+             else setTimeout(readyDefense, 600);*/
+            if (data.turn == myHand) readyAttack();
+            else readyDefense();
+        }
 
-		function applyChange(change) { //data
-			console.log(change);
-			if (change['type'] == 'player_switch') {
-				data['turn'] = change['player'];
-			} else if (change['type'] == 'take_cards') {
-				console.log('take_cards');
-			}
-			else if (change['type'] == 'set_decr') {
-				data.set--;
-				decrSet(data.set);
-			}
-			else if (change['type'] == 'trump_card') {
-				data.trump = change['card'];
-				setTrump(change['card']);
-			}
-			else if (change['type'] == 'get_card') {
-				if (change['player'] == myHand) {
-					data['hand2'].push(change['card']);
-					addCard2(change['card']);
-				}
-				else {
-					data.hand1++;
-					addCard1();
-				}
-			} else if (change['type'] == 'attack') {
-				if (myHand == change['player']) {
-					data['hand2'].splice(data['hand2'].indexOf(change['card']), 1);
-					delCard2(change['card']);
-				}
-				else {
-					data['hand1']--;
-					delCard1();
-				}
-				data['attack'].push(change['card']);
-				attack(change['card']);
-			} else if (change['type'] == 'defense') {
-				if (myHand == change['player']) {
-					data['hand2'].splice(data['hand2'].indexOf(change['card']), 1);
-					delCard2(change['card']);
-				}
-				else {
-					data['hand1']--;
-					delCard1();
-				}
-				data['defense'].push(change['card']);
-				defense(change['card']);
-			} else if (change['type'] == 'table_clear') {
-				data.attack = [];
-				data.defense = [];
-				$('#arena').empty();
-			}
-		}
+        function applyChange(change) { //data
+            console.log(change);
+            if (change['type'] == 'player_switch') {
+                data['turn'] = change['player'];
+            } else if (change['type'] == 'take_cards') {
+                console.log('take_cards');
+                take_cards = true;
+            } else if (change['type'] == 'set_decr') {
+                data.set--;
+                decrSet(data.set);
+                $('#set').find('.card_border').attr('title', data.set)
+            } else if (change['type'] == 'trump_card') {
+                data.trump = change['card'];
+                setTrump(change['card']);
+            } else if (change['type'] == 'get_card') {
+                if (change['player'] == myHand) {
+                    data['hand2'].push(change['card']);
+                    if (take_cards)
+                        addCard2(change['card'], 'TABLE');
+                    else
+                        addCard2(change['card'], 'SET');
+                }
+                else {
+                    data.hand1++;
+                    if (take_cards)
+                        addCard1('TABLE');
+                    else
+                        addCard1('SET');
+                }
+            } else if (change['type'] == 'attack') {
+                if (myHand == change['player']) {
+                    card_deleted = data['hand2'].indexOf(change['card']);
+                    data['hand2'].splice(card_deleted, 1);
+                    delCard2(change['card']);
+                }
+                else {
+                    data['hand1']--;
+                    delCard1();
+                }
+                data['attack'].push(change['card']);
+                attack(change['card']);
+            } else if (change['type'] == 'defense') {
+                if (myHand == change['player']) {
+                    data['hand2'].splice(data['hand2'].indexOf(change['card']), 1);
+                    delCard2(change['card']);
+                }
+                else {
+                    data['hand1']--;
+                    delCard1();
+                }
+                data['defense'].push(change['card']);
+                defense(change['card']);
+            } else if (change['type'] == 'table_clear') {
+                data.attack = [];
+                data.defense = [];
+                $('#arena').empty();
+            }
+        }
 
-		function clearCards() { //handlers
-			$(".cards").each(function (index, card) {
-				$(card).unbind('click');
-			});
-		}
+        function clearCards() { //handlers
+            $(".card").each(function (index, card) {
+                $(card).unbind('click');
+            });
+        }
 
-		function readyAttack() { //ajax & handlers & visual
-			function onCardClick(eventObject) {
-				console.log('click ' + eventObject.data.card);
-				$.ajax({
-							 dataType: 'json',
-							 url: './api/attack?card=' + eventObject.data.card,
-							 success: ajaxSuccess
-						 });
-			}
+        function readyAttack() { //ajax & handlers & visual
+            function onCardClick(eventObject) {
+                console.log('click ' + eventObject.data.card);
+                $.ajax({
+                    dataType: 'json',
+                    url: './api/attack?card=' + eventObject.data.card,
+                    success: ajaxSuccess
+                });
+            }
 
-			data.hand2.forEach(function (card, index) {
-				var res = false;
-				var cards = data.attack.concat(data.defense);
-				var card_jQ = $('#hand2').find('.card').eq(index);
-				card_jQ.animate({top: '0', opacity: '0.7'}).removeClass('on');;
-				if (cards.length) {
-					var card_v = getCardValue(card);
-					for (var i = 0; i < cards.length; i++) {
-						if (card_v == getCardValue(cards[i])) {
-							res = true;
-							break;
-						}
-					}
-				} else {
-					res = true;
-				}
-				if (res)
-					card_jQ.animate({top: '-15', opacity: '1.0'}).click({card: index}, onCardClick).addClass('on');
-			});
+            data.hand2.forEach(function (card, index) {
+                var res = false;
+                var hand2 = $('#hand2');
+                var cards = data.attack.concat(data.defense);
+                var card_jQ;
+                if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
+                    card_jQ = hand2.find('.card').eq(index).removeClass('on');
+                else
+                    card_jQ = hand2.find('.card').eq(index + 1).removeClass('on');
 
-			var cancelCard = $("#cancel_card");
-			cancelCard.unbind('click');
-			if (data.attack.concat(data.defense).length) {
-				cancelCard.click({card: -1}, onCardClick);
-			}
-		}
+                if (cards.length) {
+                    var card_v = getCardValue(card);
+                    for (var i = 0; i < cards.length; i++) {
+                        if (card_v == getCardValue(cards[i])) {
+                            res = true;
+                            break;
+                        }
+                    }
+                } else {
+                    res = true;
+                }
+                if (res)
+                    card_jQ.click({card: index}, onCardClick).addClass('on');
+            });
 
-		function readyDefense() { //ajax & handlers & visual
-			function onCardClick(eventObject) {
-				console.log('click ' + eventObject.data.card);
-				$.ajax({
-							 dataType: 'json',
-							 url: './api/defense?card=' + eventObject.data.card,
-							 success: ajaxSuccess
-						 });
-			}
+            var cancelCard = $("#cancel_card");
+            cancelCard.unbind('click');
+            if (data.attack.concat(data.defense).length) {
+                cancelCard.click({card: -1}, onCardClick);
+            }
+        }
 
-			data.hand2.forEach(function (card, index) {
-				var card_jQ = $('#hand2').find('.card').eq(index);
-				card_jQ.animate({top: '0', opacity: '0.7'}).unbind('click').removeClass('on');
-				if (more(card, data.attack[data.attack.length - 1])) {
-					card_jQ.animate({top: '-15', opacity: '1.0'}).click({card: index}, onCardClick).addClass('on');
-				}
-			});
+        function readyDefense() { //ajax & handlers & visual
+            function onCardClick(eventObject) {
+                console.log('click ' + eventObject.data.card);
+                $.ajax({
+                    dataType: 'json',
+                    url: './api/defense?card=' + eventObject.data.card,
+                    success: ajaxSuccess
+                });
+            }
 
-			var cancelCard = $("#cancel_card");
-			cancelCard.unbind('click');
-			cancelCard.click({card: -1}, onCardClick);
-		}
+            data.hand2.forEach(function (card, index) {
+                var card_jQ = $('#hand2').find('.card').eq(index);
+                card_jQ.animate({opacity: '0.7'}).unbind('click').removeClass('on');
+                if (more(card, data.attack[data.attack.length - 1]))
+                    card_jQ.animate({opacity: '1.0'}).click({card: index}, onCardClick).addClass('on');
+            });
 
-		$(document).ready( //init
-				function () {
-					preCacheImages();
-					init();
-				}
-		)
-	</script>
+            var cancelCard = $("#cancel_card");
+            cancelCard.unbind('click');
+            cancelCard.click({card: -1}, onCardClick);
+        }
+
+        $(document).ready( //init
+                function () {
+                    preCacheImages();
+                    init();
+                }
+        )
+    </script>
 </head>
 <body>
 <div class="hidden">
-	<div class="pair"></div>
-	<div class="card">
-		<div class="card_border">
-			<img src="">
-		</div>
-	</div>
+    <div class="pair"></div>
+    <div class="card">
+        <div class="card_border">
+            <img src="">
+        </div>
+    </div>
 </div>
 <div id="left">
-	<button type="button" id="open_menu"></button>
-	<div id="menu">
-		1234
-	</div>
+    <button type="button" id="open_menu"></button>
+    <div id="menu">
+        1234
+    </div>
 </div>
 <div id="table">
-	<div id="hand1" class="hand"></div>
-	<div id="arena"></div>
-	<div id="hand2" class="hand"></div>
+    <div id="hand1" class="hand"></div>
+    <div id="arena"></div>
+    <div id="hand2" class="hand"></div>
 </div>
 <div id="right">
-	<div id="trump">
-		<div class="card">
-			<div class="card_border">
-				<img src="">
-			</div>
-		</div>
-	</div>
-	<div id="set">
-		<div class="card">
-			<div class="card_border">
-				<img src="./static_/svg/Blue_Back.svg">
-			</div>
-		</div>
-		<div class="card">
-			<div class="card_border">
-				<img src="./static_/svg/Blue_Back.svg">
-			</div>
-		</div>
-		<div class="card">
-			<div class="card_border">
-				<img src="./static_/svg/Blue_Back.svg">
-			</div>
-		</div>
-		<div class="set_patch"></div>
-	</div>
-	<div id="cancel_card">
-		<div class="card">
-			<div class="card_border">
-				<img src="./static_/svg/cancel.svg">
-			</div>
-		</div>
-	</div>
+    <div id="trump">
+        <div class="card">
+            <div class="card_border">
+                <img src="">
+            </div>
+        </div>
+    </div>
+    <div id="set">
+        <div class="card">
+            <div class="card_border">
+                <img src="./static_/svg/Blue_Back.svg">
+            </div>
+        </div>
+        <div class="card">
+            <div class="card_border">
+                <img src="./static_/svg/Blue_Back.svg">
+            </div>
+        </div>
+        <div class="card">
+            <div class="card_border">
+                <img src="./static_/svg/Blue_Back.svg">
+            </div>
+        </div>
+        <div class="set_patch"></div>
+    </div>
+    <div id="cancel_card">
+        <div class="card">
+            <div class="card_border">
+                <img src="./static_/svg/cancel.svg">
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>

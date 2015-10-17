@@ -1,4 +1,4 @@
-html{
+html {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -57,7 +57,7 @@ body {
 }
 
 .hand > .card {
-    transition: 0.5s ease;
+    transition: 0.5s ease-out;
     display: inline-block;
     position: relative;
     width: calc(0.4 * 0.2967 * 300px);
@@ -65,9 +65,27 @@ body {
     padding: 0;
 }
 
+#hand2 > .card.on {
+    transform: translateY(-15px);
+}
+
+#hand2 > .card:not(.on) {
+    transform: translateY(0);
+}
+
+#hand2 > .card.on > .card_border {
+    opacity: 1;
+    transform: translateY(-15px);
+}
+
+#hand2 > .card:not(.on) > .card_border {
+    opacity: 0.7;
+    transform: translateY(0);
+}
+
 #hand2 > .card.on:hover {
     width: calc(0.7 * 0.2967 * 300px);
-    transform: translateY(-20px);
+    transform: translateY(-30px);
 }
 
 #arena {
@@ -132,8 +150,8 @@ body {
     align-items: flex-end;
 }
 
-#trump > .card{
-    transform: rotate(90deg) translate(0,50%);
+#trump > .card {
+    transform: rotate(90deg) translate(0, 50%);
     display: inline-block;
     position: relative;
     width: calc(0.2967 * 300px);
@@ -164,6 +182,6 @@ body {
     border: none;
 }
 
-#menu{
+#menu {
     display: none;
 }
