@@ -73,14 +73,12 @@ body {
     transform: translateY(0);
 }
 
-#hand2 > .card.on > .card_border {
+#hand2 > .card.on img {
     opacity: 1;
-    transform: translateY(-15px);
 }
 
-#hand2 > .card:not(.on) > .card_border {
+#hand2 > .card:not(.on) img {
     opacity: 0.7;
-    transform: translateY(0);
 }
 
 #hand2 > .card.on:hover {

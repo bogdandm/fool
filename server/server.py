@@ -91,7 +91,7 @@ class Server:
 			return response
 
 	def run(self):
-		self.app.run(host='192.168.0.111', debug=True, port=80)
+		self.app.run(host='192.168.0.128', debug=True, port=80)
 
 
 class ServerCache:

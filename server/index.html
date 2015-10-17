@@ -5,6 +5,7 @@
     <title></title>
     <link href="./static_/styles.css" rel="stylesheet">
     <script src="./static_/jquery-2.1.4.min.js"></script>
+    <script src="./static_/jquery.transit.min.js"></script>
     <script src="./static_/card_manipulations.js"></script>
     <script>
         var myHand = 0;
@@ -21,7 +22,7 @@
         var take_cards = false;
         var card_deleted = 100;
 
-        function preCacheImages() {
+        function preCacheImages() { //data
             var constPath = "./static_/svg/";
             var suits = ['H', 'C', 'S', 'D'];
             for (var j = 0; j < 4; j++)
@@ -62,8 +63,8 @@
             }
             clearCards();
             take_cards = false;
-            /*if (data.turn == myHand) setTimeout(readyAttack, 600);
-             else setTimeout(readyDefense, 600);*/
+            //if (data.turn == myHand) setTimeout(readyAttack, 1000);
+            //else setTimeout(readyDefense, 1000);
             if (data.turn == myHand) readyAttack();
             else readyDefense();
         }
@@ -111,7 +112,8 @@
                 attack(change['card']);
             } else if (change['type'] == 'defense') {
                 if (myHand == change['player']) {
-                    data['hand2'].splice(data['hand2'].indexOf(change['card']), 1);
+                    card_deleted = data['hand2'].indexOf(change['card']);
+                    data['hand2'].splice(card_deleted, 1);
                     delCard2(change['card']);
                 }
                 else {
@@ -149,9 +151,10 @@
                 var cards = data.attack.concat(data.defense);
                 var card_jQ;
                 if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
-                    card_jQ = hand2.find('.card').eq(index).removeClass('on');
+                    card_jQ = hand2.find('.card').eq(index);
                 else
-                    card_jQ = hand2.find('.card').eq(index + 1).removeClass('on');
+                    card_jQ = hand2.find('.card').eq(index + 1);
+                card_jQ.removeClass('on').unbind('click');
 
                 if (cards.length) {
                     var card_v = getCardValue(card);
@@ -186,10 +189,15 @@
             }
 
             data.hand2.forEach(function (card, index) {
-                var card_jQ = $('#hand2').find('.card').eq(index);
-                card_jQ.animate({opacity: '0.7'}).unbind('click').removeClass('on');
+                var hand2 = $('#hand2');
+                var card_jQ;
+                if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
+                    card_jQ = hand2.find('.card').eq(index).removeClass('on');
+                else
+                    card_jQ = hand2.find('.card').eq(index + 1).removeClass('on');
+                card_jQ.removeClass('on').unbind('click');
                 if (more(card, data.attack[data.attack.length - 1]))
-                    card_jQ.animate({opacity: '1.0'}).click({card: index}, onCardClick).addClass('on');
+                    card_jQ.click({card: index}, onCardClick).addClass('on');
             });
 
             var cancelCard = $("#cancel_card");

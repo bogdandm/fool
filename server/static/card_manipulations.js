@@ -42,15 +42,15 @@ function addCard1(mode) {
     card.find('img').attr({src: "./static_/svg/Blue_Back.svg"});
     hand.append(card);
     if (mode == 'SET')
-        card.attr({value: 0}).css({
-            left: body.width() * 1.5 + 'px',
-            top: body.height() / 2 + 'px'
-        });
+        card.attr({value: 0}).css({left: body.width() * 1.1, top: body.height() / 2});
     else if (mode == 'TABLE')
-        card.attr({value: 0}).css({
-            top: body.height() / 4 + 'px'
-        });
-    card.animate({left: '0', top: '0', opacity: 1}, {duration: 4000, easing: 'swing'});
+        card.attr({value: 0}).css({top: body.height() / 4}, 0);
+    card.animate({
+        left: 0, top: 0,
+        complete: function () {
+            $(this).css({left: '', top: ''});
+        }
+    }, ((mode == 'SET') ? 1000 : 100));
 }
 
 function addCard2(str, mode) {
@@ -61,29 +61,25 @@ function addCard2(str, mode) {
     card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
     hand.append(card);
     if (mode == 'SET')
-        card.attr({value: str}).css({
-            left: body.width() * 1.5 + 'px',
-            top: -body.height() / 2 + 'px'
-        });
+        card.attr({value: str}).css({left: body.width() * 1.1, top: -body.height() / 2});
     else if (mode == 'TABLE')
-        card.attr({value: str}).css({
-            top: -body.height() / 4 + 'px'
-        });
-    card.animate({left: '0', top: '0', opacity: 1}, {
-        duration: 4000, easing: 'swing',
+        card.attr({value: str}).css({top: -body.height() / 4});
+    card.animate({
+        left: 0, top: 0,
         complete: function () {
-            $(this).css({left: '', top: '', opacity: ''});
+            $(this).css({left: '', top: ''});
         }
-    });
+    }, ((mode == 'SET') ? 1000 : 100));
 }
 
 function setTrump(str) {
     var card = $('#trump').find('.card');
-    if (str != 'None')
+    if (str != 'None') {
         card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+        data['trump_suit'] = getCardSuit(str);
+    }
     else
         card.hide();
-    data['trump_suit'] = new RegExp('[A-Z]').exec(str)[0]
 }
 
 function decrSet(n) {
