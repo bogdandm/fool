@@ -8,8 +8,8 @@ for i in range(10000):
 	seed = i * int(time.time())
 	# print(seed)
 
-	game = Game(seed=seed)
-	ai0 = AI(game, 0, './engine/settings/1.xml')
+	game = Game(save_changes=False, log_on=False, seed=seed)
+	ai0 = AI(game, 0, './engine/settings/end_game_on.xml')
 	ai1 = AI(game, 1)
 	while game.can_play() is None:
 		if game.turn:

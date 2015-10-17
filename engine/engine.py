@@ -39,8 +39,9 @@ class Change:
 		}
 
 	def filter(self, player):
-		if self.type=='get_card' and self.player!=player:
-			self.card=None
+		if self.type == 'get_card' and self.player != player:
+			self.card = None
+
 
 class Card:
 	"""CLUBS = 1  # ♣
@@ -112,7 +113,7 @@ class Set:  # Колода
 
 
 class Game:
-	def __init__(self, save_changes=True, log_on=False, seed: int = int(time.time() * 256 * 1000), game=None):
+	def __init__(self, save_changes=True, log_on=False, seed: int=int(time.time() * 256 * 1000), game=None):
 		self.log_on = log_on
 		self.save_changes = save_changes
 		if game is not None:
@@ -142,7 +143,7 @@ class Game:
 				self.log = None
 
 			self.set = Set(seed=seed)
-			self.turn = 0#random.randint(0, 1)
+			self.turn = 0  # random.randint(0, 1)
 			if self.save_changes:
 				self.changes.append(Change('player_switch', int(self.turn), None, None))
 			self.hand = []  # user, AI
@@ -243,7 +244,7 @@ class Game:
 			del self.hand[self.turn][card_number]
 		return can_attack
 
-	def defense(self, card_number: int, card_number_table: int = -1, ai=None) -> bool:  # Меняет состояние игры
+	def defense(self, card_number: int, card_number_table: int=-1, ai=None) -> bool:  # Меняет состояние игры
 		# print('Take' if card_number == -1 else self.hand[not self.turn][card_number])
 		if card_number == -1:
 			if self.table and self.table[-1][1] is None:
@@ -287,6 +288,11 @@ class Game:
 			if ai is not None:
 				for a in ai:
 					a.update_memory('TAKE', card=-1)
+			if self.save_changes:
+				self.changes.append(Change('take_cards', int(not self.turn), None, None))
+			if self.log_on:
+				self.log.write('p%i: take_cards()\n' % (not self.turn))
+				self.log.flush()
 			for tmp in self.table:
 				for c in tmp:
 					if c is not None:
@@ -341,18 +347,10 @@ class Game:
 
 		if not_take:
 			self.turn = not self.turn
-			# print('Player switch...')
 			if self.save_changes:
 				self.changes.append(Change('player_switch', int(self.turn), None, None))
 			if self.log_on:
 				self.log.write('p%i: switch()\n' % self.turn)
-				self.log.flush()
-		else:
-			# print('Take cards...')
-			if self.save_changes:
-				self.changes.append(Change('take_cards', int(not self.turn), None, None))
-			if self.log_on:
-				self.log.write('p%i: take_cards()\n' % (not self.turn))
 				self.log.flush()
 
 	def can_continue_turn(self) -> bool:

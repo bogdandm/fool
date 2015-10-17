@@ -6,7 +6,7 @@ from engine.engine import Game, Card
 
 # Turn(self.hand_number, type='A'|'D', game=self.game, ai=self)
 class Turn:
-	def __init__(self, player, turn_type, card=None, prev=None, game: Game = None, ai=None, hashes=None):
+	def __init__(self, player, turn_type, card=None, prev=None, game: Game=None, ai=None, hashes=None):
 		self.ai = prev.ai if prev is not None else ai
 
 		self.hash = self.ai.settings['all']['hashes_in_tree']
@@ -20,7 +20,7 @@ class Turn:
 		self.prev = prev
 		self.next = []
 
-		self.game = Game(game=(prev.game if (prev is not None) else game))
+		self.game = Game(save_changes=False, game=(prev.game if (prev is not None) else game))
 		self.card_obj = self.game.hand[self.player][self.card] if (card is not None and card != -1) else '___'
 		self.game.log_on = False
 

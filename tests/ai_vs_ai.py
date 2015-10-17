@@ -1,10 +1,12 @@
-from engine.ai import AI, Game
+from engine.ai import AI
+from engine.engine import Game
+import time
 
-seed = 115366111360#int(time.time())
+seed = int(time.time())
 print(seed)
 
-game = Game(True, seed=seed)
-ai0 = AI(game, 0, './settings/end_game_on.xml')
+game = Game(save_changes=False, log_on=True, seed=seed)
+ai0 = AI(game, 0, './engine/settings/end_game_on.xml')
 ai1 = AI(game, 1)
 while game.can_play() is None:
 	if game.turn:
