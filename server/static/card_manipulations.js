@@ -6,7 +6,7 @@ function attack(str) {
     var arena = $('#arena');
     var pair = $('.hidden > .pair').clone();
     var card = $('.hidden > .card').clone();
-    card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+    card.find('img').attr({src: "/static_/svg/" + str + ".svg"});
     card.attr({value: str});
     pair.append(card);
     arena.append(pair);
@@ -15,7 +15,7 @@ function attack(str) {
 function defense(str) {
     var pair = $('#arena').find('.pair').last();
     var card = $('.hidden > .card').clone();
-    card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+    card.find('img').attr({src: "/static_/svg/" + str + ".svg"});
     card.attr({value: str});
     pair.append(card);
 }
@@ -39,7 +39,7 @@ function addCard1(mode) {
     var body = $('body');
     var hand = $('#hand1');
     var card = $('.hidden > .card').clone();
-    card.find('img').attr({src: "./static_/svg/Blue_Back.svg"});
+    card.find('img').attr({src: "/static_/svg/Blue_Back.svg"});
     hand.append(card);
     if (mode == 'SET')
         card.attr({value: 0}).css({left: body.width() * 1.1, top: body.height() / 2});
@@ -58,7 +58,7 @@ function addCard2(str, mode) {
     var body = $('body');
     var hand = $('#hand2');
     var card = $('.hidden > .card').clone();
-    card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+    card.find('img').attr({src: "/static_/svg/" + str + ".svg"});
     hand.append(card);
     if (mode == 'SET')
         card.attr({value: str}).css({left: body.width() * 1.1, top: -body.height() / 2});
@@ -75,7 +75,7 @@ function addCard2(str, mode) {
 function setTrump(str) {
     var card = $('#trump').find('.card');
     if (str != 'None') {
-        card.find('img').attr({src: "./static_/svg/" + str + ".svg"});
+        card.find('img').attr({src: "/static_/svg/" + str + ".svg"});
         data['trump_suit'] = getCardSuit(str);
     }
     else

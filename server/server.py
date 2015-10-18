@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-import time
+# import time
 from re import search
 
-from flask import Flask, make_response, request, jsonify
+from flask import Flask, make_response, request, jsonify, redirect
 
 from engine.engine import Game
 from engine.ai import AI
 
 
 class Server:
-	serverFolder = '/server'
+	serverFolder = './server'
 	staticFolder = '/static'
 	playerHand = 0
 
@@ -19,15 +19,9 @@ class Server:
 		self.app = Flask(__name__)
 		self.cache = ServerCache(self.staticFolder, self.serverFolder)
 
-		@self.app.route('/')
-		def send_root():
-			response = make_response(self.cache.get('.' + self.serverFolder + '/index.html'))
-			response.headers["Content-type"] = "text/html"
-			return response
-
-		@self.app.route('/static_/<path:path>')
+		@self.app.route('/static_/svg/<path:path>')
 		def send_static_file(path):
-			response = make_response(self.cache.get('.' + self.serverFolder + self.staticFolder + '/' + path))
+			response = make_response(self.cache.get(self.serverFolder + self.staticFolder + '/svg/' + path))
 			if search('^.*\.html$', path):
 				response.headers["Content-type"] = "text/html"
 			elif search('^.*\.css$', path):
@@ -38,17 +32,18 @@ class Server:
 				response.headers["Content-type"] = "image/svg+xml"
 			return response
 
+		@self.app.route('/')
+		def send_root():
+			return redirect('/static/index.html')
+
 		@self.app.route('/api')
 		def send_api_methods():
-			response = make_response(
-				self.cache.get('.' + self.serverFolder + self.staticFolder + '/api_methods.html'))
-			response.headers["Content-type"] = "text/html"
-			return response
+			return redirect('/static/api_methods.html')
 
 		@self.app.route('/api/<path:method>')
 		def send_api_response(method):
 			if method == 'init':
-				seed = 369942366670219#int(time.time() * 256 * 1000)
+				seed = 369942366670219  # int(time.time() * 256 * 1000)
 				print(seed)
 				self.game = Game(log_on=True, seed=seed)
 				self.ai = AI(self.game, not self.playerHand)
@@ -90,8 +85,8 @@ class Server:
 			response.headers["Content-type"] = "text/plain"
 			return response
 
-	def run(self):
-		self.app.run(host='192.168.0.128', debug=True, port=80)
+	def run(self, ip):
+		self.app.run(host=ip, debug=True, port=80)
 
 
 class ServerCache:
@@ -99,7 +94,7 @@ class ServerCache:
 		self.data = {}
 		for s in ['D', 'H', 'S', 'C']:
 			for v in range(2, 15):
-				path = '.' + server_folder + static_folder + '/svg/' + str(v) + s + '.svg'
+				path = server_folder + static_folder + '/svg/' + str(v) + s + '.svg'
 				self.data[path] = open(path, encoding='utf-8').read()
 
 	def get(self, path):
