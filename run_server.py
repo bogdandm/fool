@@ -5,7 +5,8 @@ from gevent.wsgi import WSGIServer
 from server.server import Server
 
 if __name__ == "__main__":
-	app = Server()
+	flask_server = Server()
 	ip = socket.gethostbyname_ex(socket.gethostname())[2][0]
-	server = WSGIServer((ip, 80), app)
+	print(ip)
+	server = WSGIServer((ip, 80), flask_server.app)
 	server.serve_forever()

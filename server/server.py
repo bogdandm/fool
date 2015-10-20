@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from re import search
 
 import gevent
-
 from gevent.queue import Queue
 
 from flask import Flask, make_response, request, jsonify, redirect, Response
@@ -25,7 +24,6 @@ class Server:
 	MODE_PVP = 1
 
 	def __init__(self):
-
 		self.game = None
 		self.ai = None
 		self.app = Flask(__name__)
@@ -52,7 +50,7 @@ class Server:
 
 		@self.app.route('/api')
 		def send_api_methods():
-			return redirect('/static/api_methods.html') #TODO: rewrite documentation
+			return redirect('/static/api_methods.html')  # TODO: rewrite documentation
 
 		@self.app.route("/api/subscribe")
 		def subscribe():  # Create queue for updates from server
@@ -85,18 +83,24 @@ class Server:
 				session['cur_room'] = room
 				session['player_n'] = self.PLAYER_HAND
 			elif mode == self.MODE_PVP:
-				pass #TODO
+				pass  # TODO
 
 		@self.app.route("/api/leave")
 		def leave_room():
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
-			id = room.id
+			room_id = room.id
 			if room.type == self.MODE_PVE:
-				del self.rooms[id]
+				del self.rooms[room_id]
 				del session['cur_room']
 			elif room.type == self.MODE_PVP:
-				pass #TODO
+				pass  # TODO
+
+		@self.app.route("/api/init")
+		def init():
+			session = self.sessions[request.cookies['sessID']]
+			room = session['cur_room']
+			# TODO
 
 		@self.app.route("/api/attack")
 		def attack():
@@ -190,11 +194,11 @@ class Room:
 		self.game = Game()
 		self.players = [player1, player2]
 		self.queues = []
-		id = random.randint(0, 2 ** 100)
-		while id in self.ids:
-			id = random.randint(0, 2 ** 100)
-		self.id = id
-		self.ids.add(id)
+		id_tmp = random.randint(0, 2 ** 100)
+		while id_tmp in self.ids:
+			id_tmp = random.randint(0, 2 ** 100)
+		self.id = id_tmp
+		self.ids.add(id_tmp)
 		self.type = None
 
 	def __hash__(self):
@@ -203,7 +207,7 @@ class Room:
 	def send_changes(self):
 		def notify():
 			for player in [0, 1]:
-				if (player < len(self.queues)):
+				if player < len(self.queues):
 					changes = self.game.changes[:]
 					for change in changes:
 						change.filter(player)
@@ -238,10 +242,10 @@ class RoomPvP(Room):
 		pass
 
 	def add_player(self, player):
-		if (self.players[0] is None):
+		if self.players[0] is None:
 			self.players[0] = player
 			self.queues[0] = player.get_data('queue')
-		elif (self.players[1] is None):
+		elif self.players[1] is None:
 			self.players[1] = player
 			self.queues[1] = player.get_data('queue')
 		else:
@@ -255,15 +259,39 @@ class RoomPvP(Room):
 class RoomPvE(Room):  # User - 0, AI - 1
 	# don't have add_player method, because delete when player leave PvE room
 	def __init__(self, player: Session=None):
-		super().__init__(player, AI(self.game, 1))
+		super().__init__(player, AI(self.game, not Server.PLAYER_HAND))
 		self.queues = [player.get_data('queue')]
 		self.type = Server.MODE_PVE
+		if self.game.turn != Server.PLAYER_HAND:
+			x = self.players[1].attack()
+			self.game.attack(x, ai=[self.players[1]])
 
 	def attack(self, player, card):
-		pass
+		ai = self.players[not Server.PLAYER_HAND]
+		ai.end_game_ai('U', card)
+		self.game.attack(card, ai=[ai])
+		if card == -1:
+			self.game.switch_turn(ai=[ai])
+			x = ai.attack()
+			self.game.attack(x, ai=[ai])
+		else:
+			x = ai.defense(self.game.table[-1][0])
+			self.game.defense(x, ai=[ai])
+			if x == -1:
+				self.game.switch_turn(ai=[ai])
+		self.send_changes()
 
 	def defense(self, player, card):
-		pass
+		ai = self.players[not Server.PLAYER_HAND]
+		ai.end_game_ai('U', card)
+		self.game.defense(card, ai=[ai])
+		if card == -1:
+			self.game.switch_turn(ai=[ai])
+		x = ai.attack()
+		self.game.attack(x, ai=[ai])
+		if x == -1:
+			self.game.switch_turn(ai=[ai])
+		self.send_changes()
 
 
 class ServerSentEvent(object):
@@ -293,6 +321,6 @@ class ServerCache:
 				self.data[path] = open(path, encoding='utf-8').read()
 
 	def get(self, path):
-		if (path not in self.data):
+		if path not in self.data:
 			self.data[path] = open(path, encoding='utf-8').read()
 		return self.data[path]
