@@ -11,6 +11,7 @@ from engine.engine import Game
 from engine.ai import AI
 
 
+
 class Session:
 	def __init__(self, user):
 		self.user = user
