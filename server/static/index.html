@@ -52,7 +52,7 @@
         function init() { //ajax
             $.ajax({
                 dataType: 'json',
-                url: '/api/init',
+                url: '/api/training/init',
                 success: ajaxSuccess
             });
         }
@@ -140,7 +140,7 @@
                 console.log('click ' + eventObject.data.card);
                 $.ajax({
                     dataType: 'json',
-                    url: '/api/attack?card=' + eventObject.data.card,
+                    url: '/api/training/attack?card=' + eventObject.data.card,
                     success: ajaxSuccess
                 });
             }
@@ -183,7 +183,7 @@
                 console.log('click ' + eventObject.data.card);
                 $.ajax({
                     dataType: 'json',
-                    url: '/api/defense?card=' + eventObject.data.card,
+                    url: '/api/training/defense?card=' + eventObject.data.card,
                     success: ajaxSuccess
                 });
             }
