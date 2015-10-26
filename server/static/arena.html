@@ -3,10 +3,10 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title></title>
-    <link href="./styles.css" rel="stylesheet">
-    <script src="./jquery-2.1.4.min.js"></script>
-    <script src="./jquery.transit.min.js"></script>
-    <script src="./card_manipulations.js"></script>
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="js/jquery-2.1.4.min.js"></script>
+    <script src="js/jquery.transit.min.js"></script>
+    <script src="js/card_manipulations.js"></script>
     <script>
         var myHand = 0;
         var data = {
@@ -150,10 +150,10 @@
                 var hand2 = $('#hand2');
                 var cards = data.attack.concat(data.defense);
                 var card_jQ;
-                if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
-                    card_jQ = hand2.find('.card').eq(index);
+                if (data.hand2.length == hand2.find('.card').length || arena < card_deleted)
+                    card_jQ = hand2.find('.card').eq(arena);
                 else
-                    card_jQ = hand2.find('.card').eq(index + 1);
+                    card_jQ = hand2.find('.card').eq(arena + 1);
                 card_jQ.removeClass('on').unbind('click');
 
                 if (cards.length) {
@@ -168,7 +168,7 @@
                     res = true;
                 }
                 if (res)
-                    card_jQ.click({card: index}, onCardClick).addClass('on');
+                    card_jQ.click({card: arena}, onCardClick).addClass('on');
             });
 
             var cancelCard = $("#cancel_card");
@@ -191,13 +191,13 @@
             data.hand2.forEach(function (card, index) {
                 var hand2 = $('#hand2');
                 var card_jQ;
-                if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
-                    card_jQ = hand2.find('.card').eq(index).removeClass('on');
+                if (data.hand2.length == hand2.find('.card').length || arena < card_deleted)
+                    card_jQ = hand2.find('.card').eq(arena).removeClass('on');
                 else
-                    card_jQ = hand2.find('.card').eq(index + 1).removeClass('on');
+                    card_jQ = hand2.find('.card').eq(arena + 1).removeClass('on');
                 card_jQ.removeClass('on').unbind('click');
                 if (more(card, data.attack[data.attack.length - 1]))
-                    card_jQ.click({card: index}, onCardClick).addClass('on');
+                    card_jQ.click({card: arena}, onCardClick).addClass('on');
             });
 
             var cancelCard = $("#cancel_card");
