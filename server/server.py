@@ -2,38 +2,31 @@
 import time
 import random
 import hashlib
-from datetime import datetime, timedelta
 from re import search
 
 import gevent
 from gevent.queue import Queue
+from flask import Flask, Response, make_response, request, redirect
 
-from flask import Flask, make_response, request, jsonify, redirect, Response
-
-from engine.engine import Game
-from engine.ai import AI
+import server.const as const
+from server.server_classes import RoomPvE, ServerCache
+from server.database import DB
 
 
 # TODO: проверка сессий
 # TODO: write session documentation
 class Server:
-	SERVER_FOLDER = './server'
-	STATIC_FOLDER = '/static'
-	PLAYER_HAND = 0  # use in PvE
-	MODE_PVE = 0
-	MODE_PVP = 1
-
 	def __init__(self):
 		self.game = None
 		self.ai = None
 		self.app = Flask(__name__)
-		self.cache = ServerCache(self.STATIC_FOLDER, self.SERVER_FOLDER)
+		self.cache = ServerCache(const.STATIC_FOLDER, const.SERVER_FOLDER)
 		self.sessions = dict()
 		self.rooms = dict()
 
 		@self.app.route('/static_/svg/<path:path>')
 		def send_static_file(path):
-			response = make_response(self.cache.get(self.SERVER_FOLDER + self.STATIC_FOLDER + '/svg/' + path))
+			response = make_response(self.cache.get(const.SERVER_FOLDER + const.STATIC_FOLDER + '/svg/' + path))
 			if search('^.*\.html$', path):
 				response.headers["Content-type"] = "text/html"
 			elif search('^.*\.css$', path):
@@ -46,7 +39,7 @@ class Server:
 
 		@self.app.route('/')
 		def send_root():
-			return redirect('/static/index.html')
+			return redirect('/static/arena.html')
 
 		@self.app.route('/api')
 		def send_api_methods():
@@ -55,11 +48,12 @@ class Server:
 		@self.app.route("/api/subscribe")
 		def subscribe():  # Create queue for updates from server
 			def gen():
-				q = Queue()
+				q = MyQueue()
 				session = self.sessions[request.cookies['sessID']]
 				session['msg_queue'] = q
 				try:
 					while True:  # MainLoop for SSE, use threads
+						if q.stopped: break
 						result = q.get()
 						ev = ServerSentEvent(str(result))
 						yield ev.encode()
@@ -71,18 +65,25 @@ class Server:
 		@self.app.route("/api/unsubscribe")
 		def unsubscribe():
 			session = self.sessions[request.cookies['sessID']]
+			session['msg_queue'].stop()
+
+			def notify():
+				session['msg_queue'].put('stop')
+
+			gevent.spawn(notify)
+
 			del session['msg_queue']
 
 		@self.app.route("/api/join")
 		def join_room():
 			mode = request.args['mode']
 			session = self.sessions[request.cookies['sessID']]
-			if mode == self.MODE_PVE:
+			if mode == const.MODE_PVE:
 				room = RoomPvE(session)
 				self.rooms[room.id](room)
 				session['cur_room'] = room
-				session['player_n'] = self.PLAYER_HAND
-			elif mode == self.MODE_PVP:
+				session['player_n'] = const.PLAYER_HAND
+			elif mode == const.MODE_PVP:
 				pass  # TODO
 
 		@self.app.route("/api/leave")
@@ -90,17 +91,17 @@ class Server:
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
 			room_id = room.id
-			if room.type == self.MODE_PVE:
+			if room.type == const.MODE_PVE:
 				del self.rooms[room_id]
 				del session['cur_room']
-			elif room.type == self.MODE_PVP:
+			elif room.type == const.MODE_PVP:
 				pass  # TODO
 
 		@self.app.route("/api/init")
 		def init():
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
-			# TODO
+			pass # TODO
 
 		@self.app.route("/api/attack")
 		def attack():
@@ -115,6 +116,27 @@ class Server:
 			room = session['cur_room']
 			card = request.args['mode']
 			room.defense(session['player_n'], card)
+
+		@self.app.route("/api/check_user", methods=['POST'])
+		def check_user():
+			password = request.form.get('pass')
+			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
+
+			res = DB.check_user(request.form.get('user_name'), sha256)
+			response = make_response(res.__str__())
+			response.headers["Content-type"] = "text/plain"
+			return response
+
+		@self.app.route("/api/add_user", methods=['POST'])
+		def add_user():
+			password = request.form.get('pass')
+			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
+
+			res = DB.add_user(request.form.get('user_name'), sha256)
+			if res == 'OK':
+				redirect('menu.html')
+			else:
+				redirect('')  # TODO
 
 		# TODO: Переделать под новую архитектуру
 		"""@self.app.route('/api/<path:method>')
@@ -167,133 +189,6 @@ class Server:
 		self.app.run(host=ip, debug=True, port=80)
 
 
-class Session:
-	def __init__(self, user):
-		self.user = user
-		self.id = hashlib.sha256(bytes(user + int(time.time() * 256 * 1000) + random.randint(0, 2 ** 20).__str__(),
-									   encoding='utf-8')).hexdigest()
-		self.data = dict()
-
-	def add_cookie_to_resp(self, resp: Response):
-		resp.set_cookie('sessID', self.id, expires=datetime.now() + timedelta(days=30))
-
-	def get_data(self, key):
-		return self.data.copy()[key]
-
-	def set_data(self, key, value):
-		self.data[key] = value
-
-	def get_id(self):
-		return self.id
-
-
-class Room:
-	ids = set()
-
-	def __init__(self, player1=None, player2=None):
-		self.game = Game()
-		self.players = [player1, player2]
-		self.queues = []
-		id_tmp = random.randint(0, 2 ** 100)
-		while id_tmp in self.ids:
-			id_tmp = random.randint(0, 2 ** 100)
-		self.id = id_tmp
-		self.ids.add(id_tmp)
-		self.type = None
-
-	def __hash__(self):
-		return self.id
-
-	def send_changes(self):
-		def notify():
-			for player in [0, 1]:
-				if player < len(self.queues):
-					changes = self.game.changes[:]
-					for change in changes:
-						change.filter(player)
-					json = {'data': [ch.to_dict() for ch in changes]}
-					self.game.changes = []
-					text = jsonify(json)
-					self.queues[:][player].put(text)
-			self.game.changes = []
-
-		gevent.spawn(notify)
-
-	def attack(self, player, card):
-		pass
-
-	def defense(self, player, card):
-		pass
-
-	def is_ready(self):
-		return self.players[0] is not None and self.players[1] is not None
-
-
-class RoomPvP(Room):
-	def __init__(self, player1: Session=None, player2: Session=None):
-		super().__init__(player1, player2)
-		self.queues = [player1.get_data('queue'), player2.get_data('queue')]
-		self.type = Server.MODE_PVP
-
-	def attack(self, player, card):
-		pass
-
-	def defense(self, player, card):
-		pass
-
-	def add_player(self, player):
-		if self.players[0] is None:
-			self.players[0] = player
-			self.queues[0] = player.get_data('queue')
-		elif self.players[1] is None:
-			self.players[1] = player
-			self.queues[1] = player.get_data('queue')
-		else:
-			return False
-		return True
-
-	def remove_player(self, player_n):
-		self.players[player_n] = None
-
-
-class RoomPvE(Room):  # User - 0, AI - 1
-	# don't have add_player method, because delete when player leave PvE room
-	def __init__(self, player: Session=None):
-		super().__init__(player, AI(self.game, not Server.PLAYER_HAND))
-		self.queues = [player.get_data('queue')]
-		self.type = Server.MODE_PVE
-		if self.game.turn != Server.PLAYER_HAND:
-			x = self.players[1].attack()
-			self.game.attack(x, ai=[self.players[1]])
-
-	def attack(self, player, card):
-		ai = self.players[not Server.PLAYER_HAND]
-		ai.end_game_ai('U', card)
-		self.game.attack(card, ai=[ai])
-		if card == -1:
-			self.game.switch_turn(ai=[ai])
-			x = ai.attack()
-			self.game.attack(x, ai=[ai])
-		else:
-			x = ai.defense(self.game.table[-1][0])
-			self.game.defense(x, ai=[ai])
-			if x == -1:
-				self.game.switch_turn(ai=[ai])
-		self.send_changes()
-
-	def defense(self, player, card):
-		ai = self.players[not Server.PLAYER_HAND]
-		ai.end_game_ai('U', card)
-		self.game.defense(card, ai=[ai])
-		if card == -1:
-			self.game.switch_turn(ai=[ai])
-		x = ai.attack()
-		self.game.attack(x, ai=[ai])
-		if x == -1:
-			self.game.switch_turn(ai=[ai])
-		self.send_changes()
-
-
 class ServerSentEvent(object):
 	def __init__(self, data):
 		self.data = data
@@ -312,15 +207,10 @@ class ServerSentEvent(object):
 		return "%s\n\n" % "\n".join(lines)
 
 
-class ServerCache:
-	def __init__(self, static_folder, server_folder):
-		self.data = {}
-		for s in ['D', 'H', 'S', 'C']:
-			for v in range(2, 15):
-				path = server_folder + static_folder + '/svg/' + str(v) + s + '.svg'
-				self.data[path] = open(path, encoding='utf-8').read()
+class MyQueue(Queue):
+	def __init__(self, maxsize=None, items=None):
+		super().__init__(maxsize, items)
+		self.stopped = False
 
-	def get(self, path):
-		if path not in self.data:
-			self.data[path] = open(path, encoding='utf-8').read()
-		return self.data[path]
+	def stop(self):
+		self.stopped = True
