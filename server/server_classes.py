@@ -11,12 +11,16 @@ from engine.engine import Game
 from engine.ai import AI
 
 
-
 class Session:
-	def __init__(self, user):
+	def __init__(self, user, id=None):
 		self.user = user
-		self.id = hashlib.sha256(bytes(user + int(time.time() * 256 * 1000) + random.randint(0, 2 ** 20).__str__(),
-									   encoding='utf-8')).hexdigest()
+		if id is None:
+			self.id = hashlib.sha256(bytes(user +
+										   int(time.time() * 256 * 1000).__str__() +
+										   random.randint(0, 2 ** 20).__str__(),
+										   encoding='utf-8')).hexdigest()
+		else:
+			self.id = id
 		self.data = dict()
 
 	def add_cookie_to_resp(self, resp: Response):
@@ -28,8 +32,8 @@ class Session:
 	def set_data(self, key, value):
 		self.data[key] = value
 
-	def get_id(self):
-		return self.id
+	def get_id(self) -> str:
+		return self.id[:]
 
 
 class Room:

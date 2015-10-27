@@ -1,0 +1,59 @@
+/*==========================*/
+button, button:focus {
+    color: #212121;
+    background-color: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+button:hover {
+    background-color: rgba(153, 153, 153, 0.20);
+}
+
+button:active {
+    background-color: rgba(153, 153, 153, 0.40);
+}
+
+/*==========================*/
+button.raised, button.raised:focus {
+    background-color: #ececec;
+    box-shadow: 0 3px 0 0 #b1b1b1;
+}
+
+button.raised:hover {
+    box-shadow: 0 5px 0 0 #9df063;
+}
+
+button.raised:active {
+    background-color: #9df063;
+}
+
+/*==========================*/
+button.raised_color, button.raised_color:focus {
+    background-color: #ececec;
+    box-shadow: 0 3px 0 0 #adde85;
+}
+
+button.raised_color:hover {
+    box-shadow: 0 5px 0 0 #9df063;
+}
+
+button.raised_color:active {
+    background-color: #9df063;
+}
+
+/*==========================*/
+button.color, button.color:focus {
+    background-color: rgba(34, 50, 194, 0.2);
+}
+
+button.color:hover {
+    background-color: rgba(34, 50, 194, 0.4);
+}
+
+button.color:active {
+    background-color: rgba(34, 50, 194, 0.6);
+}

@@ -9,7 +9,7 @@ from gevent.queue import Queue
 from flask import Flask, Response, make_response, request, redirect
 
 import server.const as const
-from server.server_classes import RoomPvE, ServerCache
+from server.server_classes import RoomPvE, ServerCache, Session
 from server.database import DB
 
 
@@ -21,7 +21,11 @@ class Server:
 		self.ai = None
 		self.app = Flask(__name__)
 		self.cache = ServerCache(const.STATIC_FOLDER, const.SERVER_FOLDER)
+		res = DB.get_sessions()
 		self.sessions = dict()
+		if res is not None:
+			for row in res:
+				self.sessions[row[1]] = Session(*row)
 		self.rooms = dict()
 
 		@self.app.route('/static_/svg/<path:path>')
@@ -101,7 +105,7 @@ class Server:
 		def init():
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
-			pass # TODO
+			pass  # TODO
 
 		@self.app.route("/api/attack")
 		def attack():
@@ -122,7 +126,7 @@ class Server:
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
 
-			res = DB.check_user(request.form.get('user_name'), sha256)
+			(res, uid) = DB.check_user(request.form.get('user_name'), sha256)
 			response = make_response(res.__str__())
 			response.headers["Content-type"] = "text/plain"
 			return response
@@ -137,6 +141,30 @@ class Server:
 				redirect('menu.html')
 			else:
 				redirect('')  # TODO
+
+		@self.app.route("/api/init_session", methods=['POST'])  # -> bool
+		def init_session():
+			if 'sessID' in request.cookies and request.cookies['sessID'] in self.sessions:
+				response = make_response('OK')
+				response.headers["Content-type"] = "text/plain"
+				return response
+			user_name = request.form.get('user_name')
+			password = request.form.get('pass')
+			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
+			(res, uid) = DB.check_user(request.form.get('user_name'), sha256)
+			if res:
+				s = Session(user_name)
+				self.sessions[s.get_id()] = s
+				DB.add_session(s, uid)
+
+				response = make_response('True')
+				response.headers["Content-type"] = "text/plain"
+				s.add_cookie_to_resp(response)
+				return response
+			else:
+				response = make_response('False')
+				response.headers["Content-type"] = "text/plain"
+				return response
 
 		# TODO: Переделать под новую архитектуру
 		"""@self.app.route('/api/<path:method>')

@@ -14,7 +14,21 @@ class DB:
 		return connect(**DB.config)
 
 	@staticmethod
-	def check_user(user_name, password=None) -> bool:
+	def query(query):
+		connection = DB.connect()
+		cursor = connection.cursor()
+		try:
+			cursor.execute(query)
+		except Error as e:
+			return e
+		finally:
+			connection.commit()
+			cursor.close()
+			connection.close()
+			return True
+
+	@staticmethod
+	def check_user(user_name: str, password: str=None) -> bool:
 		if user_name is None:
 			return False
 		connection = DB.connect()
@@ -24,25 +38,34 @@ class DB:
 			if password is not None:
 				query += "and pass_sha256='%s'" % password
 			cursor.execute(query)
-			cursor.fetchall()
+			row = cursor.fetchone()
+			uid = row[0] if row is not None else None
 			res = (cursor.rowcount > 0)
 		except Error as e:
 			return e
 		finally:
 			connection.close()
-		return res
+		return (res, uid)
 
 	@staticmethod
 	def add_user(user_name, password):
-		if user_name is None or password is None:
-			return 'Wrong arguments'
+		return DB.query("INSERT INTO users(name, pass_sha256) VALUES ('%s', '%s')" % (user_name, password))
+
+	@staticmethod
+	def add_session(s, uid):
+		DB.query("DELETE FROM sessions WHERE user_id=%i" % uid)
+		DB.query("INSERT INTO sessions VALUES ('%s', %i)" % (s.get_id(), uid))
+
+	@staticmethod
+	def get_sessions():
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "INSERT INTO users(name, pass_sha256) VALUES ('%s', '%s')" % (user_name, password)
+			query = "SELECT users.name, sessions.id FROM sessions INNER JOIN users ON users.id = sessions.user_id"
 			cursor.execute(query)
+			res = cursor.fetchall()
 		except Error as e:
 			return e
 		finally:
 			connection.close()
-			return 'OK'
+		return res
