@@ -8,6 +8,7 @@
     <script src="js/jquery.transit.min.js"></script>
     <script src="js/card_manipulations.js"></script>
     <script>
+        var evtSrc = null;
         var myHand = 0;
         var data = {
             'trump': null,
@@ -49,15 +50,13 @@
             Card1_s == data['trump_suit'] && Card2_s != data['trump_suit'])
         }
 
-        function init() { //ajax
-            $.ajax({
-                dataType: 'json',
-                url: '/api/training/init',
-                success: ajaxSuccess
-            });
-        }
-
-        function ajaxSuccess(jsondata) { //ajax
+        function ajaxSuccess(e) { //ajax
+            if (e.data == 'init') {
+                console.log(e);
+                $.ajax('/api/join?mode=0');
+                return;
+            }
+            var jsondata = JSON.parse(e.data);
             for (var i = 0; i < jsondata.data.length; i++) {
                 applyChange(jsondata.data[i]);
             }
@@ -140,8 +139,7 @@
                 console.log('click ' + eventObject.data.card);
                 $.ajax({
                     dataType: 'json',
-                    url: '/api/training/attack?card=' + eventObject.data.card,
-                    success: ajaxSuccess
+                    url: '/api/attack?card=' + eventObject.data.card
                 });
             }
 
@@ -150,10 +148,10 @@
                 var hand2 = $('#hand2');
                 var cards = data.attack.concat(data.defense);
                 var card_jQ;
-                if (data.hand2.length == hand2.find('.card').length || arena < card_deleted)
-                    card_jQ = hand2.find('.card').eq(arena);
+                if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
+                    card_jQ = hand2.find('.card').eq(index);
                 else
-                    card_jQ = hand2.find('.card').eq(arena + 1);
+                    card_jQ = hand2.find('.card').eq(index + 1);
                 card_jQ.removeClass('on').unbind('click');
 
                 if (cards.length) {
@@ -168,7 +166,7 @@
                     res = true;
                 }
                 if (res)
-                    card_jQ.click({card: arena}, onCardClick).addClass('on');
+                    card_jQ.click({card: index}, onCardClick).addClass('on');
             });
 
             var cancelCard = $("#cancel_card");
@@ -183,21 +181,20 @@
                 console.log('click ' + eventObject.data.card);
                 $.ajax({
                     dataType: 'json',
-                    url: '/api/training/defense?card=' + eventObject.data.card,
-                    success: ajaxSuccess
+                    url: '/api/defense?card=' + eventObject.data.card
                 });
             }
 
             data.hand2.forEach(function (card, index) {
                 var hand2 = $('#hand2');
                 var card_jQ;
-                if (data.hand2.length == hand2.find('.card').length || arena < card_deleted)
-                    card_jQ = hand2.find('.card').eq(arena).removeClass('on');
+                if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
+                    card_jQ = hand2.find('.card').eq(index).removeClass('on');
                 else
-                    card_jQ = hand2.find('.card').eq(arena + 1).removeClass('on');
+                    card_jQ = hand2.find('.card').eq(index + 1).removeClass('on');
                 card_jQ.removeClass('on').unbind('click');
                 if (more(card, data.attack[data.attack.length - 1]))
-                    card_jQ.click({card: arena}, onCardClick).addClass('on');
+                    card_jQ.click({card: index}, onCardClick).addClass('on');
             });
 
             var cancelCard = $("#cancel_card");
@@ -205,12 +202,32 @@
             cancelCard.click({card: -1}, onCardClick);
         }
 
-        $(document).ready( //init
-                function () {
-                    preCacheImages();
-                    init();
-                }
-        )
+        $(function () {
+            preCacheImages();
+            evtSrc = new EventSource("/api/subscribe");
+            evtSrc.onmessage = ajaxSuccess;
+            console.log(evtSrc);
+            $(window).on('beforeunload', function () {
+                evtSrc.close();
+                $.ajax({
+                    url: '/api/leave',
+                    async: false
+                });
+                $.ajax({
+                    url: '/api/unsubscribe',
+                    async: false
+                });
+                console.log("beforeUnload event!");
+            });
+            /*$(window).unload(function () {
+             $.ajax({
+             url: '/api/leave'
+             });
+             $.ajax({
+             url: '/api/unsubscribe'
+             });
+             })*/
+        });
     </script>
 </head>
 <body>
@@ -220,12 +237,6 @@
         <div class="card_border">
             <img src="">
         </div>
-    </div>
-</div>
-<div id="left">
-    <button type="button" id="open_menu"></button>
-    <div id="menu">
-        1234
     </div>
 </div>
 <div id="table">

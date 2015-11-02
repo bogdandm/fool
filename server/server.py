@@ -51,42 +51,53 @@ class Server:
 
 		@self.app.route("/api/subscribe")
 		def subscribe():  # Create queue for updates from server
-			def gen():
+			def gen(sess_id):
 				q = MyQueue()
-				session = self.sessions[request.cookies['sessID']]
+				session = self.sessions[sess_id]
 				session['msg_queue'] = q
+
+				def notify():
+					q.put('init')
+
+				gevent.spawn(notify)
+
 				try:
 					while True:  # MainLoop for SSE, use threads
-						if q.stopped: break
 						result = q.get()
-						ev = ServerSentEvent(str(result))
-						yield ev.encode()
-				except GeneratorExit:  # Or maybe use flask signals
+						if not q.stopped:
+							ev = ServerSentEvent(str(result))
+							yield ev.encode()
+						else:
+							break
+				except:  # Or maybe use flask signals
+					del session['msg_queue']
+				finally:
 					del session['msg_queue']
 
-			return Response(gen(), mimetype="text/event-stream")
+			return Response(gen(request.cookies['sessID']), mimetype="text/event-stream")
 
 		@self.app.route("/api/unsubscribe")
 		def unsubscribe():
 			session = self.sessions[request.cookies['sessID']]
-			session['msg_queue'].stop()
+			session['msg_queue'].stopped = True
 
 			def notify():
 				session['msg_queue'].put('stop')
 
 			gevent.spawn(notify)
-
-			del session['msg_queue']
+			return 'OK'
 
 		@self.app.route("/api/join")
 		def join_room():
-			mode = request.args['mode']
+			mode = int(request.args['mode'])
 			session = self.sessions[request.cookies['sessID']]
 			if mode == const.MODE_PVE:
 				room = RoomPvE(session)
-				self.rooms[room.id](room)
+				self.rooms[room.id] = room
 				session['cur_room'] = room
 				session['player_n'] = const.PLAYER_HAND
+				room.send_changes()
+				return 'OK'
 			elif mode == const.MODE_PVP:
 				pass  # TODO
 
@@ -98,36 +109,31 @@ class Server:
 			if room.type == const.MODE_PVE:
 				del self.rooms[room_id]
 				del session['cur_room']
+				return 'OK'
 			elif room.type == const.MODE_PVP:
 				pass  # TODO
-
-		@self.app.route("/api/init")
-		def init():
-			session = self.sessions[request.cookies['sessID']]
-			room = session['cur_room']
-			pass  # TODO
 
 		@self.app.route("/api/attack")
 		def attack():
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
-			card = request.args['mode']
-			room.attack(session['player_n'], card)
+			card = int(request.args['card'])
+			return room.attack(session['player_n'], card)
 
 		@self.app.route("/api/defense")
 		def defense():
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
-			card = request.args['mode']
-			room.defense(session['player_n'], card)
+			card = int(request.args['card'])
+			return room.defense(session['player_n'], card)
 
 		@self.app.route("/api/check_user", methods=['POST'])
 		def check_user():
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
 
-			(res, uid) = DB.check_user(request.form.get('user_name'), sha256)
-			response = make_response(res.__str__())
+			(result, uid) = DB.check_user(request.form.get('user_name'), sha256)
+			response = make_response(result.__str__())
 			response.headers["Content-type"] = "text/plain"
 			return response
 
@@ -136,8 +142,8 @@ class Server:
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
 
-			res = DB.add_user(request.form.get('user_name'), sha256)
-			if res == 'OK':
+			result = DB.add_user(request.form.get('user_name'), sha256)
+			if result == 'OK':
 				redirect('menu.html')
 			else:
 				redirect('')  # TODO
@@ -151,8 +157,8 @@ class Server:
 			user_name = request.form.get('user_name')
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
-			(res, uid) = DB.check_user(request.form.get('user_name'), sha256)
-			if res:
+			(result, uid) = DB.check_user(request.form.get('user_name'), sha256)
+			if result:
 				s = Session(user_name)
 				self.sessions[s.get_id()] = s
 				DB.add_session(s, uid)
@@ -239,6 +245,3 @@ class MyQueue(Queue):
 	def __init__(self, maxsize=None, items=None):
 		super().__init__(maxsize, items)
 		self.stopped = False
-
-	def stop(self):
-		self.stopped = True

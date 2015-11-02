@@ -143,7 +143,7 @@ class Game:
 				self.log = None
 
 			self.set = Set(seed=seed)
-			self.turn = 0  # random.randint(0, 1)
+			self.turn = random.randint(0, 1)
 			if self.save_changes:
 				self.changes.append(Change('player_switch', int(self.turn), None, None))
 			self.hand = []  # user, AI

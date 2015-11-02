@@ -1,10 +1,11 @@
 import time
 import random
 import hashlib
+import json
 from datetime import datetime, timedelta
 
 import gevent
-from flask import jsonify, Response
+from flask import Response
 
 import server.const as const
 from engine.engine import Game
@@ -12,22 +13,31 @@ from engine.ai import AI
 
 
 class Session:
-	def __init__(self, user, id=None):
+	def __init__(self, user, id_=None, dict_data: dict=None):
 		self.user = user
-		if id is None:
-			self.id = hashlib.sha256(bytes(user +
-										   int(time.time() * 256 * 1000).__str__() +
-										   random.randint(0, 2 ** 20).__str__(),
-										   encoding='utf-8')).hexdigest()
+		if id_ is None:
+			self.id = hashlib.sha256(bytes(
+				user + int(time.time() * 256 * 1000).__str__() + random.randint(0, 2 ** 20).__str__(),
+				encoding='utf-8')
+			).hexdigest()
 		else:
-			self.id = id
-		self.data = dict()
+			self.id = id_
+		self.data = dict() if dict_data is None else dict_data
+
+	def __setitem__(self, key, value):
+		self.data[key] = value
+
+	def __getitem__(self, key):
+		return self.data[key]
+
+	def __delitem__(self, key):
+		del self.data[key]
 
 	def add_cookie_to_resp(self, resp: Response):
 		resp.set_cookie('sessID', self.id, expires=datetime.now() + timedelta(days=30))
 
 	def get_data(self, key):
-		return self.data.copy()[key]
+		return self.data[key] if key in self.data else None
 
 	def set_data(self, key, value):
 		self.data[key] = value
@@ -40,7 +50,7 @@ class Room:
 	ids = set()
 
 	def __init__(self, player1=None, player2=None):
-		self.game = Game()
+		self.game = Game(seed=int(time.time() * 256 * 1000))
 		self.players = [player1, player2]
 		self.queues = []
 		id_tmp = random.randint(0, 2 ** 100)
@@ -60,9 +70,9 @@ class Room:
 					changes = self.game.changes[:]
 					for change in changes:
 						change.filter(player)
-					json = {'data': [ch.to_dict() for ch in changes]}
+					json_dict = {'data': [ch.to_dict() for ch in changes]}
 					self.game.changes = []
-					text = jsonify(json)
+					text = json.dumps(json_dict)
 					self.queues[:][player].put(text)
 			self.game.changes = []
 
@@ -81,7 +91,7 @@ class Room:
 class RoomPvP(Room):
 	def __init__(self, player1: Session=None, player2: Session=None):
 		super().__init__(player1, player2)
-		self.queues = [player1.get_data('queue'), player2.get_data('queue')]
+		self.queues = [player1.get_data('msg_queue'), player2.get_data('msg_queue')]
 		self.type = const.MODE_PVP
 
 	def attack(self, player, card):
@@ -93,23 +103,25 @@ class RoomPvP(Room):
 	def add_player(self, player):
 		if self.players[0] is None:
 			self.players[0] = player
-			self.queues[0] = player.get_data('queue')
+			self.queues[0] = player.get_data('msg_queue')
 		elif self.players[1] is None:
 			self.players[1] = player
-			self.queues[1] = player.get_data('queue')
+			self.queues[1] = player.get_data('msg_queue')
 		else:
 			return False
 		return True
 
 	def remove_player(self, player_n):
 		self.players[player_n] = None
+		pass  # TODO
 
 
 class RoomPvE(Room):  # User - 0, AI - 1
 	# don't have add_player method, because delete when player leave PvE room
 	def __init__(self, player: Session=None):
-		super().__init__(player, AI(self.game, not const.PLAYER_HAND))
-		self.queues = [player.get_data('queue')]
+		super().__init__(player)
+		self.players[1] = AI(self.game, not const.PLAYER_HAND)
+		self.queues = [player['msg_queue']]
 		self.type = const.MODE_PVE
 		if self.game.turn != const.PLAYER_HAND:
 			x = self.players[1].attack()
@@ -118,7 +130,8 @@ class RoomPvE(Room):  # User - 0, AI - 1
 	def attack(self, player, card):
 		ai = self.players[not const.PLAYER_HAND]
 		ai.end_game_ai('U', card)
-		self.game.attack(card, ai=[ai])
+		if not self.game.attack(card, ai=[ai]):
+			return "Can't attack using this card"
 		if card == -1:
 			self.game.switch_turn(ai=[ai])
 			x = ai.attack()
@@ -129,11 +142,13 @@ class RoomPvE(Room):  # User - 0, AI - 1
 			if x == -1:
 				self.game.switch_turn(ai=[ai])
 		self.send_changes()
+		return 'OK'
 
 	def defense(self, player, card):
 		ai = self.players[not const.PLAYER_HAND]
 		ai.end_game_ai('U', card)
-		self.game.defense(card, ai=[ai])
+		if not self.game.defense(card, ai=[ai]):
+			return "Can't attack using this card"
 		if card == -1:
 			self.game.switch_turn(ai=[ai])
 		x = ai.attack()
@@ -141,6 +156,7 @@ class RoomPvE(Room):  # User - 0, AI - 1
 		if x == -1:
 			self.game.switch_turn(ai=[ai])
 		self.send_changes()
+		return 'OK'
 
 
 class ServerCache:
