@@ -9,15 +9,7 @@
     <link href="css/global.css" rel="stylesheet" type="text/css">
     <link href="css/buttons.css" rel="stylesheet" type="text/css">
     <style>
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: #ececec;
+        main {
             display: flex;
             flex-direction: row;
             justify-content: center;
@@ -80,7 +72,7 @@
         }
     </style>
     <script>
-        function setSession(){
+        function setSession() {
             var user_name = $('#user_name').val();
             var pass = $('#pass').val();
             if (user_name && pass)
@@ -94,7 +86,7 @@
                             if (data == 'True') {
                                 //alert('OK');
                                 window.location.href = '/';
-                            } else if (data=='OK'){
+                            } else if (data == 'OK') {
                                 window.location.href = '/';
                             } else {
                                 $('#error').slideDown();
@@ -110,16 +102,20 @@
     </script>
 </head>
 <body>
-<form class="standart-box">
-    <input type="text" id="user_name" placeholder="Имя пользователя">
-    <input type="password" id="pass" placeholder="Пароль">
-    <span id="error">Не правильное имя пользователя или пароль</span>
+<header>Дурак online</header>
+<main>
+    <form class="standard-box">
+        <input type="text" id="user_name" placeholder="Имя пользователя">
+        <input type="password" id="pass" placeholder="Пароль">
+        <span id="error">Не правильное имя пользователя или пароль</span>
 
-    <div class="btn_container">
-        <button class="raised_color" type="button" id="login_btn">Войти</button>
-        <span>или</span>
-        <button class="raised" type="button">Зарег.</button>
-    </div>
-</form>
+        <div class="btn_container">
+            <button class="raised_color" type="button" id="login_btn">Войти</button>
+            <span>или</span>
+            <button class="raised" type="button">Зарег.</button>
+        </div>
+    </form>
+</main>
+<footer></footer>
 </body>
 </html>

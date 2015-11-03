@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fool | </title>
+    <script src="js/jquery-2.1.4.min.js"></script>
+    <script src="js/jquery.mousewheel.min.js"></script>
+    <script src="js/jquery.mCustomScrollbar.concat.min.js"></script>
+    <link href="css/jquery.mCustomScrollbar.min.css" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=PT+Sans&subset=latin,cyrillic,cyrillic-ext' rel='stylesheet'
+          type='text/css'>
+    <link href="css/global.css" rel="stylesheet" type="text/css">
+    <link href="css/buttons.css" rel="stylesheet" type="text/css">
+    <link href="css/menu.css" rel="stylesheet" type="text/css">
+    <script>
+        $(function () {
+            $(".selector").add(".menu > img.triangle").add(".container").hide();
+            $(".menu-item").hover(function () { // Перемещение блока выбора
+                $(".selector").filter('[group="' + $(this).attr('group') + '"]').show().css({
+                    top: $(this).position().top + "px"
+                });
+            }, function () {
+            });
+            var x = $("#main-menu");
+            x.find("> .menu-item[container-name]").click(function () { // Клик по выпадающему элементу
+                $(".menu > img.triangle").css({
+                    top: $(this).position().top + 'px'
+                }).show();
+                $(".container").hide();
+                $("#" + $(this).attr('container-name')).css({
+                    top: $(this).position().top + 'px'
+                }).show()
+            });
+            x.find("> .menu-item:not([container-name])").click(function () { // Клик по не выпадающему эл-ту
+                $(".menu > img.triangle").add(".container").hide();
+            });
+            x.find("> .menu-item").click(function () { // Пвсевдо-клик по блоку выбора
+                var self = this;
+
+                function f() {
+                    $(".selector").filter('[group="' + $(self).attr('group') + '"]').css({
+                        backgroundColor: "rgba(112, 255, 34, 0.5)"
+                    });
+                }
+
+                $(".selector").filter('[group="' + $(this).attr('group') + '"]').css({
+                    backgroundColor: "rgba(112, 255, 34, 0.8)"
+                });
+
+                setTimeout(f, 200);
+            });
+        })
+    </script>
+    <style>
+        main {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+
+        .container {
+            position: relative;
+            margin-left: 30px;
+        }
+
+        .container > .menu {
+            width: 400px;
+            margin-left: 0;
+        }
+    </style>
+</head>
+<body>
+<header>Дурак online</header>
+<main>
+    <div id="main-menu" class="menu standard-box">
+        <div class="selector" group="1"></div>
+        <div class="user_name" group="1">User1</div>
+        <div class="menu-item" group="1" container-name="new-games">Новая игра</div>
+        <div class="menu-item" group="1" container-name="friends">Друзья</div>
+        <div class="menu-item" group="1">Статистика</div>
+        <div class="menu-item" group="1">Выйти из аккаунта</div>
+        <img class="triangle" src="png/triangle.png">
+    </div>
+    <div id="new-games" class="container">
+        <div class="menu standard-box">
+            <div class="selector" group="2"></div>
+            <div class="menu-item" group="2">Игра против другого игрока</div>
+            <div class="menu-item" group="2">Играть с другом</div>
+            <div class="menu-item" group="2">Играть против ИИ</div>
+        </div>
+    </div>
+    <div id="friends" class="container standard-box mCustomScrollbar"
+         style="height: 300px; width: 300px"
+         data-mcs-theme="minimal-dark">
+
+        You can drop the Cloth & Chain cluster soon as you have enough res on gear. It's just a nice cluster
+        that gives quite a bit of armor and res early on while not being terribly out of the way.
+
+        Current gear will allow me to swap out my Daresso's for a Lightning Coil I just haven't bought a 6 link
+        one yet. The only required gear for the build to work are Soul Taker and Jack the axe. Everything else
+        is supplementary. You can make this build for under 3 exalts or spend as much as you like with Lightning
+        Coil + Headhunter as long term goals.
+
+        The skill tree is pretty flexible you can pick up some extra stat nodes if you can't get the stats on
+        gear. You can also pick up a 5th Endurance charge if your gear is lacking in defense.
+
+        For jewels. You want to focus on stacking phys damage, attack speed and life. High attack speed is
+        really powerful in conjunction with the massive damage we get from Bloodlust but it's really preference.
+
+        You can do any map mods with this build. I personally choose to avoid Blood Magic just because I like my
+        auras, but its easily doable with a little more caution and potion management. For exceptionally hard
+        mods you can swap out Herald of Ashe + AA for Grace, or if the map is ElE weakness you can use Purity of
+        Elements.
+
+        I prefer to use the Punishment Curse however Vulnerability is really powerful and probably better
+        because it doesn't require a monster to physically attack you to trigger the buff and it also double
+        dips and causes our bleed from Jack to do even more damage. You can however use any curse you like. Temp
+        Chains, Enfeeble, Vulnerability, or Punishment.
+
+        Sadly the Fortify Buff http://pathofexile.gamepedia.com/Fortify isn't shown on your character sheet but
+        this build has 100% uptime on Fortify granting us an additional 20% reduced damage taken from all hits
+        100% of the time! Excluding damage over time effects.
+
+        The build also has a passive 17% chance to block and in my case 6% chance to dodge. You could obviously
+        choose to use a Rumi's Concoction for another 20 - 30% additional block and 10 - 15% spell block. Giving
+        you 47% chance to block on top of your already stacked defenses.
+
+    </div>
+</main>
+<footer></footer>
+</body>
+</html>

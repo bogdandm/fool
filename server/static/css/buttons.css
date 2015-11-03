@@ -20,11 +20,11 @@ button:active {
 /*==========================*/
 button.raised, button.raised:focus {
     background-color: #ececec;
-    box-shadow: 0 3px 0 0 #b1b1b1;
+    box-shadow: 0 2px 0 0 #b1b1b1;
 }
 
 button.raised:hover {
-    box-shadow: 0 5px 0 0 #9df063;
+    box-shadow: 0 4px 0 0 #9df063;
 }
 
 button.raised:active {
@@ -34,11 +34,11 @@ button.raised:active {
 /*==========================*/
 button.raised_color, button.raised_color:focus {
     background-color: #ececec;
-    box-shadow: 0 3px 0 0 #adde85;
+    box-shadow: 0 2px 0 0 #9df063, inset 0 0 0 0 #adde85;
 }
 
 button.raised_color:hover {
-    box-shadow: 0 5px 0 0 #9df063;
+    box-shadow: 0 4px 0 0 #9df063, inset 0 0 0 0 #adde85;
 }
 
 button.raised_color:active {
