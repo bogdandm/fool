@@ -1,24 +1,20 @@
 # -*- coding: utf-8 -*-
-import time
-import random
 import hashlib
 from re import search
 
 import gevent
 from gevent.queue import Queue
-from flask import Flask, Response, make_response, request, redirect
+from flask import Flask, Response, make_response, request, redirect, render_template
 
 import server.const as const
 from server.server_classes import RoomPvE, ServerCache, Session
 from server.database import DB
 
 
-# TODO: проверка сессий
+# TODO: проверка сессий (OK?)
 # TODO: write session documentation
 class Server:
 	def __init__(self):
-		self.game = None
-		self.ai = None
 		self.app = Flask(__name__)
 		self.cache = ServerCache(const.STATIC_FOLDER, const.SERVER_FOLDER)
 		res = DB.get_sessions()
@@ -43,6 +39,14 @@ class Server:
 
 		@self.app.route('/')
 		def send_root():
+			if self.check_session(request):
+				name = self.sessions[request.cookies['sessID']].user
+				return render_template('main_menu.html', user_name=name)
+			else:
+				return redirect('/static/login.html')
+
+		@self.app.route('/arena')
+		def send_arena():
 			return redirect('/static/arena.html')
 
 		@self.app.route('/api')
@@ -52,7 +56,7 @@ class Server:
 		@self.app.route("/api/subscribe")
 		def subscribe():  # Create queue for updates from server
 			def gen(sess_id):
-				q = MyQueue()
+				q = Queue()
 				session = self.sessions[sess_id]
 				session['msg_queue'] = q
 
@@ -64,7 +68,7 @@ class Server:
 				try:
 					while True:  # MainLoop for SSE, use threads
 						result = q.get()
-						if not q.stopped:
+						if str(result) != 'stop':
 							ev = ServerSentEvent(str(result))
 							yield ev.encode()
 						else:
@@ -74,12 +78,16 @@ class Server:
 				finally:
 					del session['msg_queue']
 
+			if not self.check_session(request):
+				return 'Fail'
 			return Response(gen(request.cookies['sessID']), mimetype="text/event-stream")
 
 		@self.app.route("/api/unsubscribe")
 		def unsubscribe():
+			if not self.check_session(request):
+				return 'Fail'
+
 			session = self.sessions[request.cookies['sessID']]
-			session['msg_queue'].stopped = True
 
 			def notify():
 				session['msg_queue'].put('stop')
@@ -89,6 +97,9 @@ class Server:
 
 		@self.app.route("/api/join")
 		def join_room():
+			if not self.check_session(request):
+				return 'Fail'
+
 			mode = int(request.args['mode'])
 			session = self.sessions[request.cookies['sessID']]
 			if mode == const.MODE_PVE:
@@ -96,6 +107,7 @@ class Server:
 				self.rooms[room.id] = room
 				session['cur_room'] = room
 				session['player_n'] = const.PLAYER_HAND
+				room.send_player_inf()
 				room.send_changes()
 				return 'OK'
 			elif mode == const.MODE_PVP:
@@ -103,8 +115,12 @@ class Server:
 
 		@self.app.route("/api/leave")
 		def leave_room():
+			if not self.check_session(request):
+				return 'Fail'
+
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
+			if room is None: return 'OK'
 			room_id = room.id
 			if room.type == const.MODE_PVE:
 				del self.rooms[room_id]
@@ -115,17 +131,37 @@ class Server:
 
 		@self.app.route("/api/attack")
 		def attack():
+			if not self.check_session(request):
+				return 'Fail'
+
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
 			card = int(request.args['card'])
-			return room.attack(session['player_n'], card)
+			res = room.attack(session['player_n'], card)
+			if res == 'END':
+				room_id = room.id
+				if room.type == const.MODE_PVE:
+					del self.rooms[room_id]
+					del session['cur_room']
+					return 'OK'
+			return res
 
 		@self.app.route("/api/defense")
 		def defense():
+			if not self.check_session(request):
+				return 'Fail'
+
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
 			card = int(request.args['card'])
-			return room.defense(session['player_n'], card)
+			res = room.defense(session['player_n'], card)
+			if res == 'END':
+				room_id = room.id
+				if room.type == const.MODE_PVE:
+					del self.rooms[room_id]
+					del session['cur_room']
+					return 'OK'
+			return res
 
 		@self.app.route("/api/check_user", methods=['POST'])
 		def check_user():
@@ -143,14 +179,14 @@ class Server:
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
 
 			result = DB.add_user(request.form.get('user_name'), sha256)
-			if result == 'OK':
-				redirect('menu.html')
+			if result:
+				return 'OK'
 			else:
-				redirect('')  # TODO
+				pass  # TODO
 
 		@self.app.route("/api/init_session", methods=['POST'])  # -> bool
 		def init_session():
-			if 'sessID' in request.cookies and request.cookies['sessID'] in self.sessions:
+			if self.check_session(request):
 				response = make_response('OK')
 				response.headers["Content-type"] = "text/plain"
 				return response
@@ -172,55 +208,8 @@ class Server:
 				response.headers["Content-type"] = "text/plain"
 				return response
 
-		# TODO: Переделать под новую архитектуру
-		"""@self.app.route('/api/<path:method>')
-		def send_api_response(method):
-			if method == 'training/init':
-				seed = 369942366670219  # int(time.time() * 256 * 1000)
-				print(seed)
-				self.game = Game(log_on=True, seed=seed)
-				self.ai = AI(self.game, not self.playerHand)
-				if self.game.turn != self.playerHand:
-					x = self.ai.attack()
-					self.game.attack(x, ai=[self.ai])
-
-			elif method == 'training/attack':
-				x = int(request.args['card'])
-				self.ai.end_game_ai('U', x)
-				self.game.attack(x, ai=[self.ai])
-				if x == -1:
-					self.game.switch_turn(ai=[self.ai])
-					x = self.ai.attack()
-					self.game.attack(x, ai=[self.ai])
-				else:
-					x = self.ai.defense(self.game.table[-1][0])
-					self.game.defense(x, ai=[self.ai])
-					if x == -1:
-						self.game.switch_turn(ai=[self.ai])
-
-			elif method == 'training/defense':
-				x = int(request.args['card'])
-				self.ai.end_game_ai('U', x)
-				self.game.defense(x, ai=[self.ai])
-				if x == -1:
-					self.game.switch_turn(ai=[self.ai])
-				x = self.ai.attack()
-				self.game.attack(x, ai=[self.ai])
-				if x == -1:
-					self.game.switch_turn(ai=[self.ai])
-
-			for change in self.game.changes:
-				change.filter(self.playerHand)
-			json = {'data': [ch.to_dict() for ch in self.game.changes]}
-			self.game.changes = []
-			text = jsonify(json)
-			response = make_response(text)
-			response.headers["Content-type"] = "text/plain"
-			return response"""
-
-	def run(self, ip):
-		random.seed(int(time.time() * 256 * 1000))
-		self.app.run(host=ip, debug=True, port=80)
+	def check_session(self, request):
+		return 'sessID' in request.cookies and request.cookies['sessID'] in self.sessions
 
 
 class ServerSentEvent(object):
@@ -239,9 +228,3 @@ class ServerSentEvent(object):
 			return ""
 		lines = ["%s: %s" % (v, k) for k, v in self.desc_map.items() if k]
 		return "%s\n\n" % "\n".join(lines)
-
-
-class MyQueue(Queue):
-	def __init__(self, maxsize=None, items=None):
-		super().__init__(maxsize, items)
-		self.stopped = False

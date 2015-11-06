@@ -33,14 +33,11 @@ class Session:
 	def __delitem__(self, key):
 		del self.data[key]
 
+	def __str__(self):
+		return self.user
+
 	def add_cookie_to_resp(self, resp: Response):
 		resp.set_cookie('sessID', self.id, expires=datetime.now() + timedelta(days=30))
-
-	def get_data(self, key):
-		return self.data[key] if key in self.data else None
-
-	def set_data(self, key, value):
-		self.data[key] = value
 
 	def get_id(self) -> str:
 		return self.id[:]
@@ -71,10 +68,20 @@ class Room:
 					for change in changes:
 						change.filter(player)
 					json_dict = {'data': [ch.to_dict() for ch in changes]}
-					self.game.changes = []
 					text = json.dumps(json_dict)
 					self.queues[:][player].put(text)
 			self.game.changes = []
+
+		gevent.spawn(notify)
+
+	def send_player_inf(self):
+		def notify():
+			for i in [0, 1]:
+				if i < len(self.queues):
+					self.queues[:][i].put(json.dumps({
+						'you': self.players[i].__str__(),
+						'other': self.players[not i].__str__()
+					}))
 
 		gevent.spawn(notify)
 
@@ -91,7 +98,7 @@ class Room:
 class RoomPvP(Room):
 	def __init__(self, player1: Session=None, player2: Session=None):
 		super().__init__(player1, player2)
-		self.queues = [player1.get_data('msg_queue'), player2.get_data('msg_queue')]
+		self.queues = [player1['msg_queue'], player2['msg_queue']]
 		self.type = const.MODE_PVP
 
 	def attack(self, player, card):
@@ -103,10 +110,10 @@ class RoomPvP(Room):
 	def add_player(self, player):
 		if self.players[0] is None:
 			self.players[0] = player
-			self.queues[0] = player.get_data('msg_queue')
+			self.queues[0] = player['msg_queue']
 		elif self.players[1] is None:
 			self.players[1] = player
-			self.queues[1] = player.get_data('msg_queue')
+			self.queues[1] = player['msg_queue']
 		else:
 			return False
 		return True
@@ -118,7 +125,7 @@ class RoomPvP(Room):
 
 class RoomPvE(Room):  # User - 0, AI - 1
 	# don't have add_player method, because delete when player leave PvE room
-	def __init__(self, player: Session=None):
+	def __init__(self, player: Session):
 		super().__init__(player)
 		self.players[1] = AI(self.game, not const.PLAYER_HAND)
 		self.queues = [player['msg_queue']]
@@ -132,13 +139,22 @@ class RoomPvE(Room):  # User - 0, AI - 1
 		ai.end_game_ai('U', card)
 		if not self.game.attack(card, ai=[ai]):
 			return "Can't attack using this card"
+		if self.game.can_play() is not None:
+			self.send_changes()
+			return 'END'
 		if card == -1:
 			self.game.switch_turn(ai=[ai])
 			x = ai.attack()
+			if self.game.can_play() is not None:
+				self.send_changes()
+				return 'END'
 			self.game.attack(x, ai=[ai])
 		else:
 			x = ai.defense(self.game.table[-1][0])
 			self.game.defense(x, ai=[ai])
+			if self.game.can_play() is not None:
+				self.send_changes()
+				return 'END'
 			if x == -1:
 				self.game.switch_turn(ai=[ai])
 		self.send_changes()
@@ -149,19 +165,27 @@ class RoomPvE(Room):  # User - 0, AI - 1
 		ai.end_game_ai('U', card)
 		if not self.game.defense(card, ai=[ai]):
 			return "Can't attack using this card"
+		if self.game.can_play() is not None:
+			self.send_changes()
+			return 'END'
 		if card == -1:
 			self.game.switch_turn(ai=[ai])
+
 		x = ai.attack()
 		self.game.attack(x, ai=[ai])
+		if self.game.can_play() is not None:
+			self.send_changes()
+			return 'END'
 		if x == -1:
 			self.game.switch_turn(ai=[ai])
+
 		self.send_changes()
 		return 'OK'
 
 
 class ServerCache:
 	def __init__(self, static_folder, server_folder):
-		self.data = {}
+		self.data = dict()
 		for s in ['D', 'H', 'S', 'C']:
 			for v in range(2, 15):
 				path = server_folder + static_folder + '/svg/' + str(v) + s + '.svg'

@@ -2,7 +2,7 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title></title>
+    <title>Fool | PvE</title>
     <link href="css/arena.css" rel="stylesheet">
     <script src="js/jquery-2.1.4.min.js"></script>
     <script src="js/jquery.transit.min.js"></script>
@@ -22,6 +22,7 @@
         };
         var take_cards = false;
         var card_deleted = 100;
+        var menu_opened = false;
 
         function preCacheImages() { //data
             var constPath = "/static_/svg/";
@@ -57,6 +58,13 @@
                 return;
             }
             var jsondata = JSON.parse(e.data);
+            if (jsondata.you && jsondata.other) {
+                console.log(jsondata);
+                var u_n = $('.user-name');
+                u_n.eq(0).text(jsondata.other);
+                u_n.eq(1).text(jsondata.you);
+                return;
+            }
             for (var i = 0; i < jsondata.data.length; i++) {
                 applyChange(jsondata.data[i]);
             }
@@ -125,6 +133,8 @@
                 data.attack = [];
                 data.defense = [];
                 $('#arena').empty();
+            } else if (change['type'] == 'game_end') {
+                alert(change['inf']); //TODO
             }
         }
 
@@ -204,9 +214,16 @@
 
         $(function () {
             preCacheImages();
+            //$('#main').hide();
             evtSrc = new EventSource("/api/subscribe");
             evtSrc.onmessage = ajaxSuccess;
             console.log(evtSrc);
+
+            $('#open-btn').click(function () {
+                $('#menu-container').css({top: menu_opened ? (30 - $('body').outerHeight()) : 0});
+                menu_opened = !menu_opened;
+            });
+
             $(window).on('beforeunload', function () {
                 evtSrc.close();
                 $.ajax({
@@ -219,14 +236,6 @@
                 });
                 console.log("beforeUnload event!");
             });
-            /*$(window).unload(function () {
-             $.ajax({
-             url: '/api/leave'
-             });
-             $.ajax({
-             url: '/api/unsubscribe'
-             });
-             })*/
         });
     </script>
 </head>
@@ -239,44 +248,56 @@
         </div>
     </div>
 </div>
-<div id="table">
-    <div id="hand1" class="hand"></div>
-    <div id="arena"></div>
-    <div id="hand2" class="hand"></div>
-</div>
-<div id="right">
-    <div id="trump">
-        <div class="card">
-            <div class="card_border">
-                <img src="">
-            </div>
-        </div>
-    </div>
-    <div id="set">
-        <div class="card">
-            <div class="card_border">
-                <img src="/static_/svg/Blue_Back.svg">
-            </div>
-        </div>
-        <div class="card">
-            <div class="card_border">
-                <img src="/static_/svg/Blue_Back.svg">
-            </div>
-        </div>
-        <div class="card">
-            <div class="card_border">
-                <img src="/static_/svg/Blue_Back.svg">
-            </div>
-        </div>
-        <div class="set_patch"></div>
-    </div>
-    <div id="cancel_card">
-        <div class="card">
-            <div class="card_border">
-                <img src="/static_/svg/cancel.svg">
-            </div>
-        </div>
+<div id="menu-container">
+    <div id="main"></div>
+    <div id="open">
+        <div id="open-btn"><img src="/static_/svg/ic_menu_24px.svg"></div>
     </div>
 </div>
+<main>
+    <div id="user-names">
+        <div class="user-name">None</div>
+        <div class="user-name">None</div>
+    </div>
+    <div id="table">
+        <div id="hand1" class="hand"></div>
+        <div id="arena"></div>
+        <div id="hand2" class="hand"></div>
+    </div>
+    <div id="right">
+        <div id="trump">
+            <div class="card">
+                <div class="card_border">
+                    <img src="">
+                </div>
+            </div>
+        </div>
+        <div id="set">
+            <div class="card">
+                <div class="card_border">
+                    <img src="/static_/svg/Blue_Back.svg">
+                </div>
+            </div>
+            <div class="card">
+                <div class="card_border">
+                    <img src="/static_/svg/Blue_Back.svg">
+                </div>
+            </div>
+            <div class="card">
+                <div class="card_border">
+                    <img src="/static_/svg/Blue_Back.svg">
+                </div>
+            </div>
+            <div class="set_patch"></div>
+        </div>
+        <div id="cancel_card">
+            <div class="card">
+                <div class="card_border">
+                    <img src="/static_/svg/cancel.svg">
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
 </body>
 </html>

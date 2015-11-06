@@ -62,6 +62,9 @@ class AI:
 		self.table_cards = []
 		self.turns_tree = None
 
+	def __str__(self):
+		return 'AI'
+
 	def update_memory(self, mode='all', card: Card=None, inf=None):
 		# mode=ALL|OFF|TAKE|TRUMP|TABLE
 

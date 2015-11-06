@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fool | </title>
-    <script src="js/jquery-2.1.4.min.js"></script>
-    <script src="js/jquery.mousewheel.min.js"></script>
-    <script src="js/jquery.mCustomScrollbar.concat.min.js"></script>
-    <link href="css/jquery.mCustomScrollbar.min.css" rel="stylesheet" type="text/css">
+    <title>Fool | Главное меню</title>
+    <script src="../static/js/jquery-2.1.4.min.js"></script>
+    <script src="../static/js/jquery.mousewheel.min.js"></script>
+    <script src="../static/js/jquery.mCustomScrollbar.concat.min.js"></script>
+    <link href="../static/css/jquery.mCustomScrollbar.min.css" rel="stylesheet" type="text/css">
     <link href='https://fonts.googleapis.com/css?family=PT+Sans&subset=latin,cyrillic,cyrillic-ext' rel='stylesheet'
           type='text/css'>
-    <link href="css/global.css" rel="stylesheet" type="text/css">
-    <link href="css/buttons.css" rel="stylesheet" type="text/css">
-    <link href="css/menu.css" rel="stylesheet" type="text/css">
+    <link href="../static/css/global.css" rel="stylesheet" type="text/css">
+    <link href="../static/css/buttons.css" rel="stylesheet" type="text/css">
+    <link href="../static/css/menu.css" rel="stylesheet" type="text/css">
     <script>
         $(function () {
-            $(".selector").add(".menu > img.triangle").add(".container").hide();
+            $(".selector").add(".menu > .selection").add(".container").add(".container-mini").hide();
             $(".menu-item").hover(function () { // Перемещение блока выбора
                 $(".selector").filter('[group="' + $(this).attr('group') + '"]').show().css({
                     top: $(this).position().top + "px"
@@ -23,18 +23,18 @@
             });
             var x = $("#main-menu");
             x.find("> .menu-item[container-name]").click(function () { // Клик по выпадающему элементу
-                $(".menu > img.triangle").css({
+                $(".menu > .selection").css({
                     top: $(this).position().top + 'px'
                 }).show();
-                $(".container").hide();
-                $("#" + $(this).attr('container-name')).css({
+                $(".container").add(".container-mini").filter(':not(#' + $(this).attr('container-name') + ')').hide();
+                $("#" + $(this).attr('container-name')).toggle().filter('.container-mini').css({
                     top: $(this).position().top + 'px'
-                }).show()
+                })
             });
             x.find("> .menu-item:not([container-name])").click(function () { // Клик по не выпадающему эл-ту
-                $(".menu > img.triangle").add(".container").hide();
+                $(".menu > .selection").add(".container").add(".container-mini").hide();
             });
-            x.find("> .menu-item").click(function () { // Пвсевдо-клик по блоку выбора
+            x.find("> .menu-item").click(function () { // Псевдо-клик по блоку выбора
                 var self = this;
 
                 function f() {
@@ -57,16 +57,31 @@
             flex-direction: row;
             justify-content: flex-start;
             align-items: flex-start;
+            height: calc(100% - 60px);
         }
 
         .container {
             position: relative;
-            margin-left: 30px;
+            height: 100%;
+            width: calc(100% - 300px);
+            z-index: -10;
+            padding: 10px;
         }
 
-        .container > .menu {
+        .container-mini {
+            position: relative;
+            top: 41px;
+            z-index: -10;
+        }
+
+        .container-mini > .menu {
             width: 400px;
             margin-left: 0;
+        }
+
+        .menu {
+            width: 300px;
+            min-width: 300px;
         }
     </style>
 </head>
@@ -75,23 +90,22 @@
 <main>
     <div id="main-menu" class="menu standard-box">
         <div class="selector" group="1"></div>
-        <div class="user_name" group="1">User1</div>
+        <div class="user_name" group="1">{{ user_name }}</div>
         <div class="menu-item" group="1" container-name="new-games">Новая игра</div>
         <div class="menu-item" group="1" container-name="friends">Друзья</div>
         <div class="menu-item" group="1">Статистика</div>
         <div class="menu-item" group="1">Выйти из аккаунта</div>
-        <img class="triangle" src="png/triangle.png">
+        <div class="selection"></div>
     </div>
-    <div id="new-games" class="container">
+    <div id="new-games" class="container-mini">
         <div class="menu standard-box">
             <div class="selector" group="2"></div>
-            <div class="menu-item" group="2">Игра против другого игрока</div>
-            <div class="menu-item" group="2">Играть с другом</div>
-            <div class="menu-item" group="2">Играть против ИИ</div>
+            <div class="menu-item" group="2"><a href="">Игра против другого игрока</a></div>
+            <div class="menu-item" group="2"><a href="">Играть с другом</a></div>
+            <div class="menu-item" group="2"><a href="arena">Играть против ИИ</a></div>
         </div>
     </div>
     <div id="friends" class="container standard-box mCustomScrollbar"
-         style="height: 300px; width: 300px"
          data-mcs-theme="minimal-dark">
 
         You can drop the Cloth & Chain cluster soon as you have enough res on gear. It's just a nice cluster
@@ -128,6 +142,5 @@
 
     </div>
 </main>
-<footer></footer>
 </body>
 </html>

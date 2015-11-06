@@ -98,9 +98,9 @@ class Set:  # Колода
 		else:
 			random.seed(seed)
 			self.cards = []
-			for y in range(2, 15):
-				for x in range(1, 5):
-					self.cards.append(Card(x, y))
+			for value in range(2, 15):
+				for suit in range(1, 5):
+					self.cards.append(Card(suit, value))
 			random.shuffle(self.cards)
 
 	def take_card(self) -> Card:  # Выдаем карту из колоды
@@ -389,7 +389,7 @@ class Game:
 					return True
 		return False
 
-	def can_play(self, easy=False) -> bool:
+	def can_play(self, easy=False):
 		l0 = len(self.hand[self.turn])
 		l1 = len(self.hand[not self.turn])
 
@@ -421,18 +421,24 @@ class Game:
 				if self.log_on:
 					self.log.write('p%i: win()\n' % self.turn)
 					self.log.flush()
+				if self.save_changes:
+					self.changes.append(Change('game_end', None, None, self.turn))
 				self.result = self.turn
 				return self.turn
 			elif l0 and not l1:
 				if self.log_on:
 					self.log.write('p%i: win()\n' % (not self.turn))
 					self.log.flush()
+				if self.save_changes:
+					self.changes.append(Change('game_end', None, None, int(not self.turn)))
 				self.result = int(not self.turn)
 				return not self.turn
 			else:
 				if self.log_on:
 					self.log.write('__: draw()\n')
 					self.log.flush()
+				if self.save_changes:
+					self.changes.append(Change('game_end', None, None, -1))
 				self.result = -1
 				return -1
 
