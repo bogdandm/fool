@@ -7,12 +7,13 @@ from gevent.queue import Queue
 from flask import Flask, Response, make_response, request, redirect, render_template
 
 import server.const as const
-from server.server_classes import RoomPvE, ServerCache, Session
+from server.server_classes import RoomPvE, RoomPvP, ServerCache, Session
 from server.database import DB
 
 
 # TODO: проверка сессий (OK?)
 # TODO: write session documentation
+# TODO: отправлять данные о необходимости ожидания чужого хода/обрабатывать логикой на киленте
 class Server:
 	def __init__(self):
 		self.app = Flask(__name__)
@@ -47,7 +48,7 @@ class Server:
 
 		@self.app.route('/arena')
 		def send_arena():
-			return redirect('/static/arena.html')
+			return redirect('/static/arena.html?mode='+request.args['mode'])
 
 		@self.app.route('/api')
 		def send_api_methods():
@@ -109,9 +110,23 @@ class Server:
 				session['player_n'] = const.PLAYER_HAND
 				room.send_player_inf()
 				room.send_changes()
-				return 'OK'
 			elif mode == const.MODE_PVP:
-				pass  # TODO
+				for _, room in self.rooms.items():
+					if room.type==const.MODE_PVP and not room.is_ready():
+						break
+				else:
+					room=RoomPvP()
+					self.rooms[room.id]=room
+
+				session['player_n'] = room.add_player(session)
+				session['cur_room'] = room
+				if room.is_ready():
+					room.send_player_inf()
+					room.send_changes()
+				else:
+					room.send_msg('wait')
+
+			return 'OK'
 
 		@self.app.route("/api/leave")
 		def leave_room():
@@ -127,7 +142,14 @@ class Server:
 				del session['cur_room']
 				return 'OK'
 			elif room.type == const.MODE_PVP:
-				pass  # TODO
+				if room.is_ready():
+					room.remove_player(session['player_n'])
+					room.send_msg('wait')
+				else:
+					del self.rooms[room_id]
+				del session['cur_room']
+				return 'OK'
+
 
 		@self.app.route("/api/attack")
 		def attack():
@@ -175,6 +197,7 @@ class Server:
 
 		@self.app.route("/api/add_user", methods=['POST'])
 		def add_user():
+			# TODO: we need more security!
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
 
@@ -207,6 +230,16 @@ class Server:
 				response = make_response('False')
 				response.headers["Content-type"] = "text/plain"
 				return response
+
+		@self.app.route("/api/destroy_session")  # -> bool
+		def destroy_session():
+			if not self.check_session(request):
+				return 'Fail'
+
+			response = make_response('OK')
+			self.sessions[request.cookies['sessID']].delete_cookie(response)
+			del self.sessions[request.cookies['sessID']]
+			return response
 
 	def check_session(self, request):
 		return 'sessID' in request.cookies and request.cookies['sessID'] in self.sessions

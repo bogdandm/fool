@@ -2,6 +2,10 @@
  * Created by Bogdan on 07.10.2015.
  */
 
+function disableAllCards() {
+    $('#hand2').find('.card').removeClass('on');
+}
+
 function attack(str) {
     var arena = $('#arena');
     var pair = $('.hidden > .pair').clone();

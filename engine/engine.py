@@ -41,6 +41,11 @@ class Change:
 	def filter(self, player):
 		if self.type == 'get_card' and self.player != player:
 			self.card = None
+		elif self.type == 'game_end':
+			self.player = player
+
+	def copy(self):
+		return Change(self.type, self.player, self.card, self.inf)
 
 
 class Card:

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Fool | PvE</title>
     <link href="css/arena.css" rel="stylesheet">
+    <link href="css/a.css" rel="stylesheet">
     <script src="js/jquery-2.1.4.min.js"></script>
     <script src="js/jquery.transit.min.js"></script>
     <script src="js/card_manipulations.js"></script>
@@ -54,26 +55,51 @@
         function ajaxSuccess(e) { //ajax
             if (e.data == 'init') {
                 console.log(e);
-                $.ajax('/api/join?mode=0');
-                return;
+                if (window.location.href.match(/^\S*\?mode=0$/))
+                    $.ajax('/api/join?mode=0');
+                else if (window.location.href.match(/^\S*\?mode=1$/))
+                    $.ajax('/api/join?mode=1');
+            } else if (e.data == 'wait') {
+                myHand = 0;
+                data = {
+                    'trump': null,
+                    'trump_suit': '',
+                    'turn': null,
+                    'hand1': 0,
+                    'hand2': [],
+                    'attack': [],
+                    'defense': [],
+                    'set': 52
+                };
+                take_cards = false;
+                card_deleted = 100;
+                console.log(e);
+                $('#hand1').empty();
+                $('#hand2').empty();
+                $('#arena').empty();
+
+                $('#wait').show();
+            } else {
+                $('#wait').hide();
+                var jsonData = JSON.parse(e.data);
+                if (jsonData.you && jsonData.other) {
+                    console.log(jsonData);
+                    var u_n = $('.user-name');
+                    u_n.eq(0).text(jsonData.other);
+                    u_n.eq(1).text(jsonData.you);
+                    myHand = Number(jsonData.your_hand);
+                    return;
+                }
+                for (var i = 0; i < jsonData.data.length; i++) {
+                    applyChange(jsonData.data[i]);
+                }
+                clearCards();
+                take_cards = false;
+                //if (data.turn == myHand) setTimeout(readyAttack, 1000);
+                //else setTimeout(readyDefense, 1000);
+                if (data.turn == myHand) readyAttack();
+                else readyDefense();
             }
-            var jsondata = JSON.parse(e.data);
-            if (jsondata.you && jsondata.other) {
-                console.log(jsondata);
-                var u_n = $('.user-name');
-                u_n.eq(0).text(jsondata.other);
-                u_n.eq(1).text(jsondata.you);
-                return;
-            }
-            for (var i = 0; i < jsondata.data.length; i++) {
-                applyChange(jsondata.data[i]);
-            }
-            clearCards();
-            take_cards = false;
-            //if (data.turn == myHand) setTimeout(readyAttack, 1000);
-            //else setTimeout(readyDefense, 1000);
-            if (data.turn == myHand) readyAttack();
-            else readyDefense();
         }
 
         function applyChange(change) { //data
@@ -134,7 +160,13 @@
                 data.defense = [];
                 $('#arena').empty();
             } else if (change['type'] == 'game_end') {
-                alert(change['inf']); //TODO
+                var result;
+                if (change['inf'] == change['player'])
+                    $('#end-game').show().find('span.message').text('Вы выиграли!');
+                else if (change['inf'] == -1)
+                    $('#end-game').show().find('span.message').text('Ничья');
+                else
+                    $('#end-game').show().find('span.message').text('Вы проиграли');
             }
         }
 
@@ -148,8 +180,9 @@
             function onCardClick(eventObject) {
                 console.log('click ' + eventObject.data.card);
                 $.ajax({
-                    dataType: 'json',
-                    url: '/api/attack?card=' + eventObject.data.card
+                    dataType: 'text',
+                    url: '/api/attack?card=' + eventObject.data.card,
+                    success: disableAllCards
                 });
             }
 
@@ -190,8 +223,9 @@
             function onCardClick(eventObject) {
                 console.log('click ' + eventObject.data.card);
                 $.ajax({
-                    dataType: 'json',
-                    url: '/api/defense?card=' + eventObject.data.card
+                    dataType: 'text',
+                    url: '/api/defense?card=' + eventObject.data.card,
+                    success: disableAllCards
                 });
             }
 
@@ -203,7 +237,7 @@
                 else
                     card_jQ = hand2.find('.card').eq(index + 1).removeClass('on');
                 card_jQ.removeClass('on').unbind('click');
-                if (more(card, data.attack[data.attack.length - 1]))
+                if (data.attack.length && more(card, data.attack[data.attack.length - 1]))
                     card_jQ.click({card: index}, onCardClick).addClass('on');
             });
 
@@ -219,12 +253,23 @@
             evtSrc.onmessage = ajaxSuccess;
             console.log(evtSrc);
 
+            $('#end-game').hide().click(function (e) {
+                if (e.target == this)
+                    $(this).hide();
+            });
+
             $('#open-btn').click(function () {
                 $('#menu-container').css({top: menu_opened ? (30 - $('body').outerHeight()) : 0});
                 menu_opened = !menu_opened;
+                $('#open-btn').find('> img').toggleClass('open');
             });
 
             $(window).on('beforeunload', function () {
+                if (window.location.href.match(/^\S*\?mode=0$/))
+                    document.title = "Fool | PvE";
+                else if (window.location.href.match(/^\S*\?mode=1$/))
+                    document.title = "Fool | PvP";
+
                 evtSrc.close();
                 $.ajax({
                     url: '/api/leave',
@@ -248,10 +293,23 @@
         </div>
     </div>
 </div>
+<div id="wait" class="background-of-msgbox">
+    <div id="wait-box" class="standard-box">
+        <span class="message">Поиск другого игрока</span>
+    </div>
+</div>
+<div id="end-game" class="background-of-msgbox">
+    <div id="end-game-box" class="standard-box">
+        <span class="message">???</span>
+        <a class="raised_color" href="/arena">Начать новую игру</a>
+        <span class="grey">или</span>
+        <a href="/">Выйти в главное меню</a>
+    </div>
+</div>
 <div id="menu-container">
     <div id="main"></div>
     <div id="open">
-        <div id="open-btn"><img src="/static_/svg/ic_menu_24px.svg"></div>
+        <div id="open-btn"><img src="/static_/svg/ic_expand_more_24px.svg"></div>
     </div>
 </div>
 <main>

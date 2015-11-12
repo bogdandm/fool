@@ -39,6 +39,9 @@ class Session:
 	def add_cookie_to_resp(self, resp: Response):
 		resp.set_cookie('sessID', self.id, expires=datetime.now() + timedelta(days=30))
 
+	def delete_cookie(self, resp: Response):
+		resp.set_cookie('sessID', self.id, expires=datetime.now() + timedelta(days=-30))
+
 	def get_id(self) -> str:
 		return self.id[:]
 
@@ -64,7 +67,7 @@ class Room:
 		def notify():
 			for player in [0, 1]:
 				if player < len(self.queues):
-					changes = self.game.changes[:]
+					changes = [change.copy() for change in self.game.changes]
 					for change in changes:
 						change.filter(player)
 					json_dict = {'data': [ch.to_dict() for ch in changes]}
@@ -80,8 +83,17 @@ class Room:
 				if i < len(self.queues):
 					self.queues[:][i].put(json.dumps({
 						'you': self.players[i].__str__(),
-						'other': self.players[not i].__str__()
+						'other': self.players[not i].__str__(),
+						'your_hand': i
 					}))
+
+		gevent.spawn(notify)
+
+	def send_msg(self, msg):
+		def notify():
+			for i in [0, 1]:
+				if i < len(self.queues) and self.queues[i] is not None:
+					self.queues[:][i].put(msg)
 
 		gevent.spawn(notify)
 
@@ -98,29 +110,55 @@ class Room:
 class RoomPvP(Room):
 	def __init__(self, player1: Session=None, player2: Session=None):
 		super().__init__(player1, player2)
-		self.queues = [player1['msg_queue'], player2['msg_queue']]
+		self.queues = [player1['msg_queue'] if player1 is not None else None,
+					   player2['msg_queue'] if player2 is not None else None]
 		self.type = const.MODE_PVP
 
 	def attack(self, player, card):
-		pass  # TODO
+		if player != self.game.turn:
+			return "You can't attack now"
+		if not self.game.attack(card):
+			return "Can't attack using this card"
+		if self.game.can_play() is not None:
+			self.send_changes()
+			return 'END'
+		if card == -1:
+			self.game.switch_turn()
+		# wait for defense
+		self.send_changes()
+		return 'OK'
 
 	def defense(self, player, card):
-		pass  # TODO
+		if player == self.game.turn:
+			return "You can't defense now"
+		if not self.game.defense(card):
+			return "Can't attack using this card"
+		if self.game.can_play() is not None:
+			self.send_changes()
+			return 'END'
+		if card == -1:
+			self.game.switch_turn()
+		# wait for attack
+		self.send_changes()
+		return 'OK'
 
 	def add_player(self, player):
 		if self.players[0] is None:
 			self.players[0] = player
 			self.queues[0] = player['msg_queue']
+			return 0
 		elif self.players[1] is None:
 			self.players[1] = player
 			self.queues[1] = player['msg_queue']
+			return 1
 		else:
-			return False
-		return True
+			return -1
 
 	def remove_player(self, player_n):
 		self.players[player_n] = None
-		pass  # TODO
+		self.queues[player_n] = None
+		self.send_msg('wait')
+		self.game = Game(seed=int(time.time() * 256 * 1000))
 
 
 class RoomPvE(Room):  # User - 0, AI - 1
