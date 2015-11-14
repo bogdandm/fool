@@ -5,6 +5,7 @@
     <title>Fool | PvE</title>
     <link href="css/arena.css" rel="stylesheet">
     <link href="css/a.css" rel="stylesheet">
+    <link href="css/rotating_card.css" rel="stylesheet">
     <script src="js/jquery-2.1.4.min.js"></script>
     <script src="js/jquery.transit.min.js"></script>
     <script src="js/card_manipulations.js"></script>
@@ -79,8 +80,10 @@
                 $('#arena').empty();
 
                 $('#wait').show();
+                $('main').hide();
             } else {
                 $('#wait').hide();
+                $('main').show();
                 var jsonData = JSON.parse(e.data);
                 if (jsonData.you && jsonData.other) {
                     console.log(jsonData);
@@ -296,6 +299,11 @@
 <div id="wait" class="background-of-msgbox">
     <div id="wait-box" class="standard-box">
         <span class="message">Поиск другого игрока</span>
+
+        <div class="rotating-card">
+            <div class="card-front"><img src="/static_/svg/simple_card_red.svg"></div>
+            <div class="card-back"><img src="/static_/svg/simple_card_dark.svg"></div>
+        </div>
     </div>
 </div>
 <div id="end-game" class="background-of-msgbox">

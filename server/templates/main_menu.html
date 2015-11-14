@@ -43,12 +43,12 @@
 
                 function f() {
                     $(".selector").filter('[group="' + $(self).attr('group') + '"]').css({
-                        backgroundColor: "rgba(112, 255, 34, 0.5)"
+                        backgroundColor: "rgba(155, 237, 47, 0.5)"
                     });
                 }
 
                 $(".selector").filter('[group="' + $(this).attr('group') + '"]').css({
-                    backgroundColor: "rgba(112, 255, 34, 0.8)"
+                    backgroundColor: "rgba(155, 237, 47, 0.8)"
                 });
 
                 setTimeout(f, 200);
@@ -92,9 +92,17 @@
             margin-left: 0;
         }
 
+        .container-mini > .menu > .menu-item:last-child {
+            border-bottom: none;
+        }
+
         .menu {
             width: 300px;
             min-width: 300px;
+        }
+
+        .user_name {
+            padding-top: 8px;
         }
     </style>
 </head>

@@ -3,3 +3,4 @@ STATIC_FOLDER = '/static'
 PLAYER_HAND = 0  # use in PvE
 MODE_PVE = 0
 MODE_PVP = 1
+ENABLE_GAME_LOGGING = True

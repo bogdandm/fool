@@ -50,7 +50,7 @@ class Room:
 	ids = set()
 
 	def __init__(self, player1=None, player2=None):
-		self.game = Game(seed=int(time.time() * 256 * 1000))
+		self.game = Game(seed=int(time.time() * 256 * 1000), log_on=const.ENABLE_GAME_LOGGING)
 		self.players = [player1, player2]
 		self.queues = []
 		id_tmp = random.randint(0, 2 ** 100)

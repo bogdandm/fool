@@ -46,15 +46,15 @@ class Server:
 			else:
 				return redirect('/static/login.html')
 
-		@self.app.route('/arena')
+		@self.app.route('/arena')  # need: get@mode
 		def send_arena():
-			return redirect('/static/arena.html?mode='+request.args['mode'])
+			return redirect('/static/arena.html?mode=' + request.args['mode'])
 
 		@self.app.route('/api')
 		def send_api_methods():
 			return redirect('/static/api_methods.html')  # TODO: rewrite documentation
 
-		@self.app.route("/api/subscribe")
+		@self.app.route("/api/subscribe")  # need: session
 		def subscribe():  # Create queue for updates from server
 			def gen(sess_id):
 				q = Queue()
@@ -66,24 +66,20 @@ class Server:
 
 				gevent.spawn(notify)
 
-				try:
-					while True:  # MainLoop for SSE, use threads
-						result = q.get()
-						if str(result) != 'stop':
-							ev = ServerSentEvent(str(result))
-							yield ev.encode()
-						else:
-							break
-				except:  # Or maybe use flask signals
-					del session['msg_queue']
-				finally:
-					del session['msg_queue']
+				while True:  # MainLoop for SSE, use threads
+					result = q.get()
+					if str(result) != 'stop':
+						ev = ServerSentEvent(str(result))
+						yield ev.encode()
+					else:
+						break
+				del session['msg_queue']
 
 			if not self.check_session(request):
 				return 'Fail'
 			return Response(gen(request.cookies['sessID']), mimetype="text/event-stream")
 
-		@self.app.route("/api/unsubscribe")
+		@self.app.route("/api/unsubscribe")  # need: session
 		def unsubscribe():
 			if not self.check_session(request):
 				return 'Fail'
@@ -96,7 +92,7 @@ class Server:
 			gevent.spawn(notify)
 			return 'OK'
 
-		@self.app.route("/api/join")
+		@self.app.route("/api/join")  # need: session@queue, get@mode
 		def join_room():
 			if not self.check_session(request):
 				return 'Fail'
@@ -112,11 +108,11 @@ class Server:
 				room.send_changes()
 			elif mode == const.MODE_PVP:
 				for _, room in self.rooms.items():
-					if room.type==const.MODE_PVP and not room.is_ready():
+					if room.type == const.MODE_PVP and not room.is_ready():
 						break
 				else:
-					room=RoomPvP()
-					self.rooms[room.id]=room
+					room = RoomPvP()
+					self.rooms[room.id] = room
 
 				session['player_n'] = room.add_player(session)
 				session['cur_room'] = room
@@ -128,7 +124,7 @@ class Server:
 
 			return 'OK'
 
-		@self.app.route("/api/leave")
+		@self.app.route("/api/leave")  # need: session@cur_room
 		def leave_room():
 			if not self.check_session(request):
 				return 'Fail'
@@ -150,8 +146,7 @@ class Server:
 				del session['cur_room']
 				return 'OK'
 
-
-		@self.app.route("/api/attack")
+		@self.app.route("/api/attack")  # need: session@cur_room, get@card
 		def attack():
 			if not self.check_session(request):
 				return 'Fail'
@@ -159,16 +154,16 @@ class Server:
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
 			card = int(request.args['card'])
-			res = room.attack(session['player_n'], card)
-			if res == 'END':
+			result = room.attack(session['player_n'], card)
+			if result == 'END':
 				room_id = room.id
 				if room.type == const.MODE_PVE:
 					del self.rooms[room_id]
 					del session['cur_room']
 					return 'OK'
-			return res
+			return result
 
-		@self.app.route("/api/defense")
+		@self.app.route("/api/defense")  # need: session@cur_room, get@card
 		def defense():
 			if not self.check_session(request):
 				return 'Fail'
@@ -176,16 +171,16 @@ class Server:
 			session = self.sessions[request.cookies['sessID']]
 			room = session['cur_room']
 			card = int(request.args['card'])
-			res = room.defense(session['player_n'], card)
-			if res == 'END':
+			result = room.defense(session['player_n'], card)
+			if result == 'END':
 				room_id = room.id
 				if room.type == const.MODE_PVE:
 					del self.rooms[room_id]
 					del session['cur_room']
 					return 'OK'
-			return res
+			return result
 
-		@self.app.route("/api/check_user", methods=['POST'])
+		@self.app.route("/api/check_user", methods=['POST'])  # need: post@user_name; maybe: post@pass
 		def check_user():
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
@@ -195,7 +190,7 @@ class Server:
 			response.headers["Content-type"] = "text/plain"
 			return response
 
-		@self.app.route("/api/add_user", methods=['POST'])
+		@self.app.route("/api/add_user", methods=['POST'])  # need: post@user_name, post@pass
 		def add_user():
 			# TODO: we need more security!
 			password = request.form.get('pass')
@@ -241,8 +236,8 @@ class Server:
 			del self.sessions[request.cookies['sessID']]
 			return response
 
-	def check_session(self, request):
-		return 'sessID' in request.cookies and request.cookies['sessID'] in self.sessions
+	def check_session(self, request_):
+		return 'sessID' in request_.cookies and request_.cookies['sessID'] in self.sessions
 
 
 class ServerSentEvent(object):

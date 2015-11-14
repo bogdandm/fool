@@ -12,9 +12,22 @@ html, body {
     background-color: #146921;
 }
 
+#wait-box {
+    position: relative;
+    flex-direction: row;
+}
+
+.rotating-card {
+    position: relative;
+    width: 40px;
+    margin-left: 10px;
+    perspective: 200px !important;
+}
+
 .standard-box {
     background-color: white;
     box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.1), 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
 }
 
 .background-of-msgbox {
@@ -23,12 +36,12 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(60, 63, 65, 0.6);
+    background-color: rgba(50, 55, 58, 0.6);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 100;
 }
 
 .background-of-msgbox > .standard-box {
@@ -37,6 +50,7 @@ html, body {
     flex-direction: column;
     justify-content: center;
     align-items: stretch;
+    color: #1B2024;
 }
 
 .background-of-msgbox span.message {
@@ -52,7 +66,7 @@ html, body {
 #end-game-box > span.grey {
     text-align: center;
     font-size: 14pt;
-    color: #aeaeae;
+    color: #c2c2c2;
 }
 
 #end-game-box > a {
@@ -71,7 +85,7 @@ html, body {
     transition-property: top;
     position: absolute;
     top: calc(-100% + 30px);
-    z-index: 100;
+    z-index: 101;
     width: 100%;
     height: 100%;
 }
@@ -80,20 +94,20 @@ html, body {
     left: 0;
     width: 100%;
     height: calc(100% - 30px);
-    background-color: rgba(60, 63, 65, 0.9);
+    background-color: #404548;
 }
 
 #open {
     width: 100%;
     height: 30px;
-    background-color: rgba(39, 40, 34, 0.9);
+    background-color: #32373A;
 }
 
 #open-btn {
     float: right;
     height: 100%;
     overflow: hidden;
-    background-color: #171812;
+    background-color: #1B2024;
     cursor: pointer;
 }
 
