@@ -22,18 +22,20 @@
             'defense': [],
             'set': 52
         };
-        var take_cards = false;
+        //var take_cards = false;
         var card_deleted = 100;
         var menu_opened = false;
+        var wait = false;
 
         function preCacheImages() { //data
-            var constPath = "/static_/svg/";
+            // TODO: don't work (why?)
+            /*var constPath = "/static_/svg/";
             var suits = ['H', 'C', 'S', 'D'];
             for (var j = 0; j < 4; j++)
                 for (var i = 2; i <= 14; i++) {
                     var img = new Image();
                     img.src = constPath + i + suits[j] + '.svg';
-                }
+                }*/
         }
 
         function getCardValue(card) { //data
@@ -54,8 +56,8 @@
         }
 
         function ajaxSuccess(e) { //ajax
+            console.log(e);
             if (e.data == 'init') {
-                console.log(e);
                 if (window.location.href.match(/^\S*\?mode=0$/))
                     $.ajax('/api/join?mode=0');
                 else if (window.location.href.match(/^\S*\?mode=1$/))
@@ -74,7 +76,6 @@
                 };
                 take_cards = false;
                 card_deleted = 100;
-                console.log(e);
                 $('#hand1').empty();
                 $('#hand2').empty();
                 $('#arena').empty();
@@ -109,9 +110,6 @@
             console.log(change);
             if (change['type'] == 'player_switch') {
                 data['turn'] = change['player'];
-            } else if (change['type'] == 'take_cards') {
-                console.log('take_cards');
-                take_cards = true;
             } else if (change['type'] == 'set_decr') {
                 data.set--;
                 decrSet(data.set);
@@ -122,14 +120,14 @@
             } else if (change['type'] == 'get_card') {
                 if (change['player'] == myHand) {
                     data['hand2'].push(change['card']);
-                    if (take_cards)
+                    if (change['inf'])
                         addCard2(change['card'], 'TABLE');
                     else
                         addCard2(change['card'], 'SET');
                 }
                 else {
                     data.hand1++;
-                    if (take_cards)
+                    if (change['inf'])
                         addCard1('TABLE');
                     else
                         addCard1('SET');
@@ -163,13 +161,14 @@
                 data.defense = [];
                 $('#arena').empty();
             } else if (change['type'] == 'game_end') {
-                var result;
                 if (change['inf'] == change['player'])
                     $('#end-game').show().find('span.message').text('Вы выиграли!');
                 else if (change['inf'] == -1)
                     $('#end-game').show().find('span.message').text('Ничья');
                 else
                     $('#end-game').show().find('span.message').text('Вы проиграли');
+            } else if (change['type'] == 'wait') {
+                wait = (change['player'] != myHand)
             }
         }
 
@@ -211,7 +210,7 @@
                 } else {
                     res = true;
                 }
-                if (res)
+                if (res && !wait)
                     card_jQ.click({card: index}, onCardClick).addClass('on');
             });
 
@@ -240,7 +239,7 @@
                 else
                     card_jQ = hand2.find('.card').eq(index + 1).removeClass('on');
                 card_jQ.removeClass('on').unbind('click');
-                if (data.attack.length && more(card, data.attack[data.attack.length - 1]))
+                if (!wait && data.attack.length && more(card, data.attack[data.attack.length - 1]))
                     card_jQ.click({card: index}, onCardClick).addClass('on');
             });
 
@@ -282,7 +281,6 @@
                     url: '/api/unsubscribe',
                     async: false
                 });
-                console.log("beforeUnload event!");
             });
         });
     </script>

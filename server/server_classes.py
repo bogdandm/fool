@@ -124,8 +124,16 @@ class RoomPvP(Room):
 			return 'END'
 		if card == -1:
 			self.game.switch_turn()
-		# wait for defense
+		# wait for defense or attack
 		self.send_changes()
+		self.send_msg(json.dumps({
+			'data': [{
+				'type': 'wait',
+				'player': 1 - player,
+				'card': None,
+				'inf': None
+			}]
+		}))
 		return 'OK'
 
 	def defense(self, player, card):
@@ -140,6 +148,14 @@ class RoomPvP(Room):
 			self.game.switch_turn()
 		# wait for attack
 		self.send_changes()
+		self.send_msg(json.dumps({
+			'data': [{
+				'type': 'wait',
+				'player': self.game.turn,
+				'card': None,
+				'inf': None
+			}]
+		}))
 		return 'OK'
 
 	def add_player(self, player):

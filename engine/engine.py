@@ -159,12 +159,12 @@ class Game:
 				card = self.set.take_card()
 				if self.save_changes:
 					self.changes.append(Change('set_decr', None, None, None))
-					self.changes.append(Change('get_card', int(not self.turn), card.__str__(), None))
+					self.changes.append(Change('get_card', int(not self.turn), card.__str__(), 0))
 				self.hand[not self.turn].append(card)
 				card = self.set.take_card()
 				if self.save_changes:
 					self.changes.append(Change('set_decr', None, None, None))
-					self.changes.append(Change('get_card', int(self.turn), card.__str__(), None))
+					self.changes.append(Change('get_card', int(self.turn), card.__str__(), 0))
 				self.hand[self.turn].append(card)
 				if self.log_on:
 					self.log.write('p%i: get(%s)\n' % (self.turn, self.hand[self.turn][-1]))
@@ -303,7 +303,7 @@ class Game:
 					if c is not None:
 						self.hand[not self.turn].append(c)
 						if self.save_changes:
-							self.changes.append(Change('get_card', int(not self.turn), c.__str__(), None))
+							self.changes.append(Change('get_card', int(not self.turn), c.__str__(), 1))
 						if self.log_on:
 							self.log.write('p%i: get(%s)\n' % (not self.turn, c))
 							self.log.flush()
@@ -327,7 +327,7 @@ class Game:
 									a.update_memory('MY', card)
 						if self.save_changes:
 							self.changes.append(Change('set_decr', None, None, None))
-							self.changes.append(Change('get_card', int(turn), card.__str__(), None))
+							self.changes.append(Change('get_card', int(turn), card.__str__(), 0))
 						if self.log_on:
 							self.log.write('p%i: get(%s)\n' % (turn, card))
 							self.log.flush()
@@ -340,7 +340,7 @@ class Game:
 								if a.hand_number == turn:
 									a.update_memory('MY', self.trump_card)
 						if self.save_changes:
-							self.changes.append(Change('get_card', int(turn), self.trump_card.__str__(), None))
+							self.changes.append(Change('get_card', int(turn), self.trump_card.__str__(), 0))
 							self.changes.append(Change('trump_card', None, 'None', None))
 						if self.log_on:
 							self.log.write('p%i: get(%s)\n' % (turn, self.trump_card))
