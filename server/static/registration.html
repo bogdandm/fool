@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fool | Войти</title>
+    <script src="js/jquery-2.1.4.min.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=PT+Sans&subset=latin,cyrillic,cyrillic-ext' rel='stylesheet'
+          type='text/css'>
+    <link href="css/global.css" rel="stylesheet">
+    <link href="css/buttons.css" rel="stylesheet">
+    <link href="css/rotating_card.css" rel="stylesheet">
+    <style>
+        .grey {
+            color: #aeaeae !important;
+            font-size: 14pt !important;
+        }
+
+        main {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+
+        form {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: stretch;
+            margin-left: 50px;
+        }
+
+        #left {
+            position: absolute;
+            top:0;
+            left: -200px;
+            height: 200px;
+            width: 200px;
+            background-color: #32373a;
+            z-index: 0;
+            border-radius: 2px 0 0 2px;
+        }
+
+        #left > img {
+            height: 100%;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 30px;
+        }
+
+        #left > #pseudo-file, #left > input[type=file] {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            box-sizing: border-box;
+            height: 30px;
+            padding: 5px 0;
+        }
+
+        #left > #pseudo-file {
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            background-color: #1B2024;
+        }
+
+        #left > #pseudo-file > span {
+            float: left;
+            height: 20px;
+            color: white;
+            font-weight: bold;
+        }
+
+        #left > #pseudo-file > img {
+            float: left;
+            height: 20px;
+            box-sizing: border-box;
+            padding: 3px 2px 2px 2px;
+        }
+
+        #left > input[type=file] {
+            cursor: pointer;
+            width: 100%;
+            opacity: 0;
+            filter: alpha(Opacity=0);
+        }
+
+        #right {
+            padding: 20px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            min-width: 370px;
+            z-index: 1;
+        }
+
+        #right * {
+            display: block;
+            font-size: 16pt;
+            font-family: 'PT Sans', sans-serif;
+            color: #32373a;
+        }
+
+        #right > .grey {
+            margin-top: -5px;
+            margin-bottom: 5px;
+        }
+
+        #right > input {
+            padding: 10px;
+            border: 1px solid #9f9f9f;
+            margin: 5px 0;
+        }
+
+        #right > #e-mail {
+            margin-top: 0;
+        }
+
+        #right > #repeat-pass {
+            border-top: none;
+            margin-top: -5px;
+        }
+
+        #right > .btn_container {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+
+        #right > .btn_container > button {
+            padding-left: 30px;
+            padding-right: 30px;
+        }
+
+        #right > .btn_container > span {
+            padding-top: 7px;
+            padding-right: 2px;
+        }
+
+        #right > .rotating-card {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 40px;
+            height: 40px;
+        }
+    </style>
+    <script>
+        function setSession() {
+            var user_name = $('#user_name').val();
+            var pass = $('#pass').val();
+            if (user_name && pass) {
+                $('.rotating-card').show();
+                $.post(
+                        "/api/init_session",
+                        {
+                            user_name: user_name,
+                            pass: pass
+                        },
+                        function (data) {
+                            $('.rotating-card').hide();
+                            if (data == 'True') {
+                                window.location.href = '/';
+                            } else if (data == 'OK') {
+                                window.location.href = '/';
+                            } else {
+                                $('#error').slideDown();
+                            }
+                        }
+                );
+            }
+        }
+
+        $(function () {
+            $('#error').add('.rotating-card').hide();
+            $('#login-btn').click(setSession);
+        });
+    </script>
+</head>
+<body>
+<header>Дурак online</header>
+<main>
+    <form>
+        <div id="left"  class="standard-box">
+            <img src="/static_/svg/ic_person_24px_white.svg">
+            <div id="pseudo-file">
+                <span>Загрузить аватар</span>
+                <img src="/static_/svg/ic_file_upload_24px_white.svg">
+            </div>
+            <input type="file" id="file">
+        </div>
+        <div id="right" class="standard-box">
+            <input type="text" id="e-mail" placeholder="e-mail">
+            <input type="text" id="user_name" placeholder="Имя пользователя">
+            <span class="grey">Латинские буквы и нижнее подчеркивание</span>
+            <input type="password" id="pass" placeholder="Пароль">
+            <input type="password" id="repeat-pass" placeholder="Повторите пароль">
+
+            <div class="btn_container">
+                <button class="raised_color" type="button" id="login-btn">Зарег.</button>
+                <span class="grey">или</span>
+                <button class="raised" type="button">Войти</button>
+            </div>
+            <div class="rotating-card">
+                <div class="card-front"><img src="/static_/svg/simple_card_red.svg"></div>
+                <div class="card-back"><img src="/static_/svg/simple_card_dark.svg"></div>
+            </div>
+        </div>
+    </form>
+</main>
+<footer></footer>
+</body>
+</html>
