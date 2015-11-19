@@ -2,14 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fool | Войти</title>
+    <title>Fool | Зарегистрироваться</title>
     <script src="js/jquery-2.1.4.min.js"></script>
-    <link href='https://fonts.googleapis.com/css?family=PT+Sans&subset=latin,cyrillic,cyrillic-ext' rel='stylesheet'
-          type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700,300&subset=latin,cyrillic-ext,cyrillic'
+          rel='stylesheet' type='text/css'>
     <link href="css/global.css" rel="stylesheet">
     <link href="css/buttons.css" rel="stylesheet">
     <link href="css/rotating_card.css" rel="stylesheet">
     <style>
+        /*TODO: only border-bottom*/
+
         .grey {
             color: #aeaeae !important;
             font-size: 14pt !important;
@@ -33,12 +35,10 @@
 
         #left {
             position: absolute;
-            top:0;
+            top: 0;
             left: -200px;
-            height: 200px;
             width: 200px;
             background-color: #32373a;
-            z-index: 0;
             border-radius: 2px 0 0 2px;
         }
 
@@ -49,21 +49,40 @@
             padding: 30px;
         }
 
-        #left > #pseudo-file, #left > input[type=file] {
+        #left > #pseudo-file {
             position: absolute;
             left: 0;
             bottom: 0;
-            box-sizing: border-box;
             height: 30px;
-            padding: 5px 0;
-        }
-
-        #left > #pseudo-file {
-            cursor: pointer;
             width: 100%;
+            box-sizing: border-box;
+            padding: 5px 0;
             display: flex;
             flex-direction: row;
             justify-content: center;
+            cursor: pointer;
+            background-color: rgba(27, 32, 36, 0.75);
+            border-radius: 0 0 0 2px;
+            transition: 0.2s easy;
+            transition-property: background-color;
+        }
+
+        #left > #loading-progress {
+            transition: 0.2s easy;
+            transition-property: width;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 30px;
+            width: 0;
+            box-sizing: border-box;
+            padding: 5px;
+            background-color: #6faa21;
+            border-radius: 2px;
+            font-weight: bold;
+        }
+
+        #left > #pseudo-file:hover {
             background-color: #1B2024;
         }
 
@@ -82,10 +101,12 @@
         }
 
         #left > input[type=file] {
-            cursor: pointer;
-            width: 100%;
-            opacity: 0;
-            filter: alpha(Opacity=0);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            overflow: hidden;
         }
 
         #right {
@@ -94,19 +115,18 @@
             flex-direction: column;
             justify-content: flex-start;
             min-width: 370px;
-            z-index: 1;
         }
 
         #right * {
             display: block;
             font-size: 16pt;
-            font-family: 'PT Sans', sans-serif;
             color: #32373a;
         }
 
         #right > .grey {
             margin-top: -5px;
             margin-bottom: 5px;
+            font-weight: 300;
         }
 
         #right > input {
@@ -134,6 +154,7 @@
         #right > .btn_container > button {
             padding-left: 30px;
             padding-right: 30px;
+            font-weight: 500;
         }
 
         #right > .btn_container > span {
@@ -147,6 +168,15 @@
             right: 3px;
             width: 40px;
             height: 40px;
+        }
+
+        #patch {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 300px;
+            width: 10px;
+            background-color: white;
         }
     </style>
     <script>
@@ -175,22 +205,62 @@
             }
         }
 
+        function updateProgress(evt) {
+            if (evt.lengthComputable) {
+                var progress = $('#loading-progress');
+                var percentLoaded = Math.round((evt.loaded / evt.total) * 100);
+                console.log(percentLoaded);
+                if (percentLoaded < 100) {
+                    progress.css({width: percentLoaded + '%'});
+                    progress.text(percentLoaded + '%');
+                } else {
+                    progress.hide();
+                }
+            }
+        }
+
         $(function () {
-            $('#error').add('.rotating-card').hide();
-            $('#login-btn').click(setSession);
+            $('.rotating-card').add('#loading-progress').hide();
+            $('#login-btn').click(function () {
+                window.location.href = '/';
+            });
+
+            $('#pseudo-file').click(function () {
+                $('#file').click();
+            });
+            $('#file').change(function () {
+                var file = this.files[0];
+                if (!file.type.match(/image.*/) || file.size > 1024 * 1024) return;
+
+                var reader = new FileReader();
+                reader.onload = (function (theFile) {
+                    return function (e) {
+                        $('#left').find('> img').attr('src', e.target.result).css({padding: 0})
+                    };
+                })(file);
+                reader.onprogress = updateProgress;
+
+                reader.readAsDataURL(file);
+            })
         });
+
+        //TODO: clear input file by some conditions
+        //TODO: check fields by RegExp
+        //  TODO: add some msgs if check failed
     </script>
 </head>
 <body>
 <header>Дурак online</header>
 <main>
     <form>
-        <div id="left"  class="standard-box">
+        <div id="left" class="standard-box">
             <img src="/static_/svg/ic_person_24px_white.svg">
+
             <div id="pseudo-file">
                 <span>Загрузить аватар</span>
                 <img src="/static_/svg/ic_file_upload_24px_white.svg">
             </div>
+            <div id="loading-progress"></div>
             <input type="file" id="file">
         </div>
         <div id="right" class="standard-box">
@@ -210,6 +280,7 @@
                 <div class="card-back"><img src="/static_/svg/simple_card_dark.svg"></div>
             </div>
         </div>
+        <div id="patch"></div>
     </form>
 </main>
 <footer></footer>

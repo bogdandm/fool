@@ -7,7 +7,7 @@ from gevent.queue import Queue
 from flask import Flask, Response, make_response, request, redirect, render_template
 
 import server.const as const
-from server.server_classes import RoomPvE, RoomPvP, ServerCache, Session
+from server.server_classes import RoomPvE, RoomPvP, ServerCache, Session, Logger
 from server.database import DB
 
 
@@ -15,7 +15,8 @@ from server.database import DB
 # TODO: write session documentation
 # TODO: отправлять данные о необходимости ожидания чужого хода/обрабатывать логикой на киленте
 class Server:
-	def __init__(self):
+	def __init__(self, ip):
+		self.ip=ip
 		self.app = Flask(__name__)
 		self.cache = ServerCache(const.STATIC_FOLDER, const.SERVER_FOLDER)
 		res = DB.get_sessions()
@@ -24,6 +25,13 @@ class Server:
 			for row in res:
 				self.sessions[row[1]] = Session(*row)
 		self.rooms = dict()
+		self.logger=Logger()
+		self.logger.write_msg('==Server run at %s==' % ip)
+
+		@self.app.after_request
+		def after_request(response):
+			self.logger.write_record(request, response)
+			return response
 
 		@self.app.route('/static_/svg/<path:path>')
 		def send_static_file(path):

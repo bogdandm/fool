@@ -3,13 +3,15 @@ import random
 import hashlib
 import json
 from datetime import datetime, timedelta
+from threading import Thread
 
 import gevent
-from flask import Response
+from flask import Response, Request
 
 import server.const as const
 from engine.engine import Game
 from engine.ai import AI
+from server.database import DB
 
 
 class Session:
@@ -249,3 +251,55 @@ class ServerCache:
 		if path not in self.data:
 			self.data[path] = open(path, encoding='utf-8').read()
 		return self.data[path]
+
+
+class Logger:
+	def __init__(self, log_file=False, DB=True):
+		self.log = []
+		self.time_log = []
+		self.request_in_last_sec = 0
+		self.log_file = open("server/log/log.txt", 'a') if log_file else None
+		self.write_to_DB = DB
+
+		def timer_handler():
+			while self.thread_run:
+				self.time_log.append(self.request_in_last_sec)
+				self.request_in_last_sec = 0
+				if len(self.time_log) > 60 * 10:
+					self.time_log = self.time_log[-60 * 5:]
+				time.sleep(1)
+
+		self.thread_run = True
+		self.thread = Thread(target=timer_handler).start()
+
+	def write_record(self, request: Request, response: Response):
+		self.request_in_last_sec += 1
+		record = "{ip}\t{url}\t{method}\t{status}".format(
+			ip=request.remote_addr,
+			url=request.url,
+			method=request.method,
+			status=response.status
+		)
+		self.log.append(record)
+		if self.log_file is not None:
+			self.log_file.write(record + '\n')
+			self.log_file.flush()
+		if self.write_to_DB:
+			DB.write_log_record(
+				ip=request.remote_addr,
+				url=request.url,
+				method=request.method,
+				status=response.status
+			)
+		if len(self.log) > const.LOG_MAX_LENGTH:
+			self.log = self.log[-const.MAX_LOG_LENGTH_AFTER_CLEANING:]
+
+	def write_msg(self, msg):
+		if self.log_file is not None:
+			self.log_file.write(msg)
+			self.log_file.flush()
+		if self.write_to_DB:
+			DB.write_log_msg(msg)
+
+	def stop(self):
+		self.thread_run = False

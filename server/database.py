@@ -69,3 +69,14 @@ class DB:
 		finally:
 			connection.close()
 		return res
+
+	@staticmethod
+	def write_log_record(ip,
+			url,
+			method,
+			status):
+		DB.query("INSERT INTO log VALUES (DEFAULT, NULL, '%s', '%s', '%s', '%s', DEFAULT)" % (url, method, status, ip))
+
+	@staticmethod
+	def write_log_msg(msg):
+		DB.query("INSERT INTO log VALUES (DEFAULT, '%s', NULL, NULL, NULL, NULL, DEFAULT)" % msg)
