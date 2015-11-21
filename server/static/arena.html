@@ -2,7 +2,7 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
-    <title>Fool | PvE</title>
+    <title>Fool | Arena</title>
     <link href="css/arena.css" rel="stylesheet">
     <link href="css/a.css" rel="stylesheet">
     <link href="css/rotating_card.css" rel="stylesheet">
@@ -22,20 +22,20 @@
             'defense': [],
             'set': 52
         };
-        //var take_cards = false;
         var card_deleted = 100;
         var menu_opened = false;
         var wait = false;
+        var PvP = 1;
 
         function preCacheImages() { //data
             // TODO: don't work (why?)
             /*var constPath = "/static_/svg/";
-            var suits = ['H', 'C', 'S', 'D'];
-            for (var j = 0; j < 4; j++)
-                for (var i = 2; i <= 14; i++) {
-                    var img = new Image();
-                    img.src = constPath + i + suits[j] + '.svg';
-                }*/
+             var suits = ['H', 'C', 'S', 'D'];
+             for (var j = 0; j < 4; j++)
+             for (var i = 2; i <= 14; i++) {
+             var img = new Image();
+             img.src = constPath + i + suits[j] + '.svg';
+             }*/
         }
 
         function getCardValue(card) { //data
@@ -58,9 +58,9 @@
         function ajaxSuccess(e) { //ajax
             console.log(e);
             if (e.data == 'init') {
-                if (window.location.href.match(/^\S*\?mode=0$/))
+                if (window.location.href.match(/^.*\?mode=0$/))
                     $.ajax('/api/join?mode=0');
-                else if (window.location.href.match(/^\S*\?mode=1$/))
+                else if (window.location.href.match(/^.*\?mode=1$/))
                     $.ajax('/api/join?mode=1');
             } else if (e.data == 'wait') {
                 myHand = 0;
@@ -74,7 +74,6 @@
                     'defense': [],
                     'set': 52
                 };
-                take_cards = false;
                 card_deleted = 100;
                 $('#hand1').empty();
                 $('#hand2').empty();
@@ -94,15 +93,13 @@
                     myHand = Number(jsonData.your_hand);
                     return;
                 }
+
+                clearCards();
                 for (var i = 0; i < jsonData.data.length; i++) {
                     applyChange(jsonData.data[i]);
                 }
-                clearCards();
-                take_cards = false;
-                //if (data.turn == myHand) setTimeout(readyAttack, 1000);
-                //else setTimeout(readyDefense, 1000);
-                if (data.turn == myHand) readyAttack();
-                else readyDefense();
+                if (data.turn == myHand) setTimeout(readyAttack, 0);
+                else setTimeout(readyDefense, 0);
             }
         }
 
@@ -110,6 +107,9 @@
             console.log(change);
             if (change['type'] == 'player_switch') {
                 data['turn'] = change['player'];
+                var u_n = $('.user-name');
+                u_n.eq(change['player'] == myHand).css({textDecoration: 'underline'});
+                u_n.eq(change['player'] != myHand).css({textDecoration: 'none'});
             } else if (change['type'] == 'set_decr') {
                 data.set--;
                 decrSet(data.set);
@@ -216,8 +216,10 @@
 
             var cancelCard = $("#cancel_card");
             cancelCard.unbind('click');
-            if (data.attack.concat(data.defense).length) {
-                cancelCard.click({card: -1}, onCardClick);
+            if (data.attack.length && !wait) {
+                cancelCard.click({card: -1}, onCardClick).addClass('on');
+            } else {
+                cancelCard.removeClass('on');
             }
         }
 
@@ -245,7 +247,8 @@
 
             var cancelCard = $("#cancel_card");
             cancelCard.unbind('click');
-            cancelCard.click({card: -1}, onCardClick);
+            if (!wait) cancelCard.click({card: -1}, onCardClick).addClass('on');
+            else cancelCard.removeClass('on');
         }
 
         $(function () {
@@ -255,13 +258,17 @@
             evtSrc.onmessage = ajaxSuccess;
             console.log(evtSrc);
 
+            if (window.location.href.match(/^.*\?mode=0$/))
+                document.title = "Fool | PvE";
+            else if (window.location.href.match(/^.*\?mode=1$/))
+                document.title = "Fool | PvP";
+
             $('#end-game').hide().click(function (e) {
                 if (e.target == this)
                     $(this).hide();
             });
-			
-			//TODO
-			$('#end-game-box').find('a.raised_color').attr('href', window.location.href);
+
+            $('#end-game-box').find('a.raised_color').attr('href', window.location.href);
 
             $('#open-btn').click(function () {
                 $('#menu-container').css({top: menu_opened ? (30 - $('body').outerHeight()) : 0});
@@ -270,11 +277,6 @@
             });
 
             $(window).on('beforeunload', function () {
-                if (window.location.href.match(/^\S*\?mode=0$/))
-                    document.title = "Fool | PvE";
-                else if (window.location.href.match(/^\S*\?mode=1$/))
-                    document.title = "Fool | PvP";
-
                 evtSrc.close();
                 $.ajax({
                     url: '/api/leave',

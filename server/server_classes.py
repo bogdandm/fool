@@ -127,11 +127,12 @@ class RoomPvP(Room):
 			return "You can't attack now"
 		if not self.game.attack(card):
 			return "Can't attack using this card"
+		if card == -1:
+			self.game.switch_turn()
+
 		if self.game.can_play() is not None:
 			self.send_changes()
 			return 'END'
-		if card == -1:
-			self.game.switch_turn()
 		# wait for defense or attack
 		self.send_changes()
 		self.send_msg(json.dumps({
@@ -148,12 +149,13 @@ class RoomPvP(Room):
 		if player == self.game.turn:
 			return "You can't defense now"
 		if not self.game.defense(card):
-			return "Can't attack using this card"
+			return "Can't defense using this card"
+		if card == -1:
+			self.game.switch_turn()
+
 		if self.game.can_play() is not None:
 			self.send_changes()
 			return 'END'
-		if card == -1:
-			self.game.switch_turn()
 		# wait for attack
 		self.send_changes()
 		self.send_msg(json.dumps({

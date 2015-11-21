@@ -398,34 +398,37 @@ class Game:
 		return False
 
 	def can_play(self, easy=False):
-		l0 = len(self.hand[self.turn])
-		l1 = len(self.hand[not self.turn])
+		la = len(self.hand[self.turn])
+		ld = len(self.hand[not self.turn])
 
-		available_cards = need_cards = 0
+
 		if not easy:
-			need_cards = ((6 - l0) if l0 < 6 else 0) + 1
+			need_cards = ((6 - la) if la < 6 else 0) + 1
 			available_cards = self.set.remain() + (self.trump_card is not None)
+		else:
+			available_cards = need_cards = 0
 
 		# Если на руках есть карты
 		# ИЛИ
 		# если у защищающегося закончились карты И в колоде достаточно карт (хотя бы 1 защищаемуся)
 		# ИЛИ
-		# если у атакуещего нет карт или есть что взять
+		# если можно добрать из колоды
 		# ИЛИ
-		# На столе есть не побитые карты, хоть и у нападающего карт нету
-		if not easy and (l0 and l1 or l0 == 0 and l1 and available_cards or
+		# если у атакуещего нет карт и на столе есть не побитые карты
+
+		# TODO: переделать под другую механику взятия карт в конце игры
+		if easy and la and ld:
+			return None
+		elif not easy and (not la and ld and available_cards or
 								 available_cards and need_cards <= available_cards):
 			return None
-		elif easy and l0 and l1:
-			return None
-		elif self.table and self.table[0][0] is not None and self.table[0][1] is None and \
-				(l0 and self.turn or l1 and not self.turn):
+		elif not la and self.table and self.table[0][0] is not None and self.table[0][1] is None:
 			return None
 		else:
 			if self.log_on:
 				self.log.write('*End at %s*\n' % datetime.now().strftime('%H-%M-%S-%f'))
 				self.log.flush()
-			if not l0 and l1:
+			if not la and ld:
 				if self.log_on:
 					self.log.write('p%i: win()\n' % self.turn)
 					self.log.flush()
@@ -433,7 +436,7 @@ class Game:
 					self.changes.append(Change('game_end', None, None, self.turn))
 				self.result = self.turn
 				return self.turn
-			elif l0 and not l1:
+			elif la and not ld:
 				if self.log_on:
 					self.log.write('p%i: win()\n' % (not self.turn))
 					self.log.flush()

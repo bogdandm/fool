@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import hashlib
 from re import search
+from json import dumps
 
 import gevent
 from gevent.queue import Queue
@@ -16,7 +17,7 @@ from server.database import DB
 # TODO: отправлять данные о необходимости ожидания чужого хода/обрабатывать логикой на киленте
 class Server:
 	def __init__(self, ip):
-		self.ip=ip
+		self.ip = ip
 		self.app = Flask(__name__)
 		self.cache = ServerCache(const.STATIC_FOLDER, const.SERVER_FOLDER)
 		res = DB.get_sessions()
@@ -25,7 +26,7 @@ class Server:
 			for row in res:
 				self.sessions[row[1]] = Session(*row)
 		self.rooms = dict()
-		self.logger=Logger()
+		self.logger = Logger()
 		self.logger.write_msg('==Server run at %s==' % ip)
 
 		@self.app.after_request
@@ -127,6 +128,14 @@ class Server:
 				if room.is_ready():
 					room.send_player_inf()
 					room.send_changes()
+					room.send_msg(dumps({
+						'data': [{
+							'type': 'wait',
+							'player': room.game.turn,
+							'card': None,
+							'inf': None
+						}]
+					}))
 				else:
 					room.send_msg('wait')
 

@@ -199,11 +199,11 @@ main {
     transform: translateY(0);
 }
 
-#hand2 > .card.on img {
+#hand2 > .card.on img, #cancel_card.on img {
     opacity: 1;
 }
 
-#hand2 > .card:not(.on) img {
+#hand2 > .card:not(.on) img, #cancel_card:not(.on) img {
     opacity: 0.7;
 }
 
@@ -292,6 +292,10 @@ main {
 
 #cancel_card:hover {
     box-shadow: 0 0 20px 0 #ff0000;
+}
+
+#cancel_card:not(.on):hover {
+    box-shadow: none;
 }
 
 #user-names {
