@@ -52,12 +52,18 @@ class Room:
 	ids = set()
 
 	def __init__(self, player1=None, player2=None):
-		self.game = Game(seed=int(time.time() * 256 * 1000), log_on=const.ENABLE_GAME_LOGGING)
-		self.players = [player1, player2]
-		self.queues = []
 		id_tmp = random.randint(0, 2 ** 100)
 		while id_tmp in self.ids:
 			id_tmp = random.randint(0, 2 ** 100)
+		seed = int(time.time() * 256) ^ id_tmp
+		self.game = Game(
+			seed=hashlib.sha256(
+				seed.to_bytes((seed.bit_length() // 8) + 1, byteorder='little')
+			).hexdigest(),
+			log_on=const.ENABLE_GAME_LOGGING
+		)
+		self.players = [player1, player2]
+		self.queues = []
 		self.id = id_tmp
 		self.ids.add(id_tmp)
 		self.type = None
@@ -176,7 +182,10 @@ class RoomPvP(Room):
 		self.players[player_n] = None
 		self.queues[player_n] = None
 		self.send_msg('wait')
-		self.game = Game(seed=int(time.time() * 256 * 1000))
+		seed = int(time.time() * 256) ^ self.id + random.randint(1, 100)
+		self.game = Game(seed=hashlib.sha256(
+			seed.to_bytes((seed.bit_length() // 8) + 1, byteorder='little')
+		).hexdigest())
 
 
 class RoomPvE(Room):  # User - 0, AI - 1
@@ -254,12 +263,12 @@ class ServerCache:
 
 
 class Logger:
-	def __init__(self, log_file=False, DB=True):
+	def __init__(self, log_file=False, db_log=True):
 		self.log = []
 		self.time_log = []
 		self.request_in_last_sec = 0
 		self.log_file = open("server/log/log.txt", 'a') if log_file else None
-		self.write_to_DB = DB
+		self.write_to_DB = db_log
 
 		def timer_handler():
 			while self.thread_run:

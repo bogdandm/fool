@@ -259,6 +259,9 @@
                 if (e.target == this)
                     $(this).hide();
             });
+			
+			//TODO
+			$('#end-game-box').find('a.raised_color').attr('href', window.location.href);
 
             $('#open-btn').click(function () {
                 $('#menu-container').css({top: menu_opened ? (30 - $('body').outerHeight()) : 0});
@@ -307,7 +310,7 @@
 <div id="end-game" class="background-of-msgbox">
     <div id="end-game-box" class="standard-box">
         <span class="message">???</span>
-        <a class="raised_color" href="/arena">Начать новую игру</a>
+        <a class="raised_color" href="">Начать новую игру</a>
         <span class="grey">или</span>
         <a href="/">Выйти в главное меню</a>
     </div>

@@ -76,6 +76,9 @@ class Card:
 			s += 'H'
 		return s
 
+	def __repr__(self) -> str:
+		return "'" + self.__str__() + "'"
+
 	def __eq__(self, other):
 		return self.number == other.number and self.suit == other.suit
 
@@ -142,7 +145,7 @@ class Game:
 			if log_on:
 				self.log = open('./engine/logs/game %s.txt' % datetime.now().strftime('%m-%d-%Y %H-%M-%S-%f'), 'w')
 				self.log.write('*Start at %s*\n' % datetime.now().strftime('%H-%M-%S-%f'))
-				self.log.write('seed: %i\n' % seed)
+				self.log.write('seed: %s\n' % seed.__str__())
 				self.log.flush()
 			else:
 				self.log = None
