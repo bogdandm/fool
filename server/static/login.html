@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <title>Fool | Войти</title>
     <script src="js/jquery-2.1.4.min.js"></script>
-    <link href='https://fonts.googleapis.com/css?family=PT+Sans&subset=latin,cyrillic,cyrillic-ext' rel='stylesheet'
-          type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700,300&subset=latin,cyrillic-ext,cyrillic'
+          rel='stylesheet' type='text/css'>
     <link href="css/global.css" rel="stylesheet">
     <link href="css/buttons.css" rel="stylesheet">
     <link href="css/rotating_card.css" rel="stylesheet">
@@ -29,7 +29,6 @@
         form * {
             display: block;
             font-size: 16pt;
-            font-family: 'PT Sans', sans-serif;
             color: #1B2024;
         }
 
@@ -37,6 +36,7 @@
             padding: 10px;
             border: 1px solid #9f9f9f;
             border-top-width: 0;
+            font-weight: 300;
         }
 
         form > input:first-child {
@@ -49,6 +49,7 @@
             padding: 10px;
             margin-top: 10px;
             border-radius: 4px;
+            font-weight: 300;
         }
 
         #error > span {
@@ -64,13 +65,15 @@
 
         .btn_container > button {
             padding-left: 40px;
-            padding-right: 30px;
+            padding-right: 40px;
         }
 
         .btn_container > span {
             color: #aeaeae;
             padding-top: 7px;
             padding-right: 2px;
+            font-size: 14pt;
+            font-weight: 300;
         }
 
         .rotating-card {
@@ -110,6 +113,9 @@
         $(function () {
             $('#error').add('.rotating-card').hide();
             $('#login-btn').click(setSession);
+            $('form').keypress(function (e) {
+                if (e.which == 13) setSession();
+            })
         });
     </script>
 </head>

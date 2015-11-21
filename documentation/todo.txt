@@ -1,10 +1,8 @@
 TODO(bug)+?: Иногда нет сообщения о выигрыше/проигрыше
-TODO(bug)+-:	Не отбрабатывает ready*() в arena.html?mode=1
-				+Закрыто костылем setTimeout(readyAttack, 0);
+TODO(bug)+-: Не отбрабатывает ready*() в arena.html?mode=1
+			 +Закрыто костылем setTimeout(readyAttack, 0);
 
 TODO(fix, logic): Выдавать карты через одну в конце игры
-
-TODO(design): Изменить шрифт на Roboto
 
 TODO(major): Чат
 TODO(major): Страница статистики сервера с доступом только для админов (после фиксов задача №1)

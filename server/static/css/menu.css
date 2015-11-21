@@ -9,11 +9,19 @@
 .user_name, .menu-item {
     position: relative;
     z-index: 3;
-    min-height: 35px;
+    min-height: 30px;
     padding: 5px;
     padding-left: 15px;
     font-size: 18pt;
     border-bottom: 1px solid #c2c2c2;
+}
+
+.user_name {
+    font-weight: 400;
+}
+
+.menu-item {
+    font-weight: 300;
 }
 
 .menu-item > a {
@@ -46,7 +54,7 @@
     transition-property: top, background-color;
     position: absolute;
     z-index: 1;
-    height: 45px;
+    height: 40px;
     width: 100%;
     background-color: rgba(155, 237, 47, 0.5);
     text-align: right;
@@ -58,6 +66,6 @@
     width: 100%;
     box-sizing: border-box;
     z-index: 2;
-    height: 45px;
+    height: 40px;
     border-right: 8px solid #9bed2f;
 }

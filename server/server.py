@@ -12,9 +12,7 @@ from server.server_classes import RoomPvE, RoomPvP, ServerCache, Session, Logger
 from server.database import DB
 
 
-# TODO: проверка сессий (OK?)
 # TODO: write session documentation
-# TODO: отправлять данные о необходимости ожидания чужого хода/обрабатывать логикой на киленте
 class Server:
 	def __init__(self, ip):
 		self.ip = ip
