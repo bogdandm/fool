@@ -1,6 +1,10 @@
+import time
+import random
+from hashlib import sha256
+
 from mysql.connector import connect, Error
 
-
+# Полностью статический класс для взаимодействия с БД
 class DB:
 	config = {
 		'user': 'python_flask',
@@ -28,7 +32,7 @@ class DB:
 			return True
 
 	@staticmethod
-	def check_user(user_name: str, password: str=None) -> bool:
+	def check_user(user_name: str, password: str=None) -> (bool, int):
 		if user_name is None:
 			return False
 		connection = DB.connect()
@@ -48,8 +52,34 @@ class DB:
 		return (res, uid)
 
 	@staticmethod
-	def add_user(user_name, password):
-		return DB.query("INSERT INTO users(name, pass_sha256) VALUES ('%s', '%s')" % (user_name, password))
+	def check_email(email: str) -> bool:
+		if email is None:
+			return False
+		connection = DB.connect()
+		try:
+			cursor = connection.cursor()
+			query = "SELECT * FROM users WHERE email='%s'" % email
+			cursor.execute(query)
+			cursor.fetchone()
+			res = (cursor.rowcount > 0)
+		except Error as e:
+			return e
+		finally:
+			connection.close()
+		return res
+
+	@staticmethod
+	def add_user(user_name, password, avatar: bool, email) -> (str, bool):
+		random.seed(time.time() * 256)
+		activation_code = sha256(bytes(
+			user_name + int(time.time() * 256).__str__() + random.randint(0, 2 ** 20).__str__() + 'email activation',
+			encoding='utf-8'
+		)).hexdigest()
+		return (activation_code, DB.query(
+			"INSERT INTO users(name, pass_sha256, email, has_avatar, activation_code) "
+			"VALUES ('%s', '%s', '%s', %s, '%s')" %
+			(user_name, password, email, avatar.__str__(), activation_code)
+		))
 
 	@staticmethod
 	def add_session(s, uid):
@@ -71,10 +101,7 @@ class DB:
 		return res
 
 	@staticmethod
-	def write_log_record(ip,
-			url,
-			method,
-			status):
+	def write_log_record(ip, url, method, status):
 		DB.query("INSERT INTO log VALUES (DEFAULT, NULL, '%s', '%s', '%s', '%s', DEFAULT)" % (url, method, status, ip))
 
 	@staticmethod

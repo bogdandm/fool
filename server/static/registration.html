@@ -12,9 +12,18 @@
     <style>
         /*TODO: only border-bottom*/
 
+        .error, .grey {
+            font-size: 12pt !important;
+            font-weight: 300;
+            word-wrap: break-word;
+        }
+
         .grey {
             color: #aeaeae !important;
-            font-size: 14pt !important;
+        }
+
+        .error {
+            color: #ff433e !important;
         }
 
         main {
@@ -86,14 +95,14 @@
             background-color: #1B2024;
         }
 
-        #left > #pseudo-file > span {
+        #left > #pseudo-file > span > span {
             float: left;
             height: 20px;
             color: white;
             font-weight: bold;
         }
 
-        #left > #pseudo-file > img {
+        #left > #pseudo-file > span > img {
             float: left;
             height: 20px;
             box-sizing: border-box;
@@ -110,7 +119,7 @@
         }
 
         #right {
-            padding: 20px 30px;
+            padding: 30px;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -130,25 +139,27 @@
         }
 
         #right > input {
-            padding: 10px;
-            border: 1px solid #9f9f9f;
-            margin: 5px 0;
+            font-weight: 300;
+            margin-top: 20px;
+            padding-bottom: 2px;
+            border: none;
+            border-bottom: 1px solid #9f9f9f;
         }
 
-        #right > #e-mail {
+        #right > #e_mail {
             margin-top: 0;
         }
 
-        #right > #repeat-pass {
+        #right > #repeat_pass {
             border-top: none;
-            margin-top: -5px;
+            margin-top: 5px;
         }
 
         #right > .btn_container {
-            margin-top: 10px;
+            margin-top: 20px;
             display: flex;
             flex-direction: row;
-            justify-content: space-around;
+            justify-content: space-between;
         }
 
         #right > .btn_container > button {
@@ -174,36 +185,18 @@
             position: absolute;
             top: 0;
             left: 0;
-            height: 300px;
+            height: 210px;
             width: 10px;
             background-color: white;
         }
     </style>
     <script>
-        function setSession() {
-            var user_name = $('#user_name').val();
-            var pass = $('#pass').val();
-            if (user_name && pass) {
-                $('.rotating-card').show();
-                $.post(
-                        "/api/init_session",
-                        {
-                            user_name: user_name,
-                            pass: pass
-                        },
-                        function (data) {
-                            $('.rotating-card').hide();
-                            if (data == 'True') {
-                                window.location.href = '/';
-                            } else if (data == 'OK') {
-                                window.location.href = '/';
-                            } else {
-                                $('#error').slideDown();
-                            }
-                        }
-                );
-            }
-        }
+        var maxSize = 1.0;
+        var userName_b = true;
+        var userName_unic_b = true;
+        var email_b = true;
+        var email_unic_b = true;
+        var password_b = true;
 
         function updateProgress(evt) {
             if (evt.lengthComputable) {
@@ -219,8 +212,140 @@
             }
         }
 
+        function onFileChange() {
+            var file = this.files[0];
+            if (!file.type.match(/image.*/) || file.size > maxSize * 1024 * 1024) {
+                this.value = '';
+                $('#file').replaceWith('<input type="file" id="file">');
+                $('#file').change(onFileChange);
+                $('#load_text').hide();
+                $('#file_error').show();
+                setTimeout(function () {
+                    $('#load_text').show();
+                    $('#file_error').hide();
+                }, 2000);
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = (function (theFile) {
+                return function (e) {
+                    $('#left').find('> img').attr('src', e.target.result).css({padding: 0})
+                };
+            })(file);
+            reader.onprogress = updateProgress;
+
+            reader.readAsDataURL(file);
+        }
+
+        function initChecks() {
+            var email = $('#e_mail');
+            var userName = $('#user_name');
+            var pass = $('#repeat_pass');
+
+            email.change(function () {
+                if (!email_b) return;
+                var email = $('#e_mail');
+                var error = $('#e_mail_error2');
+                $('.rotating-card').show();
+                $.ajax({
+                            method: 'post',
+                            url: "/api/check_user",
+                            data: {
+                                email: email.val()
+                            },
+                            success: function (data) {
+                                if (data == 'True' || data == 'OK') {
+                                    email.css({borderBottomColor: '#9f9f9f'});
+                                    error.slideUp();
+                                    email_unic_b = true;
+                                } else {
+                                    email.css({borderBottomColor: '#ff433e'});
+                                    error.slideDown();
+                                    email_unic_b = false;
+                                }
+                            },
+                            complete: function () {
+                                $('.rotating-card').hide();
+                            }
+                        }
+                );
+            });
+
+            userName.change(function () {
+                if (!userName_b) return;
+                var userName = $('#user_name');
+                var error = $('#user_name_error2');
+                $('.rotating-card').show();
+                $.ajax({
+                            method: 'post',
+                            url: "/api/check_user",
+                            data: {
+                                name: userName.val()
+                            },
+                            success: function (data) {
+                                if (data == 'True' || data == 'OK') {
+                                    userName.css({borderBottomColor: '#9f9f9f'});
+                                    error.slideUp();
+                                    userName_unic_b = true;
+                                } else {
+                                    userName.css({borderBottomColor: '#ff433e'});
+                                    error.slideDown();
+                                    userName_unic_b = false;
+                                }
+                            },
+                            complete: function () {
+                                $('.rotating-card').hide();
+                            }
+                        }
+                );
+            });
+
+            email.on('input', function () {
+                var email = $('#e_mail');
+                var error = $('#e_mail_error');
+                if (email.val().match(/^.+@.+\..+$/)) {
+                    email.css({borderBottomColor: '#9f9f9f'});
+                    error.slideUp();
+                    email_b = true;
+                } else {
+                    email.css({borderBottomColor: '#ff433e'});
+                    error.slideDown();
+                    email_b = false;
+                }
+            });
+
+            userName.on('input', function () {
+                var userName = $('#user_name');
+                var error = $('#user_name_error');
+                if (userName.val().match(/^[a-zA-Z0-9_]+$/)) {
+                    userName.css({borderBottomColor: '#9f9f9f'});
+                    error.slideUp();
+                    userName_b = true;
+                } else {
+                    userName.css({borderBottomColor: '#ff433e'});
+                    error.slideDown();
+                    userName_b = false;
+                }
+            });
+
+            pass.on('input', function () {
+                var pass = $('#repeat_pass');
+                var error = $('#pass_error');
+                if (pass.val() == $('#pass').val()) {
+                    pass.css({borderBottomColor: '#9f9f9f'});
+                    error.slideUp();
+                    password_b = true;
+                } else {
+                    pass.css({borderBottomColor: '#ff433e'});
+                    error.slideDown();
+                    password_b = false;
+                }
+            });
+        }
+
         $(function () {
-            $('.rotating-card').add('#loading-progress').hide();
+            $('.rotating-card').add('#loading-progress').add('.error').hide();
             $('#login-btn').click(function () {
                 window.location.href = '/';
             });
@@ -228,25 +353,41 @@
             $('#pseudo-file').click(function () {
                 $('#file').click();
             });
-            $('#file').change(function () {
-                var file = this.files[0];
-                if (!file.type.match(/image.*/) || file.size > 1024 * 1024) return;
 
-                var reader = new FileReader();
-                reader.onload = (function (theFile) {
-                    return function (e) {
-                        $('#left').find('> img').attr('src', e.target.result).css({padding: 0})
-                    };
-                })(file);
-                reader.onprogress = updateProgress;
+            $('#file').change(onFileChange);
 
-                reader.readAsDataURL(file);
+            initChecks();
+
+            var right = $('#right');
+            right.css({width: right.width()});
+
+            $('#reg-btn').click(function () {
+                if (!(email_b && userName_b && password_b && email_unic_b && userName_unic_b)) return;
+                var file = $('#file')[0].files[0];
+                var data = new FormData();
+                data.append('file', file);
+                data.append('email', $('#e_mail').val());
+                data.append('name', $('#user_name').val());
+                data.append('pass', $('#pass').val());
+                $('.rotating-card').show();
+                $.ajax({
+                    url: '/api/add_user',
+                    type: 'POST',
+                    data: data,
+                    cache: false,
+                    dataType: 'json',
+                    processData: false,
+                    contentType: false,
+                    complete: function (x) {
+                        data= x.responseText;
+                        if (data == 'True' || data == 'OK') {
+                            window.location.href = '/';
+                        }
+                        $('.rotating-card').hide();
+                    }
+                });
             })
         });
-
-        //TODO: clear input file by some conditions
-        //TODO: check fields by RegExp
-        //  TODO: add some msgs if check failed
     </script>
 </head>
 <body>
@@ -257,21 +398,30 @@
             <img src="/static_/svg/ic_person_24px_white.svg">
 
             <div id="pseudo-file">
-                <span>Загрузить аватар</span>
-                <img src="/static_/svg/ic_file_upload_24px_white.svg">
+                <span id="load_text">
+                    <span>Загрузить аватар</span>
+                    <img src="/static_/svg/ic_file_upload_24px_white.svg">
+                </span>
+                <span class="error" id="file_error">Файл слишком большой</span>
             </div>
             <div id="loading-progress"></div>
             <input type="file" id="file">
         </div>
         <div id="right" class="standard-box">
-            <input type="text" id="e-mail" placeholder="e-mail">
+            <input type="text" id="e_mail" placeholder="e-mail">
+            <span id="e_mail_error" class="error">Не корректный e-mail</span>
+            <span id="e_mail_error2" class="error">Пользователь с таким e-mail уже существует</span>
             <input type="text" id="user_name" placeholder="Имя пользователя">
-            <span class="grey">Латинские буквы и нижнее подчеркивание</span>
+            <span id="user_name_error" class="error">
+                Имя пользователя должно состоять только из латинских букв, цифр и символа _
+            </span>
+            <span id="user_name_error2" class="error">Пользователь с таким именем уже существует</span>
             <input type="password" id="pass" placeholder="Пароль">
-            <input type="password" id="repeat-pass" placeholder="Повторите пароль">
+            <input type="password" id="repeat_pass" placeholder="Повторите пароль">
+            <span id="pass_error" class="error">Пароли не совпадают</span>
 
             <div class="btn_container">
-                <button class="raised_color" type="button" id="login-btn">Зарег.</button>
+                <button class="raised_color" type="button" id="reg-btn">Зарег.</button>
                 <span class="grey">или</span>
                 <button class="raised" type="button">Войти</button>
             </div>

@@ -2,6 +2,8 @@ TODO(bug)+?: Иногда нет сообщения о выигрыше/прои
 TODO(bug)+-: Не отбрабатывает ready*() в arena.html?mode=1
 			 +Закрыто костылем setTimeout(readyAttack, 0);
 
+TODO(major): Страница регистрации
+
 TODO(fix, logic): Выдавать карты через одну в конце игры
 
 TODO(major): Чат

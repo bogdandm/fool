@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="../js/jquery-2.1.4.min.js"></script>
+    <script>
+        function render_cards(cards){
+            var hand=$('.hand');
+            hand.empty();
+            cards.forEach(function(item, i, arr){
+                if (i % 2) return;
+                var card = $('.hidden > .card').clone();
+                card.find('img').attr({src: "/static_/svg/"+item+".svg"});
+                hand.append(card);
+            })
+        }
+    </script>
+    <style>
+        body {
+            width: 90%;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .card {
+            position: relative;
+        }
+
+        .card_border {
+            overflow: hidden;
+            position: relative;
+            width: calc(0.2967 * 300px + 1px);
+            height: calc(0.3012 * 430px - 1px);
+        }
+
+        .card_border > img {
+            position: absolute;
+            left: calc(-0.3494 * 300px);
+            top: calc(-0.3517 * 430px);
+            width: 300px;
+            height: 430px;
+        }
+
+        .hand {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .hand > .card {
+            transition: 0.4s ease-out;
+            display: inline-block;
+            position: relative;
+            width: calc(0.4 * 0.2967 * 300px);
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="hidden">
+    <div class="card">
+        <div class="card_border">
+            <img src="">
+        </div>
+    </div>
+</div>
+<div class="hand"></div>
+</body>
+</html>

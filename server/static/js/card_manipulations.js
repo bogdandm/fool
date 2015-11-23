@@ -79,11 +79,14 @@ function addCard2(str, mode) {
 function setTrump(str) {
     var card = $('#trump').find('.card');
     if (str != 'None') {
+        card.find('.card_border').css({transform: ''});
         card.find('img').attr({src: "/static_/svg/" + str + ".svg"});
         data['trump_suit'] = getCardSuit(str);
     }
-    else
-        card.hide();
+    else {
+        card.find('.card_border').css({transform: 'rotate(-90deg)'});
+        card.find('img').attr({src: "/static_/svg/" + data['trump_suit'] + ".svg"});
+    }
 }
 
 function decrSet(n) {

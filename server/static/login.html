@@ -8,6 +8,7 @@
           rel='stylesheet' type='text/css'>
     <link href="css/global.css" rel="stylesheet">
     <link href="css/buttons.css" rel="stylesheet">
+    <link href="css/a.css" rel="stylesheet">
     <link href="css/rotating_card.css" rel="stylesheet">
     <style>
         main {
@@ -33,37 +34,39 @@
         }
 
         form > input {
-            padding: 10px;
-            border: 1px solid #9f9f9f;
-            border-top-width: 0;
             font-weight: 300;
+            margin-top: 20px;
+            padding-bottom: 2px;
+            border: none;
+            border-bottom: 1px solid #9f9f9f;
         }
 
         form > input:first-child {
-            border-top-width: 1px;
+            margin-top: 0;
         }
 
         form > #error {
             display: inline-block;
-            background-color: #ff9b9b;
+            font-size: 12pt !important;
+            font-weight: 300;
+            word-wrap: break-word;
+            color: #ff433e !important;
+            padding-top: 5px;
+            /*background-color: #ff9b9b;
             padding: 10px;
             margin-top: 10px;
             border-radius: 4px;
-            font-weight: 300;
-        }
-
-        #error > span {
-            color: transparent;
+            font-weight: 300;*/
         }
 
         .btn_container {
-            margin-top: 10px;
+            margin-top: 20px;
             display: flex;
             flex-direction: row;
             justify-content: space-between;
         }
 
-        .btn_container > button {
+        .btn_container > button, .btn_container > a {
             padding-left: 40px;
             padding-right: 40px;
         }
@@ -98,11 +101,12 @@
                         },
                         function (data) {
                             $('.rotating-card').hide();
-                            if (data == 'True') {
-                                window.location.href = '/';
-                            } else if (data == 'OK') {
+                            if (data == 'True' || data == 'OK') {
+                                $('input').css({borderBottomColor: '#9f9f9f'});
+                                $('#error').slideUp();
                                 window.location.href = '/';
                             } else {
+                                $('input').css({borderBottomColor: '#ff433e'});
                                 $('#error').slideDown();
                             }
                         }
@@ -130,7 +134,7 @@
         <div class="btn_container">
             <button class="raised_color" type="button" id="login-btn">Войти</button>
             <span>или</span>
-            <button class="raised" type="button">Зарег.</button>
+            <a class="raised" href="/static/registration.html">Зарег.</a>
         </div>
         <div class="rotating-card">
             <div class="card-front"><img src="/static_/svg/simple_card_red.svg"></div>

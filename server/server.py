@@ -17,6 +17,8 @@ class Server:
 	def __init__(self, ip):
 		self.ip = ip
 		self.app = Flask(__name__)
+		self.app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
+
 		self.cache = ServerCache(const.STATIC_FOLDER, const.SERVER_FOLDER)
 		res = DB.get_sessions()
 		self.sessions = dict()
@@ -32,7 +34,7 @@ class Server:
 			self.logger.write_record(request, response)
 			return response
 
-		@self.app.route('/static_/svg/<path:path>')
+		@self.app.route('/static_/svg/<path:path>')  # static
 		def send_static_file(path):
 			response = make_response(self.cache.get(const.SERVER_FOLDER + const.STATIC_FOLDER + '/svg/' + path))
 			if search('^.*\.html$', path):
@@ -45,7 +47,7 @@ class Server:
 				response.headers["Content-type"] = "image/svg+xml"
 			return response
 
-		@self.app.route('/')
+		@self.app.route('/')  # static
 		def send_root():
 			if self.check_session(request):
 				name = self.sessions[request.cookies['sessID']].user
@@ -53,13 +55,13 @@ class Server:
 			else:
 				return redirect('/static/login.html')
 
+		@self.app.route('/api')  # static
+		def send_api_methods():
+			return redirect('/static/api_methods.html')  # TODO: rewrite documentation
+
 		@self.app.route('/arena')  # need: get@mode
 		def send_arena():
 			return redirect('/static/arena.html?mode=' + request.args['mode'])
-
-		@self.app.route('/api')
-		def send_api_methods():
-			return redirect('/static/api_methods.html')  # TODO: rewrite documentation
 
 		@self.app.route("/api/subscribe")  # need: session
 		def subscribe():  # Create queue for updates from server
@@ -195,25 +197,60 @@ class Server:
 					return 'OK'
 			return result
 
-		@self.app.route("/api/check_user", methods=['POST'])  # need: post@user_name; maybe: post@pass
+		@self.app.route("/api/check_user", methods=['POST'])  # -> bool or Error
+		# (need: post@user_name; maybe: post@pass) XOR need: post@email
 		def check_user():
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
+			email = request.form.get('email')
+			name = request.form.get('name')
 
-			(result, uid) = DB.check_user(request.form.get('user_name'), sha256)
-			response = make_response(result.__str__())
+			if name is not None:
+				(result, uid) = DB.check_user(name, sha256)
+				response = make_response((not result).__str__())
+			elif email is not None:
+				result = DB.check_email(email)
+				response = make_response((not result).__str__())
+			else:
+				response = make_response('Bad request', 400)
 			response.headers["Content-type"] = "text/plain"
 			return response
 
-		@self.app.route("/api/add_user", methods=['POST'])  # need: post@user_name, post@pass
+		@self.app.route("/api/add_user", methods=['POST'])
+		# need: post@user_name, post@pass, post@email; maybe: post@file(image)
 		def add_user():
-			# TODO: we need more security!
-			password = request.form.get('pass')
-			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
+			sha256 = hashlib.sha256(bytes(request.form.get('pass'), encoding='utf-8')).hexdigest()
+			name = request.form.get('name')
+			email = request.form.get('email')
 
-			result = DB.add_user(request.form.get('user_name'), sha256)
-			if result:
-				return 'OK'
+			result = not DB.check_user(name)[0] and not DB.check_email(email)
+
+			if not (search('^.+@.+\..+$', email) and search('^[a-zA-Z0-9_]+$', name) and result):
+				return make_response('Wrong data', 400)
+
+			if request.files:
+				file = request.files['file']
+				if file.mimetype in const.IMAGES:
+					file.save("./server/static/avatar/{}.jpg".format(name))
+				else:
+					return make_response('Wrong data', 400)
+			else:
+				file = None
+
+			result = DB.add_user(name, sha256, file is not None, email)
+
+			if result[1]:
+				response = make_response('OK')
+
+				(result2, uid) = DB.check_user(name, sha256)
+				if result2:
+					s = Session(name)
+					self.sessions[s.get_id()] = s
+					DB.add_session(s, uid)
+					s.add_cookie_to_resp(response)
+
+				response.headers["Content-type"] = "text/plain"
+				return response
 			else:
 				pass  # TODO
 
@@ -223,6 +260,7 @@ class Server:
 				response = make_response('OK')
 				response.headers["Content-type"] = "text/plain"
 				return response
+
 			user_name = request.form.get('user_name')
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None

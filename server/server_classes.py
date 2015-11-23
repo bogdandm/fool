@@ -1,7 +1,7 @@
 import time
-import random
-import hashlib
-import json
+from random import randint
+from hashlib import sha256
+from json import dumps
 from datetime import datetime, timedelta
 from threading import Thread
 
@@ -18,10 +18,10 @@ class Session:
 	def __init__(self, user, id_=None, dict_data: dict=None):
 		self.user = user
 		if id_ is None:
-			self.id = hashlib.sha256(bytes(
-				user + int(time.time() * 256 * 1000).__str__() + random.randint(0, 2 ** 20).__str__(),
-				encoding='utf-8')
-			).hexdigest()
+			self.id = sha256(bytes(
+				user + int(time.time() * 256 * 1000).__str__() + randint(0, 2 ** 20).__str__(),
+				encoding='utf-8'
+			)).hexdigest()
 		else:
 			self.id = id_
 		self.data = dict() if dict_data is None else dict_data
@@ -45,19 +45,19 @@ class Session:
 		resp.set_cookie('sessID', self.id, expires=datetime.now() + timedelta(days=-30))
 
 	def get_id(self) -> str:
-		return self.id[:]
+		return self.id
 
 
 class Room:
 	ids = set()
 
 	def __init__(self, player1=None, player2=None):
-		id_tmp = random.randint(0, 2 ** 100)
+		id_tmp = randint(0, 2 ** 100)
 		while id_tmp in self.ids:
-			id_tmp = random.randint(0, 2 ** 100)
+			id_tmp = randint(0, 2 ** 100)
 		seed = int(time.time() * 256) ^ id_tmp
 		self.game = Game(
-			seed=hashlib.sha256(
+			seed=sha256(
 				seed.to_bytes((seed.bit_length() // 8) + 1, byteorder='little')
 			).hexdigest(),
 			log_on=const.ENABLE_GAME_LOGGING
@@ -79,7 +79,7 @@ class Room:
 					for change in changes:
 						change.filter(player)
 					json_dict = {'data': [ch.to_dict() for ch in changes]}
-					text = json.dumps(json_dict)
+					text = dumps(json_dict)
 					self.queues[:][player].put(text)
 			self.game.changes = []
 
@@ -87,12 +87,12 @@ class Room:
 
 	def send_player_inf(self):
 		def notify():
-			for i in [0, 1]:
-				if i < len(self.queues):
-					self.queues[:][i].put(json.dumps({
-						'you': self.players[i].__str__(),
-						'other': self.players[not i].__str__(),
-						'your_hand': i
+			for player in [0, 1]:
+				if player < len(self.queues):
+					self.queues[:][player].put(dumps({
+						'you': self.players[player].__str__(),
+						'other': self.players[not player].__str__(),
+						'your_hand': player
 					}))
 
 		gevent.spawn(notify)
@@ -106,9 +106,11 @@ class Room:
 		gevent.spawn(notify)
 
 	def attack(self, player, card):
+		# abstract
 		pass
 
 	def defense(self, player, card):
+		# abstract
 		pass
 
 	def is_ready(self):
@@ -135,7 +137,7 @@ class RoomPvP(Room):
 			return 'END'
 		# wait for defense or attack
 		self.send_changes()
-		self.send_msg(json.dumps({
+		self.send_msg(dumps({
 			'data': [{
 				'type': 'wait',
 				'player': 1 - player,
@@ -158,7 +160,7 @@ class RoomPvP(Room):
 			return 'END'
 		# wait for attack
 		self.send_changes()
-		self.send_msg(json.dumps({
+		self.send_msg(dumps({
 			'data': [{
 				'type': 'wait',
 				'player': self.game.turn,
@@ -184,8 +186,8 @@ class RoomPvP(Room):
 		self.players[player_n] = None
 		self.queues[player_n] = None
 		self.send_msg('wait')
-		seed = int(time.time() * 256) ^ self.id + random.randint(1, 100)
-		self.game = Game(seed=hashlib.sha256(
+		seed = int(time.time() * 256) ^ self.id + randint(1, 100)
+		self.game = Game(seed=sha256(
 			seed.to_bytes((seed.bit_length() // 8) + 1, byteorder='little')
 		).hexdigest())
 
