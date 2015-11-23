@@ -31,7 +31,7 @@
     color: inherit;
 }
 
-.menu-item > a[href=''] {
+.menu-item > a[href=''], .menu-item > a[href='#'] {
     text-decoration: none;
     color: #9f9f9f;
     cursor: default;

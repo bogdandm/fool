@@ -275,9 +275,9 @@
             console.log(evtSrc);
 
             if (window.location.href.match(/^.*\?mode=0$/))
-                document.title = "Fool | PvE";
+                document.title = "Fool | Игра против ИИ";
             else if (window.location.href.match(/^.*\?mode=1$/))
-                document.title = "Fool | PvP";
+                document.title = "Fool | Игра с другим игроком";
 
             $('#end-game').hide().click(function (e) {
                 if (e.target == this)
@@ -336,6 +336,10 @@
 <div id="menu-container">
     <div id="main"></div>
     <div id="open">
+        <a href="/" id="to_main_menu">
+            <img src="/static_/svg/ic_arrow_back_24px_white.svg">
+            <span>В главное меню</span>
+        </a>
         <div id="open-btn"><img src="/static_/svg/ic_expand_more_24px.svg"></div>
     </div>
 </div>

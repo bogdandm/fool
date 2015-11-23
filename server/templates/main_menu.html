@@ -14,7 +14,8 @@
     <link href="../static/css/menu.css" rel="stylesheet" type="text/css">
     <script>
         $(function () {
-            $(".selector").add(".menu > .selection").add(".container").add(".container-mini").hide();
+            $(".selector").add(".menu > .selection").add(".container").add(".container-mini").
+                    add(".menu > .selection").hide();
 
             $(".menu-item").hover(function () { // Перемещение блока выбора
                 $(".selector").filter('[group="' + $(this).attr('group') + '"]').show().css({
@@ -25,7 +26,7 @@
 
             var x = $("#main-menu");
             x.find("> .menu-item[container-name]").click(function () { // Клик по выпадающему элементу
-                $(".menu > .selection").css({
+                $(".menu > .selection").show().css({
                     top: $(this).position().top + 'px'
                 }).show();
                 $(".container").add(".container-mini").filter(':not(#' + $(this).attr('container-name') + ')').hide();
@@ -65,7 +66,7 @@
 
             var user = $(".user_name > span").text();
             $.ajax({
-                url: '/api/avatar?user=' + user,
+                url: '/api/avatar?user=' + user + '&source=menu',
                 success: function (data) {
                     $('.user_name').find('>img').attr('src', data);
                 }
@@ -119,9 +120,10 @@
         .user_name > img {
             border-radius: 2px;
             overflow: hidden;
-            height: 30px;
+            height: 24px;
             max-width: 50px;
-            margin-right: 5px;
+            margin-right: 7px;
+            margin-top: 3px;
         }
     </style>
 </head>
@@ -145,7 +147,7 @@
             <div class="selector" group="2"></div>
             <div class="menu-item" group="2"><a href="/arena?mode=0">Играть против ИИ</a></div>
             <div class="menu-item" group="2"><a href="/arena?mode=1">Игра против другого игрока</a></div>
-            <div class="menu-item" group="2"><a href="">Играть с другом</a></div>
+            <div class="menu-item" group="2"><a href="#">Играть с другом</a></div>
         </div>
     </div>
     <div id="friends" class="container standard-box mCustomScrollbar"

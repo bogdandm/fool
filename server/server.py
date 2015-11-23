@@ -225,7 +225,10 @@ class Server:
 			if file_ext is not None:
 				return "/static/avatar/{user_name}{file_ext}".format(user_name=user, file_ext=file_ext)
 			else:
-				return "/static_/svg/ic_person_24px_grey_reverse.svg"
+				if  request.args.get('source')=='menu':
+					return "/static_/svg/ic_person_24px.svg"
+				else:
+					return "/static_/svg/ic_person_24px_grey_reverse.svg"
 
 		@self.app.route("/api/add_user", methods=['POST'])
 		# need: post@user_name, post@pass, post@email; maybe: post@file(image)
