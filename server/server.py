@@ -35,7 +35,7 @@ class Server:
 			return response
 
 		@self.app.route('/static_/svg/<path:path>')  # static
-		def send_static_file(path):
+		def send_svg(path):
 			response = make_response(self.cache.get(const.SERVER_FOLDER + const.STATIC_FOLDER + '/svg/' + path))
 			if search('^.*\.html$', path):
 				response.headers["Content-type"] = "text/html"
@@ -180,7 +180,7 @@ class Server:
 					return 'OK'
 			return result
 
-		@self.app.route("/api/defense")  # need: session@cur_room, get@card
+		@self.app.route("/api/defense", methods=['GET'])  # need: session@cur_room, get@card
 		def defense():
 			if not self.check_session(request):
 				return 'Fail'
@@ -206,7 +206,7 @@ class Server:
 			name = request.form.get('name')
 
 			if name is not None:
-				(result, uid) = DB.check_user(name, sha256)
+				result = DB.check_user(name, sha256)[0]
 				response = make_response((not result).__str__())
 			elif email is not None:
 				result = DB.check_email(email)
@@ -215,6 +215,17 @@ class Server:
 				response = make_response('Bad request', 400)
 			response.headers["Content-type"] = "text/plain"
 			return response
+
+		@self.app.route("/api/avatar", methods=['GET'])
+		def get_avatar():
+			user = request.args.get('user')
+			if user=='AI':
+				return "/static_/svg/ic_computer_24px_white.svg"
+			file_ext = DB.check_user(user)[2]
+			if file_ext is not None:
+				return "/static/avatar/{user_name}{file_ext}".format(user_name=user, file_ext=file_ext)
+			else:
+				return "/static_/svg/ic_person_24px_grey_reverse.svg"
 
 		@self.app.route("/api/add_user", methods=['POST'])
 		# need: post@user_name, post@pass, post@email; maybe: post@file(image)
@@ -231,21 +242,23 @@ class Server:
 			if request.files:
 				file = request.files['file']
 				if file.mimetype in const.IMAGES:
-					file.save("./server/static/avatar/{}.jpg".format(name))
+					file_ext = const.IMAGES[file.mimetype]
+					file.save("./server/static/avatar/{}{}".format(name, file_ext))
 				else:
 					return make_response('Wrong data', 400)
 			else:
-				file = None
+				file_ext = None
 
-			result = DB.add_user(name, sha256, file is not None, email)
+			result = DB.add_user(name, sha256, file_ext, email)
 
 			if result[1]:
 				response = make_response('OK')
 
-				(result2, uid) = DB.check_user(name, sha256)
+				(result2, uid, _) = DB.check_user(name, sha256)
 				if result2:
 					s = Session(name)
 					self.sessions[s.get_id()] = s
+					s['avatar'] = file_ext
 					DB.add_session(s, uid)
 					s.add_cookie_to_resp(response)
 
@@ -264,10 +277,11 @@ class Server:
 			user_name = request.form.get('user_name')
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
-			(result, uid) = DB.check_user(request.form.get('user_name'), sha256)
+			(result, uid, file_ext) = DB.check_user(request.form.get('user_name'), sha256)
 			if result:
 				s = Session(user_name)
 				self.sessions[s.get_id()] = s
+				s['avatar'] = file_ext
 				DB.add_session(s, uid)
 
 				response = make_response('True')

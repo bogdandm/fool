@@ -90,9 +90,23 @@
                 if (jsonData.you && jsonData.other) {
                     console.log(jsonData);
                     var u_n = $('.user-name');
-                    u_n.eq(0).text(jsonData.other);
-                    u_n.eq(1).text(jsonData.you);
+                    u_n.eq(0).find('>span').text(jsonData.other);
+                    u_n.eq(1).find('>span').text(jsonData.you);
                     myHand = Number(jsonData.your_hand);
+
+                    $.ajax({
+                        url: '/api/avatar?user=' + jsonData.other,
+                        success: function (data) {
+                            $('.user-name').eq(0).find('>img').attr('src', data);
+                        }
+                    });
+                    $.ajax({
+                        url: '/api/avatar?user=' + jsonData.you,
+                        success: function (data) {
+                            $('.user-name').eq(1).find('>img').attr('src', data);
+                        }
+                    });
+
                     return;
                 }
 
@@ -110,8 +124,8 @@
             if (change['type'] == 'player_switch') {
                 data['turn'] = change['player'];
                 var u_n = $('.user-name');
-                u_n.eq(change['player'] == myHand).css({textDecoration: 'underline'});
-                u_n.eq(change['player'] != myHand).css({textDecoration: 'none'});
+                u_n.eq(change['player'] == myHand).addClass('on');
+                u_n.eq(change['player'] != myHand).removeClass('on');
             } else if (change['type'] == 'set_decr') {
                 data.set--;
                 decrSet(data.set);
@@ -327,8 +341,14 @@
 </div>
 <main>
     <div id="user-names" class="font500">
-        <div class="user-name">None</div>
-        <div class="user-name">None</div>
+        <div class="user-name standard-box">
+            <img src="">
+            <span>None</span>
+        </div>
+        <div class="user-name standard-box">
+            <img src="">
+            <span>None</span>
+        </div>
     </div>
     <div id="table">
         <div id="hand1" class="hand"></div>

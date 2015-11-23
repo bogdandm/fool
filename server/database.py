@@ -38,18 +38,19 @@ class DB:
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "SELECT * FROM users WHERE name='%s'" % user_name
+			query = "SELECT id, file_extension FROM users WHERE name='%s'" % user_name
 			if password is not None:
 				query += "and pass_sha256='%s'" % password
 			cursor.execute(query)
 			row = cursor.fetchone()
 			uid = row[0] if row is not None else None
+			file = row[1] if row is not None else None
 			res = (cursor.rowcount > 0)
 		except Error as e:
 			return e
 		finally:
 			connection.close()
-		return (res, uid)
+		return (res, uid, file)
 
 	@staticmethod
 	def check_email(email: str) -> bool:
@@ -69,16 +70,16 @@ class DB:
 		return res
 
 	@staticmethod
-	def add_user(user_name, password, avatar: bool, email) -> (str, bool):
+	def add_user(user_name, password, avatar: str, email) -> (str, bool):
 		random.seed(time.time() * 256)
 		activation_code = sha256(bytes(
 			user_name + int(time.time() * 256).__str__() + random.randint(0, 2 ** 20).__str__() + 'email activation',
 			encoding='utf-8'
 		)).hexdigest()
 		return (activation_code, DB.query(
-			"INSERT INTO users(name, pass_sha256, email, has_avatar, activation_code) "
-			"VALUES ('%s', '%s', '%s', %s, '%s')" %
-			(user_name, password, email, avatar.__str__(), activation_code)
+			"INSERT INTO users(name, pass_sha256, email, has_avatar, activation_code, file_extension) "
+			"VALUES ('%s', '%s', '%s', %s, '%s', '%s')" %
+			(user_name, password, email, (avatar is not None).__str__(), activation_code, avatar)
 		))
 
 	@staticmethod

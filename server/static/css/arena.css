@@ -331,7 +331,31 @@ main {
 }
 
 .user-name {
+    background-color: #1B2024 !important;
     margin: 20px 30px;
-    font-size: 24pt;
+    font-size: 22pt;
     color: white;
+    border-right: 0 solid #ff433e;
+    transition: 0.2s easy;
+    transition-property: border;
+}
+
+.user-name.on {
+    border-right: 5px solid #ff433e;
+}
+
+.user-name > * {
+    float: left;
+}
+
+.user-name > img {
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 5px;
+    height: 25px;
+    max-width: 50px;
+}
+
+.user-name > span {
+    padding: 0 5px;
 }

@@ -7,11 +7,10 @@
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700,300&subset=latin,cyrillic-ext,cyrillic'
           rel='stylesheet' type='text/css'>
     <link href="css/global.css" rel="stylesheet">
+    <link href="css/a.css" rel="stylesheet">
     <link href="css/buttons.css" rel="stylesheet">
     <link href="css/rotating_card.css" rel="stylesheet">
     <style>
-        /*TODO: only border-bottom*/
-
         .error, .grey {
             font-size: 12pt !important;
             font-weight: 300;
@@ -162,7 +161,7 @@
             justify-content: space-between;
         }
 
-        #right > .btn_container > button {
+        #right > .btn_container > button, #right > .btn_container > a {
             padding-left: 30px;
             padding-right: 30px;
             font-weight: 500;
@@ -192,11 +191,11 @@
     </style>
     <script>
         var maxSize = 1.0;
-        var userName_b = true;
-        var userName_unic_b = true;
-        var email_b = true;
-        var email_unic_b = true;
-        var password_b = true;
+        var userName_b = false;
+        var userName_unic_b = false;
+        var email_b = false;
+        var email_unic_b = false;
+        var password_b = false;
 
         function updateProgress(evt) {
             if (evt.lengthComputable) {
@@ -421,9 +420,9 @@
             <span id="pass_error" class="error">Пароли не совпадают</span>
 
             <div class="btn_container">
-                <button class="raised_color" type="button" id="reg-btn">Зарег.</button>
+                <a class="raised" href="/">Войти</a>
                 <span class="grey">или</span>
-                <button class="raised" type="button">Войти</button>
+                <button class="raised_color" type="button" id="reg-btn">Зарег.</button>
             </div>
             <div class="rotating-card">
                 <div class="card-front"><img src="/static_/svg/simple_card_red.svg"></div>

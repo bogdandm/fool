@@ -62,6 +62,14 @@
                     }
                 });
             });
+
+            var user = $(".user_name > span").text();
+            $.ajax({
+                url: '/api/avatar?user=' + user,
+                success: function (data) {
+                    $('.user_name').find('>img').attr('src', data);
+                }
+            });
         })
     </script>
     <style>
@@ -103,6 +111,18 @@
         .user_name {
             padding-top: 8px;
         }
+
+        .user_name > * {
+            float: left;
+        }
+
+        .user_name > img {
+            border-radius: 2px;
+            overflow: hidden;
+            height: 30px;
+            max-width: 50px;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -110,7 +130,10 @@
 <main>
     <div id="main-menu" class="menu standard-box">
         <div class="selector" group="1"></div>
-        <div class="user_name" group="1">{{ user_name }}</div>
+        <div class="user_name" group="1">
+            <img src="">
+            <span>{{ user_name }}</span>
+        </div>
         <div class="menu-item" group="1" container-name="new-games">Новая игра</div>
         <div class="menu-item" group="1" container-name="friends">Друзья (coming soon)</div>
         <div class="menu-item" group="1">Статистика (coming soon)</div>

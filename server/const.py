@@ -9,4 +9,4 @@ ENABLE_GAME_LOGGING = True
 LOG_MAX_LENGTH = 1000
 MAX_LOG_LENGTH_AFTER_CLEANING = 200
 
-IMAGES = ['image/jpeg', 'image/gif', 'image/png']
+IMAGES = {'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/png': '.png'}
