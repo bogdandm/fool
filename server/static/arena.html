@@ -7,10 +7,14 @@
           rel='stylesheet' type='text/css'>
     <link href="css/arena.css" rel="stylesheet">
     <link href="css/a.css" rel="stylesheet">
+    <link href="css/chat.css" rel="stylesheet">
     <link href="css/rotating_card.css" rel="stylesheet">
     <script src="js/jquery-2.1.4.min.js"></script>
-    <script src="js/jquery.transit.min.js"></script>
+    <script src="/static/js/jquery.mousewheel.min.js"></script>
+    <script src="/static/js/jquery.mCustomScrollbar.concat.min.js"></script>
+    <link href="/static/css/jquery.mCustomScrollbar.min.css" rel="stylesheet" type="text/css">
     <script src="js/card_manipulations.js"></script>
+    <script src="js/chat.js"></script>
     <script>
         var evtSrc = null;
         var myHand = 0;
@@ -83,6 +87,7 @@
 
                 $('#wait').show();
                 $('main').hide();
+                $('.chat .msgs .container').empty();
             } else {
                 $('#wait').hide();
                 $('main').show();
@@ -107,6 +112,9 @@
                         }
                     });
 
+                    return;
+                } else if (jsonData.msg && jsonData.from) {
+                    receiveMsg(jsonData.msg, jsonData.from, jsonData.hand);
                     return;
                 }
 
@@ -274,8 +282,10 @@
             evtSrc.onmessage = ajaxSuccess;
             console.log(evtSrc);
 
-            if (window.location.href.match(/^.*\?mode=0$/))
+            if (window.location.href.match(/^.*\?mode=0$/)) {
                 document.title = "Fool | Игра против ИИ";
+                $('#chat').hide();
+            }
             else if (window.location.href.match(/^.*\?mode=1$/))
                 document.title = "Fool | Игра с другим игроком";
 
@@ -340,14 +350,25 @@
             <img src="/static_/svg/ic_arrow_back_24px_white.svg">
             <span>В главное меню</span>
         </a>
+
         <div id="open-btn"><img src="/static_/svg/ic_expand_more_24px.svg"></div>
     </div>
 </div>
 <main>
-    <div id="user-names" class="font500">
+    <div id="left" class="font500">
         <div class="user-name standard-box">
             <img src="">
             <span>None</span>
+        </div>
+        <div class="chat" id="chat">
+            <div class="msgs">
+                <div class="container"></div>
+            </div>
+            <div class="input">
+                <span class="gt">&gt;</span>
+                <input type="text">
+                <button class="send"><img src="/static_/svg/ic_keyboard_enter_24px_white.svg"></button>
+            </div>
         </div>
         <div class="user-name standard-box">
             <img src="">

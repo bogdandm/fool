@@ -239,6 +239,23 @@ class Server:
 					return 'OK'
 			return result
 
+		@self.app.route("/api/chat", methods=['POST'])  # need: session@cur_room, post@msg
+		def send_msg_to_chat():
+			session = self.get_session(request)
+			if not session:
+				return 'Fail'
+
+			room = session['cur_room']
+			msg = request.form.get('msg')
+
+			room.send_msg(dumps({
+				'msg': msg,
+				'from': session.user,
+				'hand': session['player_n']
+			}))
+
+			return 'OK'
+
 		@self.app.route("/api/check_user", methods=['POST'])  # -> bool or Error
 		# (need: post@user_name; maybe: post@pass) XOR need: post@email
 		def check_user():

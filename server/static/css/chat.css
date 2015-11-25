@@ -1,0 +1,88 @@
+.chat {
+    margin-left: 10px;
+    padding: 10px 10px 7px;
+    width: 250px;
+    border-radius: 2px;
+
+    background-color: transparent;
+    box-shadow: 0 0 6px 0 transparent, 0 2px 3px 0 transparent;
+    transition: 0.2s easy;
+    transition-property: background-color, box-shadow;
+}
+
+.chat.on, .chat:hover {
+    background-color: #1B2024;
+    box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.1), 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+.chat * {
+    font-size: 12pt;
+    font-weight: normal;
+    color: white;
+}
+
+.chat .msgs {
+    height: 100px;
+    padding-right: 32px;
+    overflow: hidden;
+}
+
+.chat .msgs .container {
+    width: 220px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+.chat .msg.my {
+    align-self: flex-end;
+}
+
+.chat .msg .from {
+    display: none;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.chat .msg .body, .chat .input input {
+    word-wrap: break-word;
+    font-weight: 300;
+}
+
+.chat .input {
+    height: 30px;
+    display: flex;
+    align-items: center;
+}
+
+.chat .input .gt {
+    margin-right: 5px;
+}
+
+.chat .input input {
+    height: 100%;
+    flex-grow: 10;
+    border: none;
+    background-color: transparent;
+}
+
+.chat .input button, .chat .input button:focus {
+    width: 30px;
+    color: #1B2024;
+    background-color: transparent;
+    border: none;
+    border-radius: 2px;
+    padding: 0;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.chat .input button:hover {
+    background-color: rgba(255, 67, 62, 0.5);
+}
+
+.chat .input button:active {
+    background-color: #ff433e;
+}

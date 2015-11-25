@@ -43,7 +43,11 @@ class DB:
 			if password is not None:
 				query += "and pass_sha256='%s'" % password
 			cursor.execute(query)
-			(uid, file, activated) = cursor.fetchone()
+			row = cursor.fetchone()
+			if row is not None:
+				(uid, file, activated) = row
+			else:
+				uid = file = activated = None
 			res = (cursor.rowcount > 0)
 		except Error as e:
 			return e
