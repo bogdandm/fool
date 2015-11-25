@@ -15,8 +15,9 @@ from server.database import DB
 
 
 class Session:
-	def __init__(self, user, id_=None, dict_data: dict=None):
+	def __init__(self, user, activated, id_=None, dict_data: dict=None):
 		self.user = user
+		self.activated = bool(activated)
 		if id_ is None:
 			self.id = sha256(bytes(
 				user + int(time.time() * 256 * 1000).__str__() + randint(0, 2 ** 20).__str__(),
@@ -46,6 +47,9 @@ class Session:
 
 	def get_id(self) -> str:
 		return self.id
+
+	def update_activation_status(self):
+		self.activated = bool(DB.check_user(self.user)[3])
 
 
 class Room:

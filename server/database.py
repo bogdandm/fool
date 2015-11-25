@@ -4,6 +4,7 @@ from hashlib import sha256
 
 from mysql.connector import connect, Error
 
+
 # Полностью статический класс для взаимодействия с БД
 class DB:
 	config = {
@@ -38,19 +39,17 @@ class DB:
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "SELECT id, file_extension FROM users WHERE name='%s'" % user_name
+			query = "SELECT id, file_extension, is_activated FROM users WHERE name='%s'" % user_name
 			if password is not None:
 				query += "and pass_sha256='%s'" % password
 			cursor.execute(query)
-			row = cursor.fetchone()
-			uid = row[0] if row is not None else None
-			file = row[1] if row is not None else None
+			(uid, file, activated) = cursor.fetchone()
 			res = (cursor.rowcount > 0)
 		except Error as e:
 			return e
 		finally:
 			connection.close()
-		return (res, uid, file)
+		return (res, uid, file, activated)
 
 	@staticmethod
 	def check_email(email: str) -> bool:
@@ -92,7 +91,8 @@ class DB:
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "SELECT users.name, sessions.id FROM sessions INNER JOIN users ON users.id = sessions.user_id"
+			query = "SELECT users.name, users.is_activated, sessions.id" \
+					" FROM sessions INNER JOIN users ON users.id = sessions.user_id"
 			cursor.execute(query)
 			res = cursor.fetchall()
 		except Error as e:
@@ -108,3 +108,44 @@ class DB:
 	@staticmethod
 	def write_log_msg(msg):
 		DB.query("INSERT INTO log VALUES (DEFAULT, '%s', NULL, NULL, NULL, NULL, DEFAULT)" % msg)
+
+	@staticmethod
+	def activate_account(token):
+		"""
+		:rtype : (name, uid, file_ext, activated)
+		"""
+		DB.query("UPDATE users SET is_activated=TRUE WHERE activation_code='%s'" % token)
+
+		connection = DB.connect()
+		try:
+			cursor = connection.cursor()
+			query = "SELECT name, id, file_extension, is_activated FROM users WHERE activation_code='%s'" % token
+			cursor.execute(query)
+			res = cursor.fetchone()
+		except Error as e:
+			return e
+		finally:
+			connection.close()
+		return res
+
+	@staticmethod
+	def get_email(user):
+		random.seed(time.time() * 256)
+		activation_code = sha256(bytes(
+			user + int(time.time() * 256).__str__() + random.randint(0, 2 ** 20).__str__() + 'email activation',
+			encoding='utf-8'
+		)).hexdigest()
+
+		DB.query("UPDATE users SET activation_code='%s' WHERE name='%s'" % (activation_code, user))
+
+		connection = DB.connect()
+		try:
+			cursor = connection.cursor()
+			query = "SELECT email, activation_code FROM users WHERE name='%s'" % user
+			cursor.execute(query)
+			res = cursor.fetchone()
+		except Error as e:
+			return e
+		finally:
+			connection.close()
+		return res

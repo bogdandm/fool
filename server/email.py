@@ -1,29 +1,27 @@
 from smtplib import SMTP_SSL as SMTP
 from email.mime.text import MIMEText
 
+SMTPServer = 'smtp.gmail.com'
+sender = 'fool.online.server@gmail.com'
+USERNAME = "fool.online.server"
+PASSWORD = "fool_server"
+text_subtype = 'plain'
 
-class Email:
-	SMTPServer = 'smtp.gmail.com'
-	sender = 'fool.online.server@gmail.com'
-	USERNAME = "fool.online.server"
-	PASSWORD = "fool_server"
-	text_subtype = 'plain'
 
-	@staticmethod
-	def send_email(message, subject, to):
+def send_email(message, subject, to):
+	try:
+		msg = MIMEText(message, text_subtype)
+		msg['Subject'] = subject
+		msg['From'] = sender
+
+		conn = SMTP(SMTPServer)
+		conn.set_debuglevel(False)
+		conn.login(USERNAME, PASSWORD)
 		try:
-			msg = MIMEText(message, Email.text_subtype)
-			msg['Subject'] = subject
-			msg['From'] = Email.sender  # some SMTP servers will do this automatically, not all
+			res = conn.sendmail(sender, to, msg.as_string())
+		finally:
+			conn.close()
 
-			conn = SMTP(Email.SMTPServer)
-			conn.set_debuglevel(False)
-			conn.login(Email.USERNAME, Email.PASSWORD)
-			try:
-				res = conn.sendmail(Email.sender, to, msg.as_string())
-			finally:
-				conn.close()
-
-		except Exception as e:
-			return e
-		return res
+	except Exception as e:
+		return e
+	return res
