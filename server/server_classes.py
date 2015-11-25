@@ -136,7 +136,7 @@ class RoomPvP(Room):
 		if card == -1:
 			self.game.switch_turn()
 
-		if self.game.can_play() is not None:
+		if not self.game.can_continue_turn() and self.game.can_play() is not None:
 			self.send_changes()
 			return 'END'
 		# wait for defense or attack
@@ -159,7 +159,7 @@ class RoomPvP(Room):
 		if card == -1:
 			self.game.switch_turn()
 
-		if self.game.can_play() is not None:
+		if not self.game.can_continue_turn() and self.game.can_play() is not None:
 			self.send_changes()
 			return 'END'
 		# wait for attack

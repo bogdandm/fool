@@ -362,15 +362,15 @@ class Game:
 				self.log.flush()
 
 	def can_continue_turn(self) -> bool:
-		if self.table:
+		"""if self.table:
 			if self.table[-1][1] is None:
 				if not self.hand[not self.turn]:
 					return False
 			elif not self.hand[self.turn]:
 				# Если закончились карты
-				return False
-
-		elif not self.hand[self.turn] or not self.hand[not self.turn]:
+				return False"""
+		# elif
+		if not self.hand[self.turn] or not self.hand[not self.turn]:
 			# Если закончились карты
 			return False
 		if not self.continue_turn:
@@ -390,7 +390,6 @@ class Game:
 							return True
 		else:
 			# Возможно защищаться
-
 			tmp = self.table[-1]
 			for card in self.hand[not self.turn]:
 				if card.more(tmp[0], self.trump_suit):
@@ -400,7 +399,6 @@ class Game:
 	def can_play(self, easy=False):
 		la = len(self.hand[self.turn])
 		ld = len(self.hand[not self.turn])
-
 
 		if not easy:
 			need_cards = ((6 - la) if la < 6 else 0) + 1
@@ -417,7 +415,7 @@ class Game:
 		# если у атакуещего нет карт и на столе есть не побитые карты
 
 		# TODO: переделать под другую механику взятия карт в конце игры
-		if easy and la and ld:
+		if la and ld:
 			return None
 		elif not easy and (not la and ld and available_cards or
 								 available_cards and need_cards <= available_cards):

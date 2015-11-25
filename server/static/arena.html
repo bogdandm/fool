@@ -122,8 +122,8 @@
                 for (var i = 0; i < jsonData.data.length; i++) {
                     applyChange(jsonData.data[i]);
                 }
-                if (data.turn == myHand) setTimeout(readyAttack, 0);
-                else setTimeout(readyDefense, 0);
+                if (data.turn == myHand) readyAttack();
+                else readyDefense();
             }
         }
 
@@ -207,8 +207,8 @@
                 console.log('click ' + eventObject.data.card);
                 $.ajax({
                     dataType: 'text',
-                    url: '/api/attack?card=' + eventObject.data.card,
-                    success: disableAllCards
+                    url: '/api/attack?card=' + eventObject.data.card
+                    // success: disableAllCards
                 });
             }
 
@@ -252,8 +252,8 @@
                 console.log('click ' + eventObject.data.card);
                 $.ajax({
                     dataType: 'text',
-                    url: '/api/defense?card=' + eventObject.data.card,
-                    success: disableAllCards
+                    url: '/api/defense?card=' + eventObject.data.card
+                    // success: disableAllCards
                 });
             }
 
@@ -261,12 +261,15 @@
                 var hand2 = $('#hand2');
                 var card_jQ;
                 if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
-                    card_jQ = hand2.find('.card').eq(index).removeClass('on');
+                    card_jQ = hand2.find('.card').eq(index);
                 else
-                    card_jQ = hand2.find('.card').eq(index + 1).removeClass('on');
+                    card_jQ = hand2.find('.card').eq(index + 1);
                 card_jQ.removeClass('on').unbind('click');
-                if (!wait && data.attack.length && more(card, data.attack[data.attack.length - 1]))
+                if (!wait && data.attack.length && more(card, data.attack[data.attack.length - 1])) {
                     card_jQ.click({card: index}, onCardClick).addClass('on');
+                    console.log("addClass('on')");
+                    console.log(card_jQ);
+                }
             });
 
             var cancelCard = $("#cancel_card");

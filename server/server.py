@@ -282,7 +282,7 @@ class Server:
 			if user == 'AI':
 				return "/static_/svg/ic_computer_24px_white.svg"
 			file_ext = DB.check_user(user)[2]
-			if file_ext is not None:
+			if file_ext is not None and file_ext != 'None':
 				return "/static/avatar/{user_name}{file_ext}".format(user_name=user, file_ext=file_ext)
 			else:
 				if request.args.get('source') == 'menu':

@@ -1,6 +1,5 @@
 TODO(bug)+?: Иногда нет сообщения о выигрыше/проигрыше
-TODO(bug)+-: Не отбрабатывает ready*() в arena.html?mode=1
-			 +Закрыто костылем setTimeout(readyAttack, 0);
+TODO(bug)+: Не отбрабатывает ready*()
 
 TODO(major): Страница аккаунта
 	TODO(major): Смена пароля
