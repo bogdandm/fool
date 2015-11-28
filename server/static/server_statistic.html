@@ -17,7 +17,10 @@
         var ping_timer;
         var request_timer;
         var global_timer;
+        var sessions_on = true;
+        var rooms_on = true;
         var sessions = {};
+        var rooms = {};
 
         $(function () {
             $('button.hide').click(function () {
@@ -41,6 +44,14 @@
                         else
                             request_timer = setInterval(ping, 1000);
                         break;
+
+                    case 'rooms_box':
+                        rooms_on = !rooms_on;
+                        break;
+
+                    case 'sessions_box':
+                        sessions_on = !sessions_on;
+                        break;
                 }
             });
 
@@ -55,19 +66,20 @@
                 }
             }).val(5);
 
-            /**Highcharts.setOptions({
+            Highcharts.setOptions({
                 colors: ['#5CAEF2']
-            });*/
+            });
 
             initPing();
             initRequest();
             updateSessionsTable();
+            updateRoomsTable();
             global_timer = setInterval(updateAll, parseInt($('#timer_value_input').val(), 10) * 1000);
         });
 
         function updateAll() {
-            console.log(1);
-            updateSessionsTable();
+            if (rooms_on) setTimeout(updateRoomsTable, 0);
+            if (sessions_on) setTimeout(updateSessionsTable, 0);
         }
 
         function addPingPoint(point) {
@@ -163,12 +175,45 @@
             request_timer = setInterval(getRequestPerSec, 1000);
         }
 
+        function updateRoomsTable() {
+            $.ajax({
+                url: '/api/get_rooms',
+                success: function (data) {
+                    var roomsBox = $('#rooms_box');
+                    roomsBox.find('table tr:not(:first)').remove();
+                    JSON.parse(data).forEach(function (item) {
+                        /** @namespace item.id */
+                        /** @namespace item.user1 */
+                        /** @namespace item.user2 */
+                        /** @namespace item.type */
+                        /** @namespace item.game_stage */
+                        var tr = $('#rooms_box').find('table').append('<tr></tr>').find('tr:last');
+                        tr.attr('id_', item.id);
+                        tr.append('<td>' + item.type + '</td>');
+                        tr.append('<td>' + item.user1 + '</td>');
+                        tr.append('<td>' + item.user2 + '</td>');
+                        tr.append('<td>' + item.game_stage + '</td>');
+
+                        rooms[item.id] = item;
+                    });
+
+                    if (!roomsBox.find('button.hide > img').hasClass('hide'))
+                        roomsBox.css({width: ''});
+                    roomsBox.css({width: roomsBox.width()});
+                    roomsBox.find('.title').addClass('update');
+                    setTimeout(function () {
+                        roomsBox.find('.title').removeClass('update');
+                    }, 500)
+                }
+            })
+        }
+
         function updateSessionsTable() {
             $.ajax({
                 url: '/api/get_sessions',
                 success: function (data) {
-                    var roomsBox = $('#rooms_box');
-                    roomsBox.find('table tr:not(:first)').remove();
+                    var sessions_box = $('#sessions_box');
+                    sessions_box.find('table tr:not(:first)').remove();
                     JSON.parse(data).forEach(function (item) {
                         /** @namespace item.id */
                         /** @namespace item.name */
@@ -178,7 +223,7 @@
                         /** @namespace item.queue */
                         /** @namespace item.room */
                         /** @namespace item.room_id */
-                        var tr = $('#rooms_box').find('table').append('<tr></tr>').find('tr:last');
+                        var tr = $('#sessions_box').find('table').append('<tr></tr>').find('tr:last');
                         tr.attr('id_', item.id);
                         tr.append('<td>' + item.name + '</td>');
                         tr.append('<td>' + item.ip + '</td>');
@@ -190,12 +235,12 @@
                         sessions[item.id] = item;
                     });
 
-                    if (!roomsBox.find('button.hide > img').hasClass('hide'))
-                        roomsBox.css({width: ''});
-                    roomsBox.css({width: roomsBox.width()});
-                    roomsBox.find('.title').addClass('update');
+                    if (!sessions_box.find('button.hide > img').hasClass('hide'))
+                        sessions_box.css({width: ''});
+                    sessions_box.css({width: sessions_box.width()});
+                    sessions_box.find('.title').addClass('update');
                     setTimeout(function () {
-                        roomsBox.find('.title').removeClass('update');
+                        sessions_box.find('.title').removeClass('update');
                     }, 500)
                 }
             })
@@ -252,6 +297,25 @@
     </div>
 
     <div id="rooms_box" class="standard-box">
+        <div class="title">
+            <button class="hide">
+                <img src="/static_/svg/ic_expand_more_24px.svg">
+            </button>
+            <span> Игровые комнаты </span>
+        </div>
+        <div>
+            <table>
+                <tr>
+                    <th>Type</th>
+                    <th>User 1</th>
+                    <th>User 2</th>
+                    <th>Cards remain</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div id="sessions_box" class="standard-box">
         <div class="title">
             <button class="hide">
                 <img src="/static_/svg/ic_expand_more_24px.svg">

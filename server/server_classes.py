@@ -1,21 +1,21 @@
 import time
-from random import randint
+from datetime import datetime, timedelta
 from hashlib import sha256
 from json import dumps
-from datetime import datetime, timedelta
+from random import randint
 from threading import Thread
 
 import gevent
 from flask import Response, Request
 
 import server.const as const
-from engine.engine import Game
 from engine.ai import AI
+from engine.engine import Game
 from server.database import DB
 
 
 class Session:
-	def __init__(self, user, activated, id_=None, admin=False, dict_data: dict=None):
+	def __init__(self, user, activated, id_=None, admin=False, dict_data: dict = None):
 		self.user = user
 		self.activated = bool(activated)
 		self.admin = admin
@@ -51,6 +51,18 @@ class Session:
 
 	def update_activation_status(self):
 		self.activated = bool(DB.check_user(self.user)[3])
+
+	def to_json(self) -> dict:
+		return {
+			'id': self.id,
+			'name': self.user,
+			'ip': self['ip'] if 'ip' in self.data else 'None',
+			'queue': '&lt;Queue&gt;' if 'msg_queue' in self.data else 'None',
+			'room': '&lt;Room&gt;' if 'cur_room' in self.data else 'None',
+			'room_id': self['cur_room'].id.__str__() if 'cur_room' in self.data else 'None',
+			'activated': bool(self.activated),
+			'admin': bool(self.admin)
+		}
 
 
 class Room:
@@ -120,9 +132,18 @@ class Room:
 	def is_ready(self):
 		return self.players[0] is not None and self.players[1] is not None
 
+	def to_json(self) -> dict:
+		return {
+			'id': self.id,
+			'type': 'PvP' if self.type == const.MODE_PVP else 'PvE',
+			'user1': self.players[0].user if self.players[0] else 'None',
+			'user2': (self.players[1].user if self.players[1] else 'None') if self.type == const.MODE_PVP else 'AI',
+			'game_stage': self.game.set.remain()
+		}
+
 
 class RoomPvP(Room):
-	def __init__(self, player1: Session=None, player2: Session=None):
+	def __init__(self, player1: Session = None, player2: Session = None):
 		super().__init__(player1, player2)
 		self.queues = [player1['msg_queue'] if player1 is not None else None,
 					   player2['msg_queue'] if player2 is not None else None]

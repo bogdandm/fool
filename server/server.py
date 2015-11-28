@@ -8,16 +8,19 @@ from flask import Flask, Response, make_response, request, redirect, render_temp
 from gevent.queue import Queue
 
 import server.const as const
-import server.email as Email
+import server.email as email_
 from server.database import DB
 from server.server_classes import RoomPvE, RoomPvP, ServerCache, Session, Logger
 
 
 # TODO: write session documentation
 class Server:
-	service_pages = ['\/api\/ping(\?data=[0-9]+)?$',
-					 '\/api\/getRequestPerSec$',
-					 '\/api\/get_sessions(\?id=.+)?$']
+	service_pages = [
+		'\/api\/ping(\?data=[0-9]+)?$',
+		'\/api\/getRequestPerSec$',
+		'\/api\/get_sessions(\?(id=[0-9a-z]+|name=[a-zA-Z0-9_]+))?$',
+		'\/api\/get_rooms(\?id=.+)?$'
+	]
 
 	def __init__(self, ip, domain=None):
 		self.ip = ip
@@ -31,9 +34,9 @@ class Server:
 		self.sessions_by_user_name = dict()
 		if res is not None:
 			for row in res:
-				s=Session(*row)
+				s = Session(*row)
 				self.sessions[row[2]] = s
-				self.sessions_by_user_name[s.user]=s
+				self.sessions_by_user_name[s.user] = s
 		self.rooms = dict()
 		self.logger = Logger()
 		self.logger.write_msg('==Server run at %s==' % ip)
@@ -42,10 +45,13 @@ class Server:
 		def after_request(response):
 			session = self.get_session(request)
 			if session:
-				session['ip']=request.remote_addr
-			for str in self.service_pages:
-				if search(str, request.url):
-					break
+				session['ip'] = request.remote_addr
+			if const.FILTRATE_REQUEST_FOR_LOG:
+				for item in self.service_pages:
+					if search(item, request.url):
+						break
+				else:
+					self.logger.write_record(request, response)
 			else:
 				self.logger.write_record(request, response)
 			return response
@@ -81,7 +87,7 @@ class Server:
 			# TODO: rewrite documentation
 			return redirect('/static/api_methods.html')
 
-		@self.app.route('/arena')  #static; need: get@mode
+		@self.app.route('/arena')  # static; need: get@mode
 		def send_arena():
 			return redirect('/static/arena.html?mode=' + request.args.get('mode'))
 
@@ -109,13 +115,13 @@ class Server:
 			if result is None:
 				return 'Bad token'
 
-			s = Session(result[0], result[3])
-			self.sessions[s.get_id()] = s
-			s['avatar'] = result[2]
-			DB.add_session(s, result[1])
+			session = Session(result[0], result[3])
+			self.sessions[session.get_id()] = session
+			session['avatar'] = result[2]
+			DB.add_session(session, result[1])
 
 			response = redirect('/')
-			s.add_cookie_to_resp(response)
+			session.add_cookie_to_resp(response)
 			return response
 
 		@self.app.route('/resend_email')  # need: session
@@ -125,7 +131,7 @@ class Server:
 			else:
 				return make_response('Fail', 400)
 			(email, activation_token) = DB.get_email(session.user)
-			Email.send_email(
+			email_.send_email(
 				"Для подтвеждения регистрации пожалуйста перейдите по ссылке "
 				"http://{domain}/activate_account?token={token}".format(
 					domain=(self.domain if self.domain is not None else self.ip),
@@ -349,13 +355,13 @@ class Server:
 
 				(result2, uid, file_ext, activated) = DB.check_user(name, sha256)
 				if result2:
-					s = Session(name, activated)
-					self.sessions[s.get_id()] = s
-					s['avatar'] = file_ext
-					DB.add_session(s, uid)
-					s.add_cookie_to_resp(response)
+					session = Session(name, activated)
+					self.sessions[session.get_id()] = session
+					session['avatar'] = file_ext
+					DB.add_session(session, uid)
+					session.add_cookie_to_resp(response)
 
-					Email.send_email(
+					email_.send_email(
 						"Для подтвеждения регистрации пожалуйста перейдите по ссылке "
 						"http://{domain}/activate_account?token={token}".format(
 							domain=(self.domain if self.domain is not None else self.ip),
@@ -379,7 +385,6 @@ class Server:
 				response.headers["Content-type"] = "text/plain"
 				return response
 
-
 			user_name = request.form.get('user_name')
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
@@ -387,7 +392,7 @@ class Server:
 			if result:
 
 				if user_name in self.sessions_by_user_name:
-					session  = self.sessions_by_user_name[user_name]
+					session = self.sessions_by_user_name[user_name]
 				else:
 					session = Session(user_name, activated, admin=admin)
 					self.sessions[session.get_id()] = session
@@ -441,18 +446,22 @@ class Server:
 			if session:
 				if self.get_session(request).admin:
 					result = []
-					for id, s in self.sessions.items():
-						s_dict = {
-							'id': id,
-							'name': s.user,
-							'ip': s['ip'] if 'ip' in s.data else 'None',
-							'queue': '&lt;Queue&gt;' if 'msg_queue' in s.data else 'None',
-							'room': '&lt;Room&gt;' if 'cur_room' in s.data else 'None',
-							'room_id': s['cur_room'].id.__str__() if 'cur_room' in s.data else 'None',
-							'activated': bool(s.activated),
-							'admin': bool(s.admin)
-						}
-						result.append(s_dict)
+					for sid, session in self.sessions.items():
+						result.append(session.to_json())
+					return dumps(result)
+				else:
+					return 'Permission denied'
+			else:
+				return redirect('/')
+
+		@self.app.route('/api/get_rooms')
+		def get_rooms():
+			session = self.get_session(request)
+			if session:
+				if self.get_session(request).admin:
+					result = []
+					for rid, room in self.rooms.items():
+						result.append(room.to_json())
 					return dumps(result)
 				else:
 					return 'Permission denied'

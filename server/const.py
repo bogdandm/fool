@@ -10,3 +10,5 @@ LOG_MAX_LENGTH = 1000
 MAX_LOG_LENGTH_AFTER_CLEANING = 200
 
 IMAGES = {'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/png': '.png'}
+
+FILTRATE_REQUEST_FOR_LOG = True
