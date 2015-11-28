@@ -77,8 +77,17 @@ main {
     transition-property: background-color;
 }
 
-.standard-box > .title.update {
+.update {
     background-color: #E6F6FF;
+}
+
+tr.update {
+    background-color: #1B2024;
+    color: white;
+}
+
+tr.update td {
+    color: inherit;
 }
 
 button.hide {
@@ -108,4 +117,15 @@ button.hide > img.hide {
 
 #ping_chart, #request_chart {
     height: 100px;
+}
+
+.room_link, .session_link {
+    text-decoration: underline;
+    cursor: pointer;
+    color: #001723;
+}
+
+.room_link:hover, .session_link:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-radius: 2px;
 }

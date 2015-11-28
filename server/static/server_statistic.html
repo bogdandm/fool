@@ -181,17 +181,24 @@
                 success: function (data) {
                     var roomsBox = $('#rooms_box');
                     roomsBox.find('table tr:not(:first)').remove();
-                    JSON.parse(data).forEach(function (item) {
+                    JSON.parse(data).forEach(function (item, i) {
                         /** @namespace item.id */
                         /** @namespace item.user1 */
                         /** @namespace item.user2 */
                         /** @namespace item.type */
                         /** @namespace item.game_stage */
-                        var tr = $('#rooms_box').find('table').append('<tr></tr>').find('tr:last');
+                        var tr = $('#rooms_box').find('table').append('<tr id="room' + i + '"></tr>').find('tr:last');
                         tr.attr('id_', item.id);
                         tr.append('<td>' + item.type + '</td>');
-                        tr.append('<td>' + item.user1 + '</td>');
-                        tr.append('<td>' + item.user2 + '</td>');
+
+                        var td = $('<td>' + item.user1 + '</td>');
+                        if (item.user1 != 'AI' && item.user1 != 'None') td.addClass('session_link');
+                        tr.append(td);
+
+                        td=$('<td>' + item.user2 + '</td>');
+                        if (item.user2 != 'AI' && item.user2 != 'None') td.addClass('session_link');
+                        tr.append(td);
+
                         tr.append('<td>' + item.game_stage + '</td>');
 
                         rooms[item.id] = item;
@@ -203,7 +210,21 @@
                     roomsBox.find('.title').addClass('update');
                     setTimeout(function () {
                         roomsBox.find('.title').removeClass('update');
-                    }, 500)
+                    }, 500);
+
+                    $('.session_link').click(function () {
+                        var name = $(this).text();
+                        var tr = $('#sessions_box').find('tr[name_=' + name + ']').addClass('update').
+                        css({transition: '0.5s easy', transitionProperty: 'background-color, color'});
+
+                        setTimeout(function () {
+                            tr.removeClass('update');
+                            setTimeout(function () {
+                                tr.css({transition: ''});
+                            }, 500);
+                        }, 1000);
+                        window.location.href = '#' + tr.attr('id');
+                    })
                 }
             })
         }
@@ -214,7 +235,7 @@
                 success: function (data) {
                     var sessions_box = $('#sessions_box');
                     sessions_box.find('table tr:not(:first)').remove();
-                    JSON.parse(data).forEach(function (item) {
+                    JSON.parse(data).forEach(function (item, i) {
                         /** @namespace item.id */
                         /** @namespace item.name */
                         /** @namespace item.ip */
@@ -223,14 +244,16 @@
                         /** @namespace item.queue */
                         /** @namespace item.room */
                         /** @namespace item.room_id */
-                        var tr = $('#sessions_box').find('table').append('<tr></tr>').find('tr:last');
-                        tr.attr('id_', item.id);
+                        var tr = $('#sessions_box').find('table').append('<tr id="session' + i + '"></tr>').find('tr:last');
+                        tr.attr('id_', item.id).attr('name_', item.name);
                         tr.append('<td>' + item.name + '</td>');
                         tr.append('<td>' + item.ip + '</td>');
                         tr.append('<td>' + item.activated + '</td>');
                         tr.append('<td>' + item.admin + '</td>');
                         tr.append('<td>' + item.queue + '</td>');
-                        tr.append($('<td>' + item.room + '</td>').attr('id_', item.room_id));
+                        var td = $('<td>' + item.room + '</td>').attr('id_', item.room_id);
+                        if (item.room != 'None') td.addClass('room_link');
+                        tr.append(td);
 
                         sessions[item.id] = item;
                     });
@@ -241,7 +264,21 @@
                     sessions_box.find('.title').addClass('update');
                     setTimeout(function () {
                         sessions_box.find('.title').removeClass('update');
-                    }, 500)
+                    }, 500);
+
+                    $('.room_link').click(function () {
+                        var id = $(this).attr('id_');
+                        var tr = $('#rooms_box').find('tr[id_=' + id + ']').addClass('update').
+                        css({transition: '0.5s easy', transitionProperty: 'background-color, color'});
+
+                        setTimeout(function () {
+                            tr.removeClass('update');
+                            setTimeout(function () {
+                                tr.css({transition: ''});
+                            }, 500);
+                        }, 1000);
+                        window.location.href = '#' + tr.attr('id');
+                    })
                 }
             })
         }

@@ -4,7 +4,7 @@
 
 function disableAllCards() {
     console.log('disableAllCards');
-    $('#hand2').find('.card').removeClass('on');
+    $('#hand2').find('.card').removeClass('on').unbind('click');
 }
 
 function attack(str) {

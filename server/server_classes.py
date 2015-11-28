@@ -83,6 +83,7 @@ class Room:
 		self.id = id_tmp
 		self.ids.add(id_tmp)
 		self.type = None
+		self.lock = False
 
 	def __hash__(self):
 		return self.id
@@ -134,7 +135,7 @@ class Room:
 
 	def to_json(self) -> dict:
 		return {
-			'id': self.id,
+			'id': self.id.__str__(),
 			'type': 'PvP' if self.type == const.MODE_PVP else 'PvE',
 			'user1': self.players[0].user if self.players[0] else 'None',
 			'user2': (self.players[1].user if self.players[1] else 'None') if self.type == const.MODE_PVP else 'AI',
@@ -150,15 +151,23 @@ class RoomPvP(Room):
 		self.type = const.MODE_PVP
 
 	def attack(self, player, card):
+		x = True
+		while self.lock:
+			if x: DB.write_log_msg('Lock fired')
+			x = False
+		self.lock = True
 		if player != self.game.turn:
+			self.lock = False
 			return "You can't attack now"
 		if not self.game.attack(card):
+			self.lock = False
 			return "Can't attack using this card"
 		if card == -1:
 			self.game.switch_turn()
 
 		if not self.game.can_continue_turn() and self.game.can_play() is not None:
 			self.send_changes()
+			self.lock = False
 			return 'END'
 		# wait for defense or attack
 		self.send_changes()
@@ -170,18 +179,27 @@ class RoomPvP(Room):
 				'inf': None
 			}]
 		}))
+		self.lock = False
 		return 'OK'
 
 	def defense(self, player, card):
+		x = True
+		while self.lock:
+			if x: DB.write_log_msg('Lock fired')
+			x = False
+		self.lock = True
 		if player == self.game.turn:
+			self.lock = False
 			return "You can't defense now"
 		if not self.game.defense(card):
+			self.lock = False
 			return "Can't defense using this card"
 		if card == -1:
 			self.game.switch_turn()
 
 		if not self.game.can_continue_turn() and self.game.can_play() is not None:
 			self.send_changes()
+			self.lock = False
 			return 'END'
 		# wait for attack
 		self.send_changes()
@@ -193,6 +211,7 @@ class RoomPvP(Room):
 				'inf': None
 			}]
 		}))
+		self.lock = False
 		return 'OK'
 
 	def add_player(self, player):
@@ -214,7 +233,7 @@ class RoomPvP(Room):
 		seed = int(time.time() * 256) ^ self.id + randint(1, 100)
 		self.game = Game(seed=sha256(
 			seed.to_bytes((seed.bit_length() // 8) + 1, byteorder='little')
-		).hexdigest())
+		).hexdigest(), log_on=const.ENABLE_GAME_LOGGING)
 
 
 class RoomPvE(Room):  # User - 0, AI - 1

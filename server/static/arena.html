@@ -7,6 +7,7 @@
           rel='stylesheet' type='text/css'>
     <link href="css/arena.css" rel="stylesheet">
     <link href="css/a.css" rel="stylesheet">
+    <link href="css/buttons.css" rel="stylesheet">
     <link href="css/chat.css" rel="stylesheet">
     <link href="css/rotating_card.css" rel="stylesheet">
     <script src="js/jquery-2.1.4.min.js"></script>
@@ -31,7 +32,7 @@
         var card_deleted = 100;
         var menu_opened = false;
         var wait = false;
-        var PvP = 1;
+        var end = false;
 
         function preCacheImages() { //data
             // TODO: don't work (why?)
@@ -81,11 +82,13 @@
                     'set': 52
                 };
                 card_deleted = 100;
+                end = false;
                 $('#hand1').empty();
                 $('#hand2').empty();
                 $('#arena').empty();
 
                 $('#wait').show();
+                $('#set').find('.card').show();
                 $('main').hide();
                 $('.chat .msgs .container').empty();
             } else {
@@ -191,6 +194,7 @@
                     $('#end-game').show().find('span.message').text('Ничья');
                 else
                     $('#end-game').show().find('span.message').text('Вы проиграли');
+                end = true;
             } else if (change['type'] == 'wait') {
                 wait = (change['player'] != myHand)
             }
@@ -205,6 +209,7 @@
         function readyAttack() { //ajax & handlers & visual
             function onCardClick(eventObject) {
                 console.log('click ' + eventObject.data.card);
+                disableAllCards();
                 $.ajax({
                     dataType: 'text',
                     url: '/api/attack?card=' + eventObject.data.card
@@ -250,6 +255,7 @@
         function readyDefense() { //ajax & handlers & visual
             function onCardClick(eventObject) {
                 console.log('click ' + eventObject.data.card);
+                disableAllCards();
                 $.ajax({
                     dataType: 'text',
                     url: '/api/defense?card=' + eventObject.data.card
@@ -267,8 +273,6 @@
                 card_jQ.removeClass('on').unbind('click');
                 if (!wait && data.attack.length && more(card, data.attack[data.attack.length - 1])) {
                     card_jQ.click({card: index}, onCardClick).addClass('on');
-                    console.log("addClass('on')");
-                    console.log(card_jQ);
                 }
             });
 
@@ -297,7 +301,13 @@
                     $(this).hide();
             });
 
-            $('#end-game-box').find('a.raised_color').attr('href', window.location.href);
+            $('#end-game-box').find('button.raised_color').click(function () {
+                if (end)
+                //noinspection SillyAssignmentJS
+                    window.location.href = window.location.href;
+                else
+                    $('#end-game').hide();
+            });
 
             $('#open-btn').click(function () {
                 $('#menu-container').css({top: menu_opened ? (30 - $('body').outerHeight()) : 0});
@@ -341,7 +351,7 @@
 <div id="end-game" class="background-of-msgbox">
     <div id="end-game-box" class="standard-box">
         <span class="message font500">???</span>
-        <a class="raised_color" href="">Начать новую игру</a>
+        <button class="raised_color">Начать новую игру</button>
         <span class="grey font300">или</span>
         <a href="/">Выйти в главное меню</a>
     </div>

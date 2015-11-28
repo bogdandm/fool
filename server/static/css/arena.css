@@ -85,7 +85,7 @@ html, body {
     color: #c2c2c2;
 }
 
-#end-game-box > a {
+#end-game-box > a, #end-game-box > button{
     display: inline-block;
     margin: 10px;
     text-align: center;
