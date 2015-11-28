@@ -7,7 +7,11 @@ from server.server import Server
 
 def get_ip():
 	import subprocess
-	res = subprocess.Popen("curl.exe ifconfig.co", shell=True, stdout=subprocess.PIPE).stdout.read()
+	res = subprocess.Popen("curl.exe ifconfig.co --connect-timeout 5",
+						   shell=True, stdout=subprocess.PIPE).stdout.read()
+	if not res:
+		res = subprocess.Popen("curl.exe ifconfig.me --connect-timeout 5",
+						   shell=True, stdout=subprocess.PIPE).stdout.read()
 	return res.decode()[:-1]
 
 

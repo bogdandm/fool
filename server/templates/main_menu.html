@@ -139,6 +139,11 @@
         <div class="menu-item" group="1" container-name="new-games">Новая игра</div>
         <div class="menu-item" group="1" container-name="friends">Друзья (coming soon)</div>
         <div class="menu-item" group="1">Статистика (coming soon)</div>
+        {% if admin %}
+        <div class="menu-item" group="1">
+            <a href="/static/server_statistic.html">Статистика сервера</a>
+        </div>
+        {% endif %}
         <div id="logout" class="menu-item" group="1">Выйти из аккаунта</div>
         <div class="selection"></div>
     </div>

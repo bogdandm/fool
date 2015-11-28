@@ -5,7 +5,6 @@ from hashlib import sha256
 from mysql.connector import connect, Error
 
 
-# Полностью статический класс для взаимодействия с БД
 class DB:
 	config = {
 		'user': 'python_flask',
@@ -33,27 +32,27 @@ class DB:
 			return True
 
 	@staticmethod
-	def check_user(user_name: str, password: str=None) -> (bool, int):
+	def check_user(user_name: str, password: str=None) -> (bool, int, str, bool, bool):
 		if user_name is None:
 			return False
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "SELECT id, file_extension, is_activated FROM users WHERE name='%s'" % user_name
+			query = "SELECT id, file_extension, is_activated, is_admin FROM users WHERE name='%s'" % user_name
 			if password is not None:
 				query += "and pass_sha256='%s'" % password
 			cursor.execute(query)
 			row = cursor.fetchone()
 			if row is not None:
-				(uid, file, activated) = row
+				(uid, file, activated, admin) = row
 			else:
-				uid = file = activated = None
+				uid = file = activated = admin = None
 			res = (cursor.rowcount > 0)
 		except Error as e:
 			return e
 		finally:
 			connection.close()
-		return (res, uid, file, activated)
+		return (res, uid, file, activated, admin)
 
 	@staticmethod
 	def check_email(email: str) -> bool:
@@ -91,11 +90,15 @@ class DB:
 		DB.query("INSERT INTO sessions VALUES ('%s', %i)" % (s.get_id(), uid))
 
 	@staticmethod
+	def delete_session(id):
+		DB.query("DELETE FROM sessions WHERE id='%s'" % id)
+
+	@staticmethod
 	def get_sessions():
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "SELECT users.name, users.is_activated, sessions.id" \
+			query = "SELECT users.name, users.is_activated, sessions.id, users.is_admin" \
 					" FROM sessions INNER JOIN users ON users.id = sessions.user_id"
 			cursor.execute(query)
 			res = cursor.fetchall()

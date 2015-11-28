@@ -15,9 +15,10 @@ from server.database import DB
 
 
 class Session:
-	def __init__(self, user, activated, id_=None, dict_data: dict=None):
+	def __init__(self, user, activated, id_=None, admin=False, dict_data: dict=None):
 		self.user = user
 		self.activated = bool(activated)
+		self.admin = admin
 		if id_ is None:
 			self.id = sha256(bytes(
 				user + int(time.time() * 256 * 1000).__str__() + randint(0, 2 ** 20).__str__(),
@@ -60,12 +61,11 @@ class Room:
 		while id_tmp in self.ids:
 			id_tmp = randint(0, 2 ** 100)
 		seed = int(time.time() * 256) ^ id_tmp
-		self.game = Game(
-			seed=sha256(
-				seed.to_bytes((seed.bit_length() // 8) + 1, byteorder='little')
-			).hexdigest(),
-			log_on=const.ENABLE_GAME_LOGGING
-		)
+		seed = sha256(
+			seed.to_bytes((seed.bit_length() // 8) + 1, byteorder='little')
+		).hexdigest()
+		# seed='315af9e74414592d4ca337ec02bb034680e380ff7b9e1a7027ecd4d6a2576d47'
+		self.game = Game(seed=seed, log_on=const.ENABLE_GAME_LOGGING)
 		self.players = [player1, player2]
 		self.queues = []
 		self.id = id_tmp
@@ -212,24 +212,29 @@ class RoomPvE(Room):  # User - 0, AI - 1
 		ai.end_game_ai('U', card)
 		if not self.game.attack(card, ai=[ai]):
 			return "Can't attack using this card"
-		if self.game.can_play() is not None:
-			self.send_changes()
-			return 'END'
 		if card == -1:
 			self.game.switch_turn(ai=[ai])
-			x = ai.attack()
 			if self.game.can_play() is not None:
 				self.send_changes()
 				return 'END'
+
+			x = ai.attack()
 			self.game.attack(x, ai=[ai])
+			if self.game.can_play() is not None:
+				self.send_changes()
+				return 'END'
 		else:
+			if self.game.can_play() is not None:
+				self.send_changes()
+				return 'END'
+
 			x = ai.defense(self.game.table[-1][0])
 			self.game.defense(x, ai=[ai])
+			if x == -1:
+				self.game.switch_turn(ai=[ai])
 			if self.game.can_play() is not None:
 				self.send_changes()
 				return 'END'
-			if x == -1:
-				self.game.switch_turn(ai=[ai])
 		self.send_changes()
 		return 'OK'
 
@@ -238,19 +243,23 @@ class RoomPvE(Room):  # User - 0, AI - 1
 		ai.end_game_ai('U', card)
 		if not self.game.defense(card, ai=[ai]):
 			return "Can't attack using this card"
+		if card == -1:
+			self.game.switch_turn(ai=[ai])
 		if self.game.can_play() is not None:
 			self.send_changes()
 			return 'END'
-		if card == -1:
-			self.game.switch_turn(ai=[ai])
 
 		x = ai.attack()
 		self.game.attack(x, ai=[ai])
 		if self.game.can_play() is not None:
 			self.send_changes()
 			return 'END'
+
 		if x == -1:
 			self.game.switch_turn(ai=[ai])
+		if self.game.can_play() is not None:
+			self.send_changes()
+			return 'END'
 
 		self.send_changes()
 		return 'OK'
@@ -287,7 +296,7 @@ class Logger:
 				time.sleep(1)
 
 		self.thread_run = True
-		self.thread = Thread(target=timer_handler).start()
+		self.thread = Thread(target=timer_handler, name="RequestPerSecTimer").start()
 
 	def write_record(self, request: Request, response: Response):
 		self.request_in_last_sec += 1

@@ -4,6 +4,7 @@ body, html {
     height: 100%;
     width: 100%;
     overflow: hidden;
+    background-color: #F0F0F0;
 }
 
 * {
@@ -25,10 +26,10 @@ header {
 
 main {
     position: relative;
-    z-index: 0;
+    box-sizing: border-box;
     width: 100%;
     height: calc(100% - 60px - 25px);
-    background-color: #F0F0F0;
+    z-index: 0;
 }
 
 footer {

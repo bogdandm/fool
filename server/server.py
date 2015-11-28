@@ -1,39 +1,53 @@
 # -*- coding: utf-8 -*-
 import hashlib
-from re import search
 from json import dumps
+from re import search
 
 import gevent
-from gevent.queue import Queue
 from flask import Flask, Response, make_response, request, redirect, render_template
+from gevent.queue import Queue
 
 import server.const as const
-from server.server_classes import RoomPvE, RoomPvP, ServerCache, Session, Logger
-from server.database import DB
 import server.email as Email
+from server.database import DB
+from server.server_classes import RoomPvE, RoomPvP, ServerCache, Session, Logger
 
 
 # TODO: write session documentation
 class Server:
+	service_pages = ['\/api\/ping(\?data=[0-9]+)?$',
+					 '\/api\/getRequestPerSec$',
+					 '\/api\/get_sessions(\?id=.+)?$']
+
 	def __init__(self, ip, domain=None):
 		self.ip = ip
-		self.domain = domain
+		self.domain = domain if domain != '' else None
 		self.app = Flask(__name__)
 		self.app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
 		self.cache = ServerCache(const.STATIC_FOLDER, const.SERVER_FOLDER)
 		res = DB.get_sessions()
 		self.sessions = dict()
+		self.sessions_by_user_name = dict()
 		if res is not None:
 			for row in res:
-				self.sessions[row[2]] = Session(*row)
+				s=Session(*row)
+				self.sessions[row[2]] = s
+				self.sessions_by_user_name[s.user]=s
 		self.rooms = dict()
 		self.logger = Logger()
 		self.logger.write_msg('==Server run at %s==' % ip)
 
 		@self.app.after_request
 		def after_request(response):
-			self.logger.write_record(request, response)
+			session = self.get_session(request)
+			if session:
+				session['ip']=request.remote_addr
+			for str in self.service_pages:
+				if search(str, request.url):
+					break
+			else:
+				self.logger.write_record(request, response)
 			return response
 
 		@self.app.route('/static_/svg/<path:path>')  # static
@@ -54,7 +68,7 @@ class Server:
 			session = self.get_session(request)
 			if session:
 				name = session.user
-				return render_template('main_menu.html', user_name=name)
+				return render_template('main_menu.html', user_name=name, admin=bool(session.admin))
 			elif session is None:
 				return redirect('/static/login.html')
 			else:
@@ -64,13 +78,29 @@ class Server:
 
 		@self.app.route('/api')  # static
 		def send_api_methods():
-			return redirect('/static/api_methods.html')  # TODO: rewrite documentation
+			# TODO: rewrite documentation
+			return redirect('/static/api_methods.html')
 
-		@self.app.route('/arena')  # need: get@mode
+		@self.app.route('/arena')  #static; need: get@mode
 		def send_arena():
-			return redirect('/static/arena.html?mode=' + request.args['mode'])
+			return redirect('/static/arena.html?mode=' + request.args.get('mode'))
 
-		@self.app.route('/activate_account')  # need: -
+		@self.app.route('/static/server_statistic.html')  # static
+		def send_server_statistic_file():
+			session = self.get_session(request)
+			if session:
+				if self.get_session(request).admin:
+					file = open(const.SERVER_FOLDER + const.STATIC_FOLDER + '/server_statistic.html',
+								encoding='utf-8').read()
+					response = make_response(file)
+					response.headers["Content-type"] = "text/html"
+					return response
+				else:
+					return 'Permission denied'
+			else:
+				return redirect('/')
+
+		@self.app.route('/activate_account')  # need: get@token
 		def activate_account():
 			token = request.args.get('token')
 			if not search('^[a-zA-Z0-9]+$', token):
@@ -131,7 +161,7 @@ class Server:
 				return 'Fail'
 			return Response(gen(request.cookies['sessID']), mimetype="text/event-stream")
 
-		@self.app.route("/api/unsubscribe")  # need: session
+		@self.app.route("/api/unsubscribe")  # need: session@msg_queue
 		def unsubscribe():
 			session = self.get_session(request)
 			if not session:
@@ -143,13 +173,13 @@ class Server:
 			gevent.spawn(notify)
 			return 'OK'
 
-		@self.app.route("/api/join")  # need: session@queue, get@mode
+		@self.app.route("/api/join")  # need: session@msg_queue, get@mode
 		def join_room():
 			session = self.get_session(request)
 			if not self.get_session(request):
 				return 'Fail'
 
-			mode = int(request.args['mode'])
+			mode = int(request.args.get('mode'))
 			if mode == const.MODE_PVE:
 				room = RoomPvE(session)
 				self.rooms[room.id] = room
@@ -212,7 +242,7 @@ class Server:
 				return 'Fail'
 
 			room = session['cur_room']
-			card = int(request.args['card'])
+			card = int(request.args.get('card'))
 			result = room.attack(session['player_n'], card)
 			if result == 'END':
 				room_id = room.id
@@ -229,7 +259,7 @@ class Server:
 				return 'Fail'
 
 			room = session['cur_room']
-			card = int(request.args['card'])
+			card = int(request.args.get('card'))
 			result = room.defense(session['player_n'], card)
 			if result == 'END':
 				room_id = room.id
@@ -276,7 +306,7 @@ class Server:
 			return response
 
 		@self.app.route("/api/avatar", methods=['GET'])
-		# need: get@user; maybe: get@source = menu | any
+		# need: get@user; maybe: get@source := menu | any
 		def get_avatar():
 			user = request.args.get('user')
 			if user == 'AI':
@@ -339,7 +369,7 @@ class Server:
 				response.headers["Content-type"] = "text/plain"
 				return response
 			else:
-				pass  # TODO
+				return 'Error'
 
 		@self.app.route("/api/init_session", methods=['POST'])
 		# need: post@user_name, post@pass
@@ -349,19 +379,26 @@ class Server:
 				response.headers["Content-type"] = "text/plain"
 				return response
 
+
 			user_name = request.form.get('user_name')
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
-			(result, uid, file_ext, activated) = DB.check_user(request.form.get('user_name'), sha256)
+			(result, uid, file_ext, activated, admin) = DB.check_user(request.form.get('user_name'), sha256)
 			if result:
-				s = Session(user_name, activated)
-				self.sessions[s.get_id()] = s
-				s['avatar'] = file_ext
-				DB.add_session(s, uid)
+
+				if user_name in self.sessions_by_user_name:
+					session  = self.sessions_by_user_name[user_name]
+				else:
+					session = Session(user_name, activated, admin=admin)
+					self.sessions[session.get_id()] = session
+					self.sessions_by_user_name[user_name] = session
+					session['avatar'] = file_ext
+					DB.add_session(session, uid)
+				session['ip'] = request.remote_addr
 
 				response = make_response('True')
 				response.headers["Content-type"] = "text/plain"
-				s.add_cookie_to_resp(response)
+				session.add_cookie_to_resp(response)
 				return response
 			else:
 				response = make_response('False')
@@ -377,8 +414,50 @@ class Server:
 
 			response = make_response('OK')
 			session.delete_cookie(response)
-			del self.sessions[request.cookies['sessID']]
+			DB.delete_session(session.id)
+			del self.sessions_by_user_name[session.user]
+			del self.sessions[session.id]
 			return response
+
+		@self.app.route('/api/ping')
+		def ping():
+			data = request.args.get('data')
+			return data if data is not None else 'Pong'
+
+		@self.app.route('/api/getRequestPerSec')
+		def get_request_per_sec():
+			session = self.get_session(request)
+			if session:
+				if self.get_session(request).admin:
+					return self.logger.time_log[-1].__str__()
+				else:
+					return 'Permission denied'
+			else:
+				return redirect('/')
+
+		@self.app.route('/api/get_sessions')
+		def get_sessions():
+			session = self.get_session(request)
+			if session:
+				if self.get_session(request).admin:
+					result = []
+					for id, s in self.sessions.items():
+						s_dict = {
+							'id': id,
+							'name': s.user,
+							'ip': s['ip'] if 'ip' in s.data else 'None',
+							'queue': '&lt;Queue&gt;' if 'msg_queue' in s.data else 'None',
+							'room': '&lt;Room&gt;' if 'cur_room' in s.data else 'None',
+							'room_id': s['cur_room'].id.__str__() if 'cur_room' in s.data else 'None',
+							'activated': bool(s.activated),
+							'admin': bool(s.admin)
+						}
+						result.append(s_dict)
+					return dumps(result)
+				else:
+					return 'Permission denied'
+			else:
+				return redirect('/')
 
 	def get_session(self, request_) -> Session:  # -> Session | False | None
 		if 'sessID' in request_.cookies and request_.cookies['sessID'] in self.sessions:

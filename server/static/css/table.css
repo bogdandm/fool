@@ -1,0 +1,33 @@
+table {
+    padding: 0;
+    margin: 0;
+    border-collapse: collapse;
+}
+
+tr:not(:first-child):hover {
+    background-color: #F0F0F0;
+}
+
+tr td {
+    border-top: 1px solid #F0F0F0;
+}
+
+th {
+    height: 56px;
+    padding: 0 25px;
+    color: #6e7375;
+    font-weight: 500;
+    font-size: 12pt;
+    text-align: left;
+    vertical-align: middle;
+}
+
+td {
+    height: 48px;
+    padding: 0 25px;
+    color: #1b2024;
+    font-weight: 400;
+    font-size: 13pt;
+    text-align: left;
+    vertical-align: middle;
+}
