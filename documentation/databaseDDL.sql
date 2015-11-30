@@ -1,18 +1,32 @@
-CREATE TABLE sessions
-(
-    id VARCHAR(300) PRIMARY KEY NOT NULL,
-    user_id BIGINT NOT NULL
+create TABLE log (
+    id bigint(20) not null,
+    msg varchar(8000),
+    url varchar(1024),
+    method varchar(100),
+    status_ varchar(1024),
+    ip varchar(20),
+    "time" timestamp not null default 'CURRENT_TIMESTAMP',
+    PRIMARY KEY (id)
 );
-CREATE TABLE users
-(
-    id BIGINT PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    name VARCHAR(64) NOT NULL,
-    pass_sha256 VARCHAR(300) NOT NULL,
-    is_admin TINYINT NOT NULL,
-    is_activated TINYINT DEFAULT 1 NOT NULL,
-    has_avatar TINYINT DEFAULT 0 NOT NULL,
-    email VARCHAR(1024)
+create TABLE sessions (
+    id varchar(300) not null,
+    user_id bigint(20) not null,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users (id)
 );
-ALTER TABLE sessions ADD FOREIGN KEY (user_id) REFERENCES users (id);
-CREATE UNIQUE INDEX unique_user_id ON sessions (user_id);
-CREATE UNIQUE INDEX unique_name ON users (name);
+CREATE UNIQUE INDEX unique_user_id ON sessions (user_id ASC);
+create TABLE users (
+    id bigint(20) not null,
+    name varchar(64) not null,
+    pass_sha256 varchar(300) not null,
+    is_admin tinyint(4) default '0',
+    is_activated tinyint(4) default '0',
+    has_avatar tinyint(1) not null default '0',
+    email varchar(1024),
+    activation_code varchar(300),
+    file_extension varchar(10),
+    PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX unique_activation_code ON users (activation_code ASC);
+CREATE UNIQUE INDEX unique_email ON users (email ASC);
+CREATE UNIQUE INDEX unique_name ON users (name ASC);

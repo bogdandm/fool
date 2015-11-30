@@ -353,7 +353,7 @@ class Server:
 			if result:
 				response = make_response('OK')
 
-				(result2, uid, file_ext, activated) = DB.check_user(name, sha256)
+				(result2, uid, file_ext, activated, admin) = DB.check_user(name, sha256)
 				if result2:
 					session = Session(name, activated)
 					self.sessions[session.get_id()] = session

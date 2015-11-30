@@ -151,10 +151,12 @@ class RoomPvP(Room):
 		self.type = const.MODE_PVP
 
 	def attack(self, player, card):
-		x = True
-		while self.lock:
-			if x: DB.write_log_msg('Lock fired')
-			x = False
+		#x = True
+		#while self.lock:
+			#if x: DB.write_log_msg('Lock fired')
+			#x = False
+			
+		if self.lock: DB.write_log_msg('Lock fired')
 		self.lock = True
 		if player != self.game.turn:
 			self.lock = False
@@ -183,10 +185,12 @@ class RoomPvP(Room):
 		return 'OK'
 
 	def defense(self, player, card):
-		x = True
-		while self.lock:
-			if x: DB.write_log_msg('Lock fired')
-			x = False
+		#x = True
+		#while self.lock:
+			#if x: DB.write_log_msg('Lock fired')
+			#x = False
+			
+		if self.lock: DB.write_log_msg('Lock fired')
 		self.lock = True
 		if player == self.game.turn:
 			self.lock = False
