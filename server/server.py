@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import hashlib
+import os
 from json import dumps
 from re import search
 
 import gevent
-from flask import Flask, Response, make_response, request, redirect, render_template
+from flask import Flask, Response, make_response, request, redirect, render_template, send_from_directory
 from gevent.queue import Queue
 
 import server.const as const
@@ -40,7 +41,7 @@ class Server:
 		self.rooms = dict()
 		self.logger = Logger()
 		self.logger.write_msg('==Server run at %s==' % ip)
-		self.seed=seed
+		self.seed = seed
 
 		@self.app.after_request
 		def after_request(response):
@@ -82,6 +83,34 @@ class Server:
 				session = self.sessions[request.cookies['sessID']]
 				session.update_activation_status()
 				return redirect('/static/errors/not_activated.html')
+
+		@self.app.route('/favicon.ico')  # static
+		def send_favicon():
+			return send_from_directory(
+				os.path.join(self.app.root_path, 'static'),
+				'favicon.ico', mimetype='image/vnd.microsoft.icon'
+			)
+
+		@self.app.errorhandler(404)
+		def page_not_found(e):
+			return send_from_directory(
+				os.path.join(self.app.root_path, 'static'),
+				'errors/404.html', mimetype='text/html'
+			), 404
+
+		@self.app.errorhandler(400)
+		def page_not_found(e):
+			return send_from_directory(
+				os.path.join(self.app.root_path, 'static'),
+				'errors/404.html', mimetype='text/html'
+			), 400
+
+		@self.app.errorhandler(500)
+		def page_not_found(e):
+			return send_from_directory(
+				os.path.join(self.app.root_path, 'static'),
+				'errors/404.html', mimetype='text/html'
+			), 500
 
 		@self.app.route('/api')  # static
 		def send_api_methods():
