@@ -86,14 +86,14 @@ function addCard2WithSort(card) {
     //data.trump_suit
     //hand.append(card);
     var i;
-    var cardValue = card.attr('value');
+    var cardWeight = parseInt(card.attr('weight'));
     var cardSuit = card.attr('suit');
     var hand = $('#hand2');
     if (cardSuit == data.trump_suit) {
         var trumpCards = hand.find('.card[suit=' + data.trump_suit + ']');
         if (trumpCards.length) {
             for (i = 0; i < trumpCards.length; i++) {
-                if (trumpCards.eq(i).attr('weight') > cardValue) {
+                if (cardWeight > parseInt(trumpCards.eq(i).attr('weight'))) {
                     trumpCards.eq(i).before(card);
                     return;
                 }
@@ -106,7 +106,7 @@ function addCard2WithSort(card) {
         var cards = hand.find('.card[suit=' + cardSuit + ']');
         if (cards.length) {
             for (i = 0; i < cards.length; i++) {
-                if (cards.eq(i).attr('weight') > cardValue) {
+                if (cardWeight > parseInt(cards.eq(i).attr('weight'))) {
                     cards.eq(i).before(card);
                     return;
                 }

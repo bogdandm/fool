@@ -68,16 +68,19 @@ class Session:
 class Room:
 	ids = set()
 
-	def __init__(self, player1=None, player2=None):
+	def __init__(self, player1=None, player2=None, seed=None):
 		id_tmp = randint(0, 2 ** 100)
 		while id_tmp in self.ids:
 			id_tmp = randint(0, 2 ** 100)
-		seed = int(time.time() * 256) ^ id_tmp
-		seed = sha256(
-			seed.to_bytes((seed.bit_length() // 8) + 1, byteorder='little')
-		).hexdigest()
+		if seed is None:
+			seed_ = int(time.time() * 256) ^ id_tmp
+			seed_ = sha256(
+				seed_.to_bytes((seed_.bit_length() // 8) + 1, byteorder='little')
+			).hexdigest()
+		else:
+			seed_ = seed
 		# seed='315af9e74414592d4ca337ec02bb034680e380ff7b9e1a7027ecd4d6a2576d47'
-		self.game = Game(seed=seed, log_on=const.ENABLE_GAME_LOGGING)
+		self.game = Game(seed=seed_, log_on=const.ENABLE_GAME_LOGGING)
 		self.players = [player1, player2]
 		self.queues = []
 		self.id = id_tmp
@@ -144,18 +147,18 @@ class Room:
 
 
 class RoomPvP(Room):
-	def __init__(self, player1: Session = None, player2: Session = None):
-		super().__init__(player1, player2)
+	def __init__(self, player1: Session = None, player2: Session = None, seed=None):
+		super().__init__(player1, player2, seed=seed)
 		self.queues = [player1['msg_queue'] if player1 is not None else None,
 					   player2['msg_queue'] if player2 is not None else None]
 		self.type = const.MODE_PVP
 
 	def attack(self, player, card):
-		#x = True
-		#while self.lock:
-			#if x: DB.write_log_msg('Lock fired')
-			#x = False
-			
+		# x = True
+		# while self.lock:
+		# if x: DB.write_log_msg('Lock fired')
+		# x = False
+
 		if self.lock: DB.write_log_msg('Lock fired')
 		self.lock = True
 		if player != self.game.turn:
@@ -185,11 +188,11 @@ class RoomPvP(Room):
 		return 'OK'
 
 	def defense(self, player, card):
-		#x = True
-		#while self.lock:
-			#if x: DB.write_log_msg('Lock fired')
-			#x = False
-			
+		# x = True
+		# while self.lock:
+		# if x: DB.write_log_msg('Lock fired')
+		# x = False
+
 		if self.lock: DB.write_log_msg('Lock fired')
 		self.lock = True
 		if player == self.game.turn:
@@ -242,8 +245,8 @@ class RoomPvP(Room):
 
 class RoomPvE(Room):  # User - 0, AI - 1
 	# don't have add_player method, because delete when player leave PvE room
-	def __init__(self, player: Session):
-		super().__init__(player)
+	def __init__(self, player: Session, seed=None):
+		super().__init__(player, seed=seed)
 		self.players[1] = AI(self.game, not const.PLAYER_HAND)
 		self.queues = [player['msg_queue']]
 		self.type = const.MODE_PVE

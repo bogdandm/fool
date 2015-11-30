@@ -22,7 +22,7 @@ class Server:
 		'\/api\/get_rooms(\?id=.+)?$'
 	]
 
-	def __init__(self, ip, domain=None):
+	def __init__(self, ip, domain=None, seed=None):
 		self.ip = ip
 		self.domain = domain if domain != '' else None
 		self.app = Flask(__name__)
@@ -40,6 +40,7 @@ class Server:
 		self.rooms = dict()
 		self.logger = Logger()
 		self.logger.write_msg('==Server run at %s==' % ip)
+		self.seed=seed
 
 		@self.app.after_request
 		def after_request(response):
@@ -187,7 +188,7 @@ class Server:
 
 			mode = int(request.args.get('mode'))
 			if mode == const.MODE_PVE:
-				room = RoomPvE(session)
+				room = RoomPvE(session, seed=self.seed)
 				self.rooms[room.id] = room
 				session['cur_room'] = room
 				session['player_n'] = const.PLAYER_HAND
@@ -198,7 +199,7 @@ class Server:
 					if room.type == const.MODE_PVP and not room.is_ready():
 						break
 				else:
-					room = RoomPvP()
+					room = RoomPvP(seed=self.seed)
 					self.rooms[room.id] = room
 
 				session['player_n'] = room.add_player(session)

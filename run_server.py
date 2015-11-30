@@ -18,7 +18,10 @@ def get_ip():
 if __name__ == "__main__":
 	outer_ip = get_ip()
 	ip = socket.gethostbyname_ex(socket.gethostname())[2][0]
-	flask_server = Server(ip, outer_ip)
+	flask_server = Server(
+		ip, outer_ip,
+		seed=None
+	)
 	print(ip)
 	print(outer_ip)
 	server = WSGIServer((ip, 80), flask_server.app)
