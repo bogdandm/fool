@@ -61,10 +61,14 @@ function addCard1(mode) {
 function addCard2(str, mode) {
     mode = mode || 'SET';
     var body = $('body');
-    var hand = $('#hand2');
+    //var hand = $('#hand2');
     var card = $('.hidden > .card').clone();
-    card.find('img').attr({src: "/static_/svg/" + str + ".svg"});
-    hand.append(card);
+    card.attr({
+        weight: getCardValue(str),
+        suit: getCardSuit(str)
+    }).find('img').attr({src: "/static_/svg/" + str + ".svg"});
+    addCard2WithSort(card);
+    //hand.append(card);
     if (mode == 'SET')
         card.attr({value: str}).css({left: body.width() * 1.1, top: -body.height() / 2});
     else if (mode == 'TABLE')
@@ -77,12 +81,51 @@ function addCard2(str, mode) {
     }, ((mode == 'SET') ? 1000 : 100));
 }
 
+function addCard2WithSort(card) {
+    //trump_max -> trump_min -> other_max -> other_min
+    //data.trump_suit
+    //hand.append(card);
+    var i;
+    var cardValue = card.attr('value');
+    var cardSuit = card.attr('suit');
+    var hand = $('#hand2');
+    if (cardSuit == data.trump_suit) {
+        var trumpCards = hand.find('.card[suit=' + data.trump_suit + ']');
+        if (trumpCards.length) {
+            for (i = 0; i < trumpCards.length; i++) {
+                if (trumpCards.eq(i).attr('weight') > cardValue) {
+                    trumpCards.eq(i).before(card);
+                    return;
+                }
+            }
+            trumpCards.last().after(card);
+        } else {
+            hand.prepend(card);
+        }
+    } else {
+        var cards = hand.find('.card[suit=' + cardSuit + ']');
+        if (cards.length) {
+            for (i = 0; i < cards.length; i++) {
+                if (cards.eq(i).attr('weight') > cardValue) {
+                    cards.eq(i).before(card);
+                    return;
+                }
+            }
+            cards.last().after(card);
+        } else {
+            hand.append(card);
+        }
+    }
+}
+
 function setTrump(str) {
     var card = $('#trump').find('.card');
     if (str != 'None') {
         card.find('.card_border').css({transform: ''});
         card.find('img').attr({src: "/static_/svg/" + str + ".svg"});
         data['trump_suit'] = getCardSuit(str);
+        var hand = $('#hand2');
+        hand.prepend(hand.find('.card[suit=' + data.trump_suit + ']'));
     }
     else {
         card.find('.card_border').css({transform: 'rotate(-90deg)'});
