@@ -97,6 +97,9 @@
                 $('main').show();
                 var jsonData = JSON.parse(e.data);
                 if (jsonData.you && jsonData.other) {
+                    /** @namespace jsonData.you */
+                    /** @namespace jsonData.other */
+                    /** @namespace jsonData.your_hand */
                     console.log(jsonData);
                     var u_n = $('.user-name');
                     u_n.eq(0).find('>span').text(jsonData.other);
@@ -117,11 +120,15 @@
                     });
 
                     return;
-                } else if (jsonData.msg && jsonData.from) {
+                } else if (jsonData.msg && jsonData.from && jsonData.hand) {
+                    /** @namespace jsonData.msg */
+                    /** @namespace jsonData.from */
+                    /** @namespace jsonData.hand */
                     receiveMsg(jsonData.msg, jsonData.from, jsonData.hand);
                     return;
                 }
 
+                /** @namespace jsonData.data */
                 clearCards();
                 for (var i = 0; i < jsonData.data.length; i++) {
                     applyChange(jsonData.data[i]);
@@ -222,11 +229,11 @@
                 var res = false;
                 var hand2 = $('#hand2');
                 var cards = data.attack.concat(data.defense);
-                var card_jQ = hand2.find('.card[value='+card+']');
+                var card_jQ = hand2.find('.card[value=' + card + ']');
                 /*if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
-                    card_jQ = hand2.find('.card').eq(index);
-                else
-                    card_jQ = hand2.find('.card').eq(index + 1);*/
+                 card_jQ = hand2.find('.card').eq(index);
+                 else
+                 card_jQ = hand2.find('.card').eq(index + 1);*/
                 card_jQ.removeClass('on').unbind('click');
 
                 if (cards.length) {
@@ -266,11 +273,11 @@
 
             data.hand2.forEach(function (card, index) {
                 var hand2 = $('#hand2');
-                var card_jQ = hand2.find('.card[value='+card+']');
+                var card_jQ = hand2.find('.card[value=' + card + ']');
                 /*if (data.hand2.length == hand2.find('.card').length || index < card_deleted)
-                    card_jQ = hand2.find('.card').eq(index);
-                else
-                    card_jQ = hand2.find('.card').eq(index + 1);*/
+                 card_jQ = hand2.find('.card').eq(index);
+                 else
+                 card_jQ = hand2.find('.card').eq(index + 1);*/
                 card_jQ.removeClass('on').unbind('click');
                 if (!wait && data.attack.length && more(card, data.attack[data.attack.length - 1])) {
                     card_jQ.click({card: index}, onCardClick).addClass('on');
@@ -283,13 +290,35 @@
             else cancelCard.removeClass('on');
         }
 
+        window.onload = function (){
+            $.ajax({
+                url: '/api/subscribe_allow',
+                success: function (data) {
+                    if (data == 'False') {
+                        $('#wait').hide();
+                        $('main').hide();
+                        $('#single-room-allowed').show();
+                    } else {
+                        evtSrc = new EventSource("/api/subscribe");
+                        evtSrc.onmessage = serverSentEventHandler;
+                        $(window).on('beforeunload', function () {
+                            evtSrc.close();
+                            $.ajax({
+                                url: '/api/unsubscribe',
+                                async: false
+                            });
+                        });
+                    }
+                },
+                error: function () {
+                    window.location.href = "/";
+                }
+            });
+        };
+
         $(function () {
             preCacheImages();
             //$('#main').hide();
-            evtSrc = new EventSource("/api/subscribe");
-            evtSrc.onmessage = serverSentEventHandler;
-            console.log(evtSrc);
-
             if (window.location.href.match(/^.*\?mode=0$/)) {
                 document.title = "Fool | Игра против ИИ";
                 $('#chat').hide();
@@ -297,10 +326,12 @@
             else if (window.location.href.match(/^.*\?mode=1$/))
                 document.title = "Fool | Игра с другим игроком";
 
-            $('#end-game').hide().click(function (e) {
-                if (e.target == this)
-                    $(this).hide();
-            });
+            $('#end-game').hide();
+            $('#single-room-allowed').hide();
+            /*.click(function (e) {
+             if (e.target == this)
+             $(this).hide();
+             });*/
 
             $('#end-game-box').find('button.raised_color').click(function () {
                 if (end)
@@ -315,18 +346,6 @@
                 menu_opened = !menu_opened;
                 $('#open-btn').find('> img').toggleClass('open');
             });
-
-            $(window).on('beforeunload', function () {
-                evtSrc.close();
-                $.ajax({
-                    url: '/api/leave',
-                    async: false
-                });
-                $.ajax({
-                    url: '/api/unsubscribe',
-                    async: false
-                });
-            });
         });
     </script>
 </head>
@@ -337,6 +356,12 @@
         <div class="card_border">
             <img src="">
         </div>
+    </div>
+</div>
+<div id="single-room-allowed" class="background-of-msgbox">
+    <div id="single-room-allowed-box" class="standard-box">
+        <img src="/static_/svg/ic_error_24px_red.svg">
+        <span class="message font300">Одновременно можно присоединиться только к 1 игре</span>
     </div>
 </div>
 <div id="wait" class="background-of-msgbox">

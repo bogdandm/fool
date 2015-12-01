@@ -28,9 +28,10 @@ html, body {
     font-weight: 300;
 }
 
-#wait-box {
-    position: relative;
-    flex-direction: row;
+.standard-box {
+    background-color: white;
+    box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.1), 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
 }
 
 .rotating-card {
@@ -40,10 +41,27 @@ html, body {
     perspective: 200px !important;
 }
 
-.standard-box {
-    background-color: white;
-    box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.1), 0 2px 3px 0 rgba(0, 0, 0, 0.2);
-    border-radius: 2px;
+#wait-box, #single-room-allowed-box {
+    position: relative;
+    flex-direction: row;
+}
+
+#single-room-allowed-box {
+    align-items: center;
+}
+
+#single-room-allowed-box > img {
+    height: 50px;
+    width: 50px;
+    margin-right: 10px;
+}
+
+#single-room-allowed-box > span {
+    display: inline-block;
+    width: 300px;
+    text-align: left;
+    font-size: 14pt;
+    word-wrap: break-word;
 }
 
 .background-of-msgbox {
@@ -213,9 +231,9 @@ main {
 }
 
 #table {
-    padding: 10px;
     box-sizing: border-box;
     width: 80%;
+    padding: 10px 10px 10px 10%;
     height: 100%;
     display: flex;
     flex-direction: column;

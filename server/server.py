@@ -172,6 +172,13 @@ class Server:
 			)
 			return 'OK'
 
+		@self.app.route("/api/subscribe_allow")
+		def subscribe_allow():
+			session = self.get_session(request)
+			if not session:
+				return 'Fail', 401
+			return 'False' if 'cur_room' in session.data else 'True'
+
 		@self.app.route("/api/subscribe")  # need: session
 		def subscribe():  # Create queue for updates from server
 			def gen(sess_id):
@@ -191,11 +198,15 @@ class Server:
 						yield ev.encode()
 					else:
 						break
-				del session['msg_queue']
+				if q is session['msg_queue']:
+					del session['msg_queue']
+				del q
 
-			if not self.get_session(request):
-				return 'Fail'
-			return Response(gen(request.cookies['sessID']), mimetype="text/event-stream")
+			session = self.get_session(request)
+			if not session:
+				return 'Fail', 401
+
+			return Response(gen(session.id), mimetype="text/event-stream")
 
 		@self.app.route("/api/unsubscribe")  # need: session@msg_queue
 		def unsubscribe():
@@ -207,7 +218,24 @@ class Server:
 				session['msg_queue'].put('stop')
 
 			gevent.spawn(notify)
-			return 'OK'
+
+			room = session['cur_room']
+			if room is None: return 'OK'
+			room_id = room.id
+			if room.type == const.MODE_PVE:
+				del self.rooms[room_id]
+				del session['cur_room']
+				del room
+				return 'OK'
+			elif room.type == const.MODE_PVP:
+				if room.is_ready():
+					room.remove_player(session['player_n'])
+					room.send_msg('wait')
+				else:
+					del self.rooms[room_id]
+					del room
+				del session['cur_room']
+				return 'OK'
 
 		@self.app.route("/api/join")  # need: session@msg_queue, get@mode
 		def join_room():
@@ -248,28 +276,6 @@ class Server:
 					room.send_msg('wait')
 
 			return 'OK'
-
-		@self.app.route("/api/leave")  # need: session@cur_room
-		def leave_room():
-			session = self.get_session(request)
-			if not session:
-				return 'Fail'
-
-			room = session['cur_room']
-			if room is None: return 'OK'
-			room_id = room.id
-			if room.type == const.MODE_PVE:
-				del self.rooms[room_id]
-				del session['cur_room']
-				return 'OK'
-			elif room.type == const.MODE_PVP:
-				if room.is_ready():
-					room.remove_player(session['player_n'])
-					room.send_msg('wait')
-				else:
-					del self.rooms[room_id]
-				del session['cur_room']
-				return 'OK'
 
 		@self.app.route("/api/attack")  # need: session@cur_room, get@card
 		def attack():
