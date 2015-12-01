@@ -309,6 +309,7 @@
                             evtSrc.close();
                             $.ajax({
                                 url: '/api/unsubscribe',
+                                cache: false,
                                 async: false
                             });
                         });
@@ -356,6 +357,7 @@
             $('#drop_connections').click(function () {
                 $.ajax({
                     url: '/api/unsubscribe',
+                    cache: false,
                     success: function () {
                         //noinspection SillyAssignmentJS
                         window.location.href = window.location.href;
@@ -380,7 +382,7 @@
             <img src="/static_/svg/ic_error_24px_red.svg">
             <span class="message font300">Одновременно можно присоединиться только к 1 игре</span>
         </div>
-        <button class="raised" id="drop_connections">
+        <button class="raised_color_red" id="drop_connections">
             <img src="/static_/svg/ic_refresh_24px.svg">
             <span>Сбросить соединения</span>
         </button>

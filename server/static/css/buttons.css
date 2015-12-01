@@ -48,6 +48,21 @@ button.raised_color:active {
 }
 
 /*==========================*/
+button.raised_color_red, button.raised_color_red:focus {
+    background-color: #F0F0F0;
+    box-shadow: 0 2px 0 0 #ff433e;
+}
+
+button.raised_color_red:hover {
+    box-shadow: 0 4px 0 0 #ff433e;
+}
+
+button.raised_color_red:active {
+    background-color: #ff433e;
+    color: #1B2024;
+}
+
+/*==========================*/
 button.color, button.color:focus {
     background-color: rgba(34, 50, 194, 0.2);
 }

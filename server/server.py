@@ -7,6 +7,7 @@ from re import search
 import gevent
 from flask import Flask, Response, make_response, request, redirect, render_template, send_from_directory
 from gevent.queue import Queue
+from werkzeug.contrib.cache import SimpleCache
 
 import server.const as const
 import server.email as email_
@@ -41,6 +42,7 @@ class Server:
 		self.logger = Logger()
 		self.logger.write_msg('==Server run at %s==' % ip)
 		self.seed = seed
+		self.cache = SimpleCache(default_timeout=60 * 60 * 24 * 30)
 
 		@self.app.after_request
 		def after_request(response):
@@ -72,11 +74,13 @@ class Server:
 
 		@self.app.route('/static_/svg/<path:path>')  # static
 		def send_svg(path):
-			response = send_from_directory(
-				os.path.join(os.path.join(self.app.root_path, 'static'), 'svg'),
-				path, mimetype='image/svg+xml'
-			)
-			response.headers["Cache-Control"] = "public"
+			data = self.cache.get(path)
+			if data is None:
+				data = open("./server/static/svg/" + path).read()
+				self.cache.set(path, data)
+			response = make_response(data)
+			response.headers["Content-type"] = "image/svg+xml"
+			response.headers["Cache-Control"] = "max-age=1000000, public"
 			return response
 
 		@self.app.route('/favicon.ico')  # static
@@ -207,7 +211,9 @@ class Server:
 		def unsubscribe():
 			session = self.get_session(request)
 			if not session:
-				return 'Fail'
+				response = make_response('Fail')
+				response.headers["Cache-Control"] = "no-store"
+				return response
 
 			def notify():
 				session['msg_queue'].put('stop')
@@ -215,13 +221,19 @@ class Server:
 			gevent.spawn(notify)
 
 			room = session['cur_room']
-			if room is None: return 'OK'
+			if room is None:
+				response = make_response('OK')
+				response.headers["Cache-Control"] = "no-store"
+				return response
 			room_id = room.id
 			if room.type == const.MODE_PVE:
 				del self.rooms[room_id]
 				del session['cur_room']
 				del room
-				return 'OK'
+
+				response = make_response('OK')
+				response.headers["Cache-Control"] = "no-store"
+				return response
 			elif room.type == const.MODE_PVP:
 				if room.is_ready():
 					room.remove_player(session['player_n'])
@@ -230,7 +242,10 @@ class Server:
 					del self.rooms[room_id]
 					del room
 				del session['cur_room']
-				return 'OK'
+
+				response = make_response('OK')
+				response.headers["Cache-Control"] = "no-store"
+				return response
 
 		@self.app.route("/api/join")  # need: session@msg_queue, get@mode
 		def join_room():
