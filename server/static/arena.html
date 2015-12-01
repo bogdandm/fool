@@ -12,9 +12,9 @@
     <link href="css/chat.css" rel="stylesheet">
     <link href="css/rotating_card.css" rel="stylesheet">
     <script src="js/jquery-2.1.4.min.js"></script>
-    <script src="/static/js/jquery.mousewheel.min.js"></script>
-    <script src="/static/js/jquery.mCustomScrollbar.concat.min.js"></script>
-    <link href="/static/css/jquery.mCustomScrollbar.min.css" rel="stylesheet" type="text/css">
+    <script src="js/jquery.mousewheel.min.js"></script>
+    <script src="js/jquery.mCustomScrollbar.concat.min.js"></script>
+    <link href="css/jquery.mCustomScrollbar.min.css" rel="stylesheet" type="text/css">
     <script src="js/card_manipulations.js"></script>
     <script src="js/chat.js"></script>
     <script>
@@ -36,14 +36,13 @@
         var end = false;
 
         function preCacheImages() { //data
-            // TODO: don't work (why?)
-            /*var constPath = "/static_/svg/";
-             var suits = ['H', 'C', 'S', 'D'];
-             for (var j = 0; j < 4; j++)
-             for (var i = 2; i <= 14; i++) {
-             var img = new Image();
-             img.src = constPath + i + suits[j] + '.svg';
-             }*/
+            var constPath = "/static_/svg/";
+            var suits = ['H', 'C', 'S', 'D'];
+            for (var j = 0; j < 4; j++)
+                for (var i = 2; i <= 14; i++) {
+                    var img = new Image();
+                    img.src = constPath + i + suits[j] + '.svg';
+                }
         }
 
         function getCardValue(card) { //data
@@ -290,7 +289,12 @@
             else cancelCard.removeClass('on');
         }
 
-        window.onload = function (){
+        window.onload = function () {
+            var spans = $('#wait-box').find("span");
+            $('main').show();
+            spans.eq(0).show();
+            spans.eq(1).hide();
+
             $.ajax({
                 url: '/api/subscribe_allow',
                 success: function (data) {
@@ -317,7 +321,7 @@
         };
 
         $(function () {
-            preCacheImages();
+            setTimeout(preCacheImages, 0);
             //$('#main').hide();
             if (window.location.href.match(/^.*\?mode=0$/)) {
                 document.title = "Fool | Игра против ИИ";
@@ -326,6 +330,8 @@
             else if (window.location.href.match(/^.*\?mode=1$/))
                 document.title = "Fool | Игра с другим игроком";
 
+            $('main').hide();
+            $('#wait-box').find("span").eq(0).hide();
             $('#end-game').hide();
             $('#single-room-allowed').hide();
             /*.click(function (e) {
@@ -346,6 +352,16 @@
                 menu_opened = !menu_opened;
                 $('#open-btn').find('> img').toggleClass('open');
             });
+
+            $('#drop_connections').click(function () {
+                $.ajax({
+                    url: '/api/unsubscribe',
+                    success: function () {
+                        //noinspection SillyAssignmentJS
+                        window.location.href = window.location.href;
+                    }
+                })
+            })
         });
     </script>
 </head>
@@ -360,13 +376,20 @@
 </div>
 <div id="single-room-allowed" class="background-of-msgbox">
     <div id="single-room-allowed-box" class="standard-box">
-        <img src="/static_/svg/ic_error_24px_red.svg">
-        <span class="message font300">Одновременно можно присоединиться только к 1 игре</span>
+        <div class="msg">
+            <img src="/static_/svg/ic_error_24px_red.svg">
+            <span class="message font300">Одновременно можно присоединиться только к 1 игре</span>
+        </div>
+        <button class="raised" id="drop_connections">
+            <img src="/static_/svg/ic_refresh_24px.svg">
+            <span>Сбросить соединения</span>
+        </button>
     </div>
 </div>
 <div id="wait" class="background-of-msgbox">
     <div id="wait-box" class="standard-box">
         <span class="message font300">Поиск другого игрока</span>
+        <span class="message font300">Загрузка</span>
 
         <div class="rotating-card">
             <div class="card-front"><img src="/static_/svg/simple_card_red.svg"></div>

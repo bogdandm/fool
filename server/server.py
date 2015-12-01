@@ -11,7 +11,7 @@ from gevent.queue import Queue
 import server.const as const
 import server.email as email_
 from server.database import DB
-from server.server_classes import RoomPvE, RoomPvP, ServerCache, Session, Logger
+from server.server_classes import RoomPvE, RoomPvP, Session, Logger
 
 
 # TODO: write session documentation
@@ -29,7 +29,6 @@ class Server:
 		self.app = Flask(__name__)
 		self.app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
-		self.cache = ServerCache(const.STATIC_FOLDER, const.SERVER_FOLDER)
 		res = DB.get_sessions()
 		self.sessions = dict()
 		self.sessions_by_user_name = dict()
@@ -58,19 +57,6 @@ class Server:
 				self.logger.write_record(request, response)
 			return response
 
-		@self.app.route('/static_/svg/<path:path>')  # static
-		def send_svg(path):
-			response = make_response(self.cache.get(const.SERVER_FOLDER + const.STATIC_FOLDER + '/svg/' + path))
-			if search('^.*\.html$', path):
-				response.headers["Content-type"] = "text/html"
-			elif search('^.*\.css$', path):
-				response.headers["Content-type"] = "text/css"
-			elif search('^.*\.js$', path):
-				response.headers["Content-type"] = "text/javascript"
-			elif search('^.*\.svg', path):
-				response.headers["Content-type"] = "image/svg+xml"
-			return response
-
 		@self.app.route('/')  # static
 		def send_root():
 			session = self.get_session(request)
@@ -83,6 +69,15 @@ class Server:
 				session = self.sessions[request.cookies['sessID']]
 				session.update_activation_status()
 				return redirect('/static/errors/not_activated.html')
+
+		@self.app.route('/static_/svg/<path:path>')  # static
+		def send_svg(path):
+			response = send_from_directory(
+				os.path.join(os.path.join(self.app.root_path, 'static'), 'svg'),
+				path, mimetype='image/svg+xml'
+			)
+			response.headers["Cache-Control"] = "public"
+			return response
 
 		@self.app.route('/favicon.ico')  # static
 		def send_favicon():

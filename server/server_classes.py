@@ -321,9 +321,11 @@ class ServerCache:
 				self.data[path] = open(path, encoding='utf-8').read()
 
 	def get(self, path):
-		if path not in self.data:
-			self.data[path] = open(path, encoding='utf-8').read()
-		return self.data[path]
+		if path in self.data:
+			return self.data[path]
+		else:
+			data = self.data[path] = open(path, encoding='utf-8').read()
+			return data
 
 
 class Logger:

@@ -41,27 +41,39 @@ html, body {
     perspective: 200px !important;
 }
 
-#wait-box, #single-room-allowed-box {
+#wait-box {
     position: relative;
     flex-direction: row;
 }
 
-#single-room-allowed-box {
+#single-room-allowed-box > .msg, #single-room-allowed-box > button {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
     align-items: center;
 }
 
-#single-room-allowed-box > img {
+#single-room-allowed-box > button {
+    margin-top: 10px;
+}
+
+#single-room-allowed-box > .msg > img {
     height: 50px;
     width: 50px;
     margin-right: 10px;
 }
 
-#single-room-allowed-box > span {
+#single-room-allowed-box > .msg > span {
     display: inline-block;
     width: 300px;
     text-align: left;
     font-size: 14pt;
     word-wrap: break-word;
+}
+
+#single-room-allowed-box > button > span {
+    font-size: 14pt;
+    font-weight: 500;
 }
 
 .background-of-msgbox {
