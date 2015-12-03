@@ -345,7 +345,7 @@ class Logger:
 				time.sleep(1)
 
 		self.thread_run = True
-		self.thread = Thread(target=timer_handler, name="RequestPerSecTimer").start()
+		self.thread = Thread(target=timer_handler, name="RequestPerSecTimer", daemon=True).start()
 
 	def write_record(self, request: Request, response: Response):
 		self.request_in_last_sec += 1

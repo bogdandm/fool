@@ -259,7 +259,7 @@ main {
 }
 
 .hand > .card {
-    transition: 0.4s ease-out;
+    transition: 0.3s ease-out;
     display: inline-block;
     position: relative;
     width: calc(0.4 * 0.2967 * 300px);

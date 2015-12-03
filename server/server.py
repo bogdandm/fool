@@ -218,7 +218,8 @@ class Server:
 			def notify():
 				session['msg_queue'].put('stop')
 
-			gevent.spawn(notify)
+			if 'msg_queue' in session.data:
+				gevent.spawn(notify)
 
 			room = session['cur_room']
 			if room is None:
@@ -237,7 +238,7 @@ class Server:
 			elif room.type == const.MODE_PVP:
 				if room.is_ready():
 					room.remove_player(session['player_n'])
-					room.send_msg('wait')
+					self.merge_room(room)
 				else:
 					del self.rooms[room_id]
 					del room
@@ -523,6 +524,27 @@ class Server:
 				return False
 		else:
 			return None
+
+	def merge_room(self, room):
+		for thin_room in self.rooms:
+			if thin_room.is_ready() or thin_room is room: continue
+			session = room.players[0] if room.players[0] is not None else room.players[1]
+			session['player_n'] = thin_room.add_player(session)
+			session['cur_room'] = thin_room
+			if thin_room.is_ready():
+				thin_room.send_player_inf()
+				thin_room.send_changes()
+				thin_room.send_msg(dumps({
+					'data': [{
+						'type': 'wait',
+						'player': thin_room.game.turn,
+						'card': None,
+						'inf': None
+					}]
+				}))
+			del self.rooms[room.id]
+			return thin_room
+		return None
 
 
 class ServerSentEvent(object):

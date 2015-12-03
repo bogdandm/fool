@@ -49,7 +49,7 @@ function addCard1(mode) {
     if (mode == 'SET')
         card.attr({value: 0}).css({left: body.width() + 40, top: body.height() / 2});
     else if (mode == 'TABLE')
-        card.attr({value: 0}).css({top: body.height() / 4}, 0);
+        card.attr({value: 0}).css({top: body.height() / 4});
     card.animate({
         left: 0, top: 0,
         complete: function () {
@@ -70,7 +70,7 @@ function addCard2(str, mode) {
     addCard2WithSort(card);
     //hand.append(card);
     if (mode == 'SET')
-        card.attr({value: str}).css({left: body.width() * 1.1, top: -body.height() / 2});
+        card.attr({value: str}).css({left: body.width() + 40, top: -body.height() / 2});
     else if (mode == 'TABLE')
         card.attr({value: str}).css({top: -body.height() / 4});
     card.animate({
