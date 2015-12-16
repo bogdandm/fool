@@ -16,10 +16,6 @@
     border-bottom: 1px solid #c2c2c2;
 }
 
-.user_name {
-    font-weight: 400;
-}
-
 .menu-item {
     font-weight: 300;
 }
@@ -43,6 +39,7 @@
 
 .user_name {
     background-color: #9bed2f;
+    font-weight: 400;
 }
 
 .menu-item {

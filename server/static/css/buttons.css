@@ -19,6 +19,32 @@ button:active {
 }
 
 /*==========================*/
+button.easy, button.easy:focus {
+    background-color: transparent;
+    opacity: 0.50;
+}
+
+button.easy:hover {
+    opacity: 0.80;
+}
+
+button.easy:active {
+    opacity: 1;
+}
+
+/*==========================*/
+button.red, button.red:focus {
+}
+
+button.red:hover {
+    background-color: rgba(255, 67, 62, 0.5);
+}
+
+button.red:active {
+    background-color: #ff433e;
+}
+
+/*==========================*/
 button.raised, button.raised:focus {
     background-color: #F0F0F0;
     box-shadow: 0 2px 0 0 #505456;

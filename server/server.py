@@ -120,7 +120,7 @@ class Server:
 		def send_arena():
 			return redirect('/static/arena.html?mode=' + request.args.get('mode'))
 
-		@self.app.route('/static/server_statistic.html')  # static
+		@self.app.route('/static/server_statistic.html')  # static; need: session
 		def send_server_statistic_file():
 			session = self.get_session(request)
 			if session:
@@ -158,7 +158,7 @@ class Server:
 			if 'sessID' in request.cookies and request.cookies['sessID'] in self.sessions:
 				session = self.sessions[request.cookies['sessID']]
 			else:
-				return make_response('Fail', 400)
+				return 'Fail', 401
 			(email, activation_token) = DB.get_email(session.user)
 			email_.send_email(
 				"Для подтвеждения регистрации пожалуйста перейдите по ссылке "
@@ -211,7 +211,7 @@ class Server:
 		def unsubscribe():
 			session = self.get_session(request)
 			if not session:
-				response = make_response('Fail')
+				response = make_response('Fail', 401)
 				response.headers["Cache-Control"] = "no-store"
 				return response
 
@@ -252,7 +252,7 @@ class Server:
 		def join_room():
 			session = self.get_session(request)
 			if not self.get_session(request):
-				return 'Fail'
+				return 'Fail', 401
 
 			mode = int(request.args.get('mode'))
 			if mode == const.MODE_PVE:
@@ -288,11 +288,11 @@ class Server:
 
 			return 'OK'
 
-		@self.app.route("/api/attack")  # need: session@cur_room, get@card
+		@self.app.route("/api/attack", methods=['GET'])  # need: session@cur_room, get@card
 		def attack():
 			session = self.get_session(request)
 			if not session:
-				return 'Fail'
+				return 'Fail', 401
 
 			room = session['cur_room']
 			card = int(request.args.get('card'))
@@ -309,7 +309,7 @@ class Server:
 		def defense():
 			session = self.get_session(request)
 			if not session:
-				return 'Fail'
+				return 'Fail', 401
 
 			room = session['cur_room']
 			card = int(request.args.get('card'))
@@ -326,7 +326,7 @@ class Server:
 		def send_msg_to_chat():
 			session = self.get_session(request)
 			if not session:
-				return 'Fail'
+				return 'Fail', 401
 
 			room = session['cur_room']
 			msg = request.form.get('msg')
@@ -362,7 +362,7 @@ class Server:
 		# need: get@user; maybe: get@source := menu | any
 		def get_avatar():
 			user = request.args.get('user')
-			if user == 'AI':
+			if user == 'AI' or user == 'root':
 				return "/static_/svg/ic_computer_24px_white.svg"
 			file_ext = DB.check_user(user)[2]
 			if file_ext is not None and file_ext != 'None':
@@ -371,7 +371,7 @@ class Server:
 				if request.args.get('source') == 'menu':
 					return "/static_/svg/ic_person_24px.svg"
 				else:
-					return "/static_/svg/ic_person_24px_grey_reverse.svg"
+					return "/static_/svg/ic_person_24px_white.svg"
 
 		@self.app.route("/api/add_user", methods=['POST'])
 		# need: post@user_name, post@pass, post@email; maybe: post@file(image)
@@ -462,7 +462,7 @@ class Server:
 		def destroy_session():
 			session = self.get_session(request)
 			if not session:
-				return 'Fail'
+				return 'Fail', 401
 
 			response = make_response('OK')
 			session.delete_cookie(response)
@@ -472,22 +472,25 @@ class Server:
 			return response
 
 		@self.app.route('/api/ping')
+		# maybe: get@data
 		def ping():
 			data = request.args.get('data')
 			return data if data is not None else 'Pong'
 
 		@self.app.route('/api/getRequestPerSec')
+		# need: session@admin
 		def get_request_per_sec():
 			session = self.get_session(request)
 			if session:
 				if self.get_session(request).admin:
 					return self.logger.time_log[-1].__str__()
 				else:
-					return 'Permission denied'
+					return 'Permission denied', 401
 			else:
-				return redirect('/')
+				return 'Fail', 401
 
 		@self.app.route('/api/get_sessions')
+		# need: session@admin
 		def get_sessions():
 			session = self.get_session(request)
 			if session:
@@ -497,11 +500,12 @@ class Server:
 						result.append(session.to_json())
 					return dumps(result)
 				else:
-					return 'Permission denied'
+					return 'Permission denied', 401
 			else:
-				return redirect('/')
+				return 'Fail', 401
 
 		@self.app.route('/api/get_rooms')
+		# need: session@admin
 		def get_rooms():
 			session = self.get_session(request)
 			if session:
@@ -511,9 +515,28 @@ class Server:
 						result.append(room.to_json())
 					return dumps(result)
 				else:
-					return 'Permission denied'
+					return 'Permission denied', 401
 			else:
-				return redirect('/')
+				return 'Fail', 401
+
+		@self.app.route('/api/get_friends')
+		# need: session@admin
+		def get_friends():
+			session = self.get_session(request)
+			if session:
+				if self.get_session(request).admin:
+					friends, edges = DB.get_friends_table()
+					result = {"nodes": friends, "edges": []}
+					for edge in edges:
+						result["edges"].append({
+							"src": edge["name1"],
+							"dest": edge["name2"]
+						})
+					return dumps(result)
+				else:
+					return 'Permission denied', 401
+			else:
+				return 'Fail', 401
 
 	def get_session(self, request_) -> Session:  # -> Session | False | None
 		if 'sessID' in request_.cookies and request_.cookies['sessID'] in self.sessions:

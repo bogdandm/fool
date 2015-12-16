@@ -1,10 +1,11 @@
-import time
 import random
+import time
 from hashlib import sha256
 
 from mysql.connector import connect, Error
 
 
+# Full static class
 class DB:
 	config = {
 		'user': 'python_flask',
@@ -32,7 +33,7 @@ class DB:
 			return True
 
 	@staticmethod
-	def check_user(user_name: str, password: str=None) -> (bool, int, str, bool, bool):
+	def check_user(user_name: str, password: str = None) -> (bool, int, str, bool, bool):
 		if user_name is None:
 			return False
 		connection = DB.connect()
@@ -156,3 +157,57 @@ class DB:
 		finally:
 			connection.close()
 		return res
+
+	@staticmethod
+	def get_friends_table(user=None, id=None) -> (list, list):
+		friends = []
+		edges = []
+		connection = DB.connect()
+		try:
+			cursor = connection.cursor()
+			query = (
+				"SELECT "
+				"friends.user   id1, "
+				"u1.name        name1, "
+				"friends.friend id2, "
+				"u2.name        name2 "
+				"FROM friends "
+				"INNER JOIN users u1 ON friends.user = u1.id "
+				"INNER JOIN users u2 ON friends.friend = u2.id "
+			)
+			query += ("WHERE friends.user=%i OR friends.friend=%i;" % (id, id)) if id is not None else ";"
+			cursor.execute(query)
+			res = cursor.fetchall()  # id1, name1, id2, name2
+			for row in res:
+				edges.append({
+					'id1': row[0],
+					'name1': row[1],
+					'id2': row[2],
+					'name2': row[3]
+				})
+		except Error as e:
+			return e
+		try:
+			cursor = connection.cursor()
+			query = "SELECT id, name FROM users "
+			query += (
+				"WHERE "
+				"id IN (SELECT user "
+				"		FROM friends "
+				"		WHERE friend = %i) OR "
+				"id IN (SELECT friend "
+				"		FROM friends "
+				"		WHERE user = %i);" % (id, id)) if id is not None else ";"
+
+			cursor.execute(query)
+			res = cursor.fetchall()  # id, name
+			for row in res:
+				friends.append({
+					'id': row[0],
+					'name': row[1]
+				})
+		except Error as e:
+			return e
+		finally:
+			connection.close()
+		return friends, edges
