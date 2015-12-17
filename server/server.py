@@ -101,14 +101,14 @@ class Server:
 		def page_not_found(e):
 			return send_from_directory(
 				os.path.join(self.app.root_path, 'static'),
-				'errors/404.html', mimetype='text/html'
+				'errors/400.html', mimetype='text/html'
 			), 400
 
 		@self.app.errorhandler(500)
 		def page_not_found(e):
 			return send_from_directory(
 				os.path.join(self.app.root_path, 'static'),
-				'errors/404.html', mimetype='text/html'
+				'errors/500.html', mimetype='text/html'
 			), 500
 
 		@self.app.route('/api')  # static
@@ -526,7 +526,7 @@ class Server:
 			return None
 
 	def merge_room(self, room):
-		for thin_room in self.rooms:
+		for _, thin_room in self.rooms.items():
 			if thin_room.is_ready() or thin_room is room: continue
 			session = room.players[0] if room.players[0] is not None else room.players[1]
 			session['player_n'] = thin_room.add_player(session)
