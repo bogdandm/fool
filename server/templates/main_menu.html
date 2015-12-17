@@ -18,6 +18,20 @@
             $("#friends-left").mCustomScrollbar({
                 theme: 'minimal-dark'
             });
+
+            $.getJSON('/api/users/get_friend_list',
+                    function (data) {
+                        $.each(data, function (key, val) {
+                            /** @namespace val.name */
+                            /** @namespace val.status */
+                            /** @namespace val.avatar */
+                            var friendHTML = $('.hidden > .friend').clone();
+                            friendHTML.find('.name').text(val.name);
+                            friendHTML.find('.status').text(val.status);
+                            friendHTML.find('> img').attr('src', val.avatar);
+                            $("#friends-left").find(".body").append(friendHTML);
+                        });
+                    })
         }
 
         $(function () {
@@ -138,7 +152,13 @@
             margin-top: 3px;
         }
 
-        #friends-left, #friends-right {
+        #friends-left {
+            min-width: 350px;
+            width: 50%;
+            max-width: 400px;
+        }
+
+        #friends-right {
             max-width: 430px;
             width: 50%;
         }
@@ -154,21 +174,21 @@
         .friend {
             margin: 7px;
             max-width: 400px;
-            background-color: transparent;
+            background-color: white;
         }
 
         .friend > img {
-            height: 60px;
-            max-width: 60px;
-            border-radius: 2px 0 0 2px;
+            height: 40px;
+            max-width: 40px;
+            margin: 10px 10px 10px 7px;
+            border-radius: 20px;
             float: left;
         }
 
         .friend > .friend-body {
             height: 60px;
-            padding: 0 15px;
+            padding-right: 15px;
             border-radius: 0 2px 2px 0;
-            background-color: white;
             cursor: pointer;
             display: flex;
             flex-direction: column;
@@ -177,8 +197,8 @@
             flex-wrap: wrap;
         }
 
-        .friend > .friend-body:hover {
-            background-color: rgba(92, 174, 242, 0.1);
+        .friend:hover {
+            background-color: #ebf5dc;
         }
 
         .friend > .friend-body > .name {
@@ -212,6 +232,22 @@
 <body>
 <header>Дурак online</header>
 <main>
+    <div class="hidden">
+        <div class="friend standard-box">
+            <img src="/static/avatar/leon.jpg">
+
+            <div class="friend-body">
+                <div class="name">Leon</div>
+                <div class="status">offline</div>
+                <div class="buttons">
+                    <button class="remove red easy"><img src="/static_/svg/delete_people.svg"></button>
+                    <button class="chat easy"><img src="/static_/svg/ic_chat_24px.svg"></button>
+                    <button class="play easy"><img src="/static_/svg/play.svg"></button>
+                    <button class="info easy"><img src="/static_/svg/ic_info_outline_24px.svg"></button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="main-menu" class="menu standard-box">
         <div class="selector" group="1"></div>
         <div class="user_name" group="1">
@@ -219,11 +255,14 @@
             <span>{{ user_name }}</span>
         </div>
         <div class="menu-item" group="1" container-name="new-games">Новая игра</div>
-        <div class="menu-item" group="1" container-name="friends">Друзья (coming soon)</div>
+        <div class="menu-item" group="1" container-name="friends">Друзья</div>
         <div class="menu-item" group="1">Статистика (coming soon)</div>
         {% if admin %}
         <div class="menu-item" group="1">
             <a href="/static/server_statistic.html">Статистика сервера</a>
+        </div>
+        <div class="menu-item" group="1">
+            <a href="/static/test_friends_graph.html">Граф друзей</a>
         </div>
         {% endif %}
         <div id="logout" class="menu-item" group="1">Выйти из аккаунта</div>
@@ -240,20 +279,6 @@
     <div id="friends" class="container">
         <div id="friends-left">
             <div class="body">
-                <div class="friend standard-box">
-                    <img src="/static/avatar/leon.jpg">
-
-                    <div class="friend-body">
-                        <div class="name">Leon</div>
-                        <div class="status">offline</div>
-                        <div class="buttons">
-                            <button class="remove red easy"><img src="/static_/svg/delete_people.svg"></button>
-                            <button class="chat easy"><img src="/static_/svg/ic_chat_24px.svg"></button>
-                            <button class="play easy"><img src="/static_/svg/play.svg"></button>
-                            <button class="info easy"><img src="/static_/svg/ic_info_outline_24px.svg"></button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         <div id="friends-right">

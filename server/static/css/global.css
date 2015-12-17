@@ -45,3 +45,7 @@ footer {
     box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.1), 0 2px 3px 0 rgba(0, 0, 0, 0.2);
     border-radius: 2px;
 }
+
+.hidden {
+    display: none;
+}

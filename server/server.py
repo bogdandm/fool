@@ -36,7 +36,7 @@ class Server:
 		if res is not None:
 			for row in res:
 				s = Session(*row)
-				self.sessions[row[2]] = s
+				self.sessions[row[3]] = s
 				self.sessions_by_user_name[s.user] = s
 		self.rooms = dict()
 		self.logger = Logger()
@@ -101,14 +101,14 @@ class Server:
 		def page_not_found(e):
 			return send_from_directory(
 				os.path.join(self.app.root_path, 'static'),
-				'errors/404.html', mimetype='text/html'
+				'errors/400.html', mimetype='text/html'
 			), 400
 
 		@self.app.errorhandler(500)
 		def page_not_found(e):
 			return send_from_directory(
 				os.path.join(self.app.root_path, 'static'),
-				'errors/404.html', mimetype='text/html'
+				'errors/500.html', mimetype='text/html'
 			), 500
 
 		@self.app.route('/api')  # static
@@ -144,7 +144,7 @@ class Server:
 			if result is None:
 				return 'Bad token'
 
-			session = Session(result[0], result[3])
+			session = Session(result[0], result[3], result[1])
 			self.sessions[session.get_id()] = session
 			session['avatar'] = result[2]
 			DB.add_session(session, result[1])
@@ -363,7 +363,10 @@ class Server:
 		def get_avatar():
 			user = request.args.get('user')
 			if user == 'AI' or user == 'root':
-				return "/static_/svg/ic_computer_24px_white.svg"
+				if request.args.get('source') == 'menu':
+					return "/static_/svg/ic_computer_24px.svg"
+				else:
+					return "/static_/svg/ic_computer_24px_white.svg"
 			file_ext = DB.check_user(user)[2]
 			if file_ext is not None and file_ext != 'None':
 				return "/static/avatar/{user_name}{file_ext}".format(user_name=user, file_ext=file_ext)
@@ -402,7 +405,7 @@ class Server:
 
 				(result2, uid, file_ext, activated, admin) = DB.check_user(name, sha256)
 				if result2:
-					session = Session(name, activated)
+					session = Session(name, activated, uid)
 					self.sessions[session.get_id()] = session
 					session['avatar'] = file_ext
 					DB.add_session(session, uid)
@@ -441,7 +444,7 @@ class Server:
 				if user_name in self.sessions_by_user_name:
 					session = self.sessions_by_user_name[user_name]
 				else:
-					session = Session(user_name, activated, admin=admin)
+					session = Session(user_name, activated, uid, admin=admin)
 					self.sessions[session.get_id()] = session
 					self.sessions_by_user_name[user_name] = session
 					session['avatar'] = file_ext
@@ -538,6 +541,88 @@ class Server:
 			else:
 				return 'Fail', 401
 
+		@self.app.route('/api/users/find', methods=['GET'])
+		# need: session; get@name
+		def find_user():
+			session = self.get_session(request)
+			if not session:
+				return 'Fail', 401
+
+			name = request.args.get('name')
+
+			res = DB.find_user(name)
+			result = []
+			for uid, u_name, u_avatar in res:
+				if uid == 1: continue
+				if u_name in self.sessions_by_user_name:
+					tmp_session = self.sessions_by_user_name[u_name]
+					status = tmp_session['status'] if 'status' in tmp_session.data else 'Offline'
+				else:
+					status = 'Offline'
+
+				if u_avatar is not None and u_avatar != 'None':
+					u_avatar = "/static/avatar/{user_name}{file_ext}".format(user_name=u_name, file_ext=u_avatar)
+				else:
+					u_avatar = "/static_/svg/ic_person_24px.svg"
+
+				mutual_friends = [name for name, _ in DB.get_mutual_friends(session.uid, uid)]
+
+				result.append({
+					'name': u_name,
+					'status': status,
+					'avatar': u_avatar,
+					'mutual_friends': mutual_friends
+				})
+
+			return dumps(result)
+
+		@self.app.route('/api/users/send_friend_invite', methods=['GET'])
+		def send_friend_invite():
+			pass
+
+		@self.app.route('/api/users/get_friend_list')
+		def get_friend_list():
+			session = self.get_session(request)
+			if not session:
+				return 'Fail', 401
+
+			res = DB.get_friends(id=session.uid)
+			result = []
+			for uid, u_name, u_avatar in res:
+				if u_name in self.sessions_by_user_name:
+					tmp_session = self.sessions_by_user_name[u_name]
+					status = tmp_session['status'] if 'status' in tmp_session.data else 'Offline'
+				else:
+					status = 'Offline'
+
+				if u_avatar is not None and u_avatar != 'None':
+					u_avatar = "/static/avatar/{user_name}{file_ext}".format(user_name=u_name, file_ext=u_avatar)
+				else:
+					u_avatar = "/static_/svg/account-circle.svg"
+
+				mutual_friends = [name for name, _ in DB.get_mutual_friends(session.uid, uid)]
+
+				result.append({
+					'name': u_name,
+					'status': status,
+					'avatar': u_avatar,
+					'mutual_friends': mutual_friends
+				})
+
+			return dumps(result)
+
+		@self.app.route('/api/users/check_online', methods=['GET'])
+		def check_online():
+			pass
+
+		@self.app.route('/api/open_page')
+		def open_page():
+			pass
+
+		@self.app.route('/api/leave_page')
+		def leave_page():
+			pass
+
 	def get_session(self, request_) -> Session:  # -> Session | False | None
 		if 'sessID' in request_.cookies and request_.cookies['sessID'] in self.sessions:
 			session = self.sessions[request_.cookies['sessID']]
@@ -549,7 +634,7 @@ class Server:
 			return None
 
 	def merge_room(self, room):
-		for thin_room in self.rooms:
+		for _, thin_room in self.rooms.items():
 			if thin_room.is_ready() or thin_room is room: continue
 			session = room.players[0] if room.players[0] is not None else room.players[1]
 			session['player_n'] = thin_room.add_player(session)

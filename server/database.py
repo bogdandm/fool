@@ -99,7 +99,7 @@ class DB:
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "SELECT users.name, users.is_activated, sessions.id, users.is_admin" \
+			query = "SELECT users.name, users.is_activated, users.id, sessions.id, users.is_admin" \
 					" FROM sessions INNER JOIN users ON users.id = sessions.user_id"
 			cursor.execute(query)
 			res = cursor.fetchall()
@@ -160,6 +160,9 @@ class DB:
 
 	@staticmethod
 	def get_friends_table(user=None, id=None) -> (list, list):
+		if user is not None:
+			id = DB.check_user(user)[0]
+
 		friends = []
 		edges = []
 		connection = DB.connect()
@@ -211,3 +214,77 @@ class DB:
 		finally:
 			connection.close()
 		return friends, edges
+
+	@staticmethod
+	def get_friends(user=None, id=None):
+		if user is not None:
+			id = DB.check_user(user)[0]
+
+		connection = DB.connect()
+		try:
+			cursor = connection.cursor()
+			query = "SELECT y.id, name, file_extension " \
+					"FROM (SELECT user id " \
+					"      FROM friends " \
+					"      WHERE friend = %i " \
+					"      UNION " \
+					"      SELECT friend id " \
+					"      FROM friends " \
+					"      WHERE user = %i " \
+					"     ) y " \
+					"INNER JOIN users ON y.id = users.id " \
+					"ORDER BY name" % (id, id)
+			cursor.execute(query)
+			res = cursor.fetchall()
+		except Error as e:
+			return e
+		finally:
+			connection.close()
+		return res
+
+	@staticmethod
+	def get_mutual_friends(you: int, other: int):
+		connection = DB.connect()
+		try:
+			cursor = connection.cursor()
+			query = "SELECT name, y.id " \
+					"FROM ( " \
+					"	SELECT * " \
+					"	FROM (SELECT USER id " \
+					"		FROM friends " \
+					"		WHERE friend = %i " \
+					"		UNION " \
+					"		SELECT friend id " \
+					"		FROM friends " \
+					"		WHERE USER = %i) x1 " \
+					"	WHERE id IN (" \
+					"			SELECT USER id " \
+					"			FROM friends " \
+					"			WHERE friend = %i " \
+					"			UNION " \
+					"			SELECT friend id " \
+					"			FROM friends " \
+					"			WHERE USER = %i" \
+					"	) " \
+					") y INNER JOIN users ON y.id = users.id" % (you, you, other, other)
+			cursor.execute(query)
+			res = cursor.fetchall()
+		except Error as e:
+			return e
+		finally:
+			connection.close()
+		return res
+
+	@staticmethod
+	def find_user(user):
+		connection = DB.connect()
+		try:
+			cursor = connection.cursor()
+			query = "SELECT id, name, file_extension FROM users U WHERE name LIKE '%%%s%%'" % user
+			cursor.execute(query)
+			res = cursor.fetchall()
+		except Error as e:
+			return e
+		finally:
+			connection.close()
+		return res

@@ -15,8 +15,9 @@ from server.database import DB
 
 
 class Session:
-	def __init__(self, user, activated, id_=None, admin=False, dict_data: dict = None):
+	def __init__(self, user, activated, uid, id_=None, admin=False, dict_data: dict = None):
 		self.user = user
+		self.uid = uid
 		self.activated = bool(activated)
 		self.admin = admin
 		if id_ is None:
