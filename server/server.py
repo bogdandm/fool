@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import hashlib
 import os
+from datetime import datetime, timedelta
 from json import dumps
 from re import search
 
@@ -44,11 +45,25 @@ class Server:
 		self.seed = seed
 		self.cache = SimpleCache(default_timeout=60 * 60 * 24 * 30)
 
+		def update_status(this):
+			while True:
+				delta = timedelta(minutes=5)
+				now = datetime.now()
+				for _, s in this.sessions.items():
+					if not s.last_request or (s.last_request + delta < now and s.status == Session.ONLINE):
+						s.status = Session.OFFLINE
+				gevent.sleep(5 * 60 + 1)
+
+		gevent.spawn(update_status, self)
+
 		@self.app.after_request
 		def after_request(response):
 			session = self.get_session(request)
 			if session:
 				session['ip'] = request.remote_addr
+				session.last_request = datetime.now()
+				if session.status == Session.OFFLINE:
+					session.status = Session.ONLINE
 			if const.FILTRATE_REQUEST_FOR_LOG:
 				for item in self.service_pages:
 					if search(item, request.url):
@@ -204,6 +219,7 @@ class Server:
 			session = self.get_session(request)
 			if not session:
 				return 'Fail', 401
+			session.status = Session.PLAY
 
 			return Response(gen(session.id), mimetype="text/event-stream")
 
@@ -221,6 +237,7 @@ class Server:
 			if 'msg_queue' in session.data:
 				gevent.spawn(notify)
 
+			session.status = Session.ONLINE
 			room = session['cur_room']
 			if room is None:
 				response = make_response('OK')
@@ -581,6 +598,7 @@ class Server:
 			pass
 
 		@self.app.route('/api/users/get_friend_list')
+		# need: session;
 		def get_friend_list():
 			session = self.get_session(request)
 			if not session:
@@ -591,7 +609,19 @@ class Server:
 			for uid, u_name, u_avatar in res:
 				if u_name in self.sessions_by_user_name:
 					tmp_session = self.sessions_by_user_name[u_name]
-					status = tmp_session['status'] if 'status' in tmp_session.data else 'Offline'
+					if tmp_session.status==Session.ONLINE:
+						status = "Online"
+					elif tmp_session.status==Session.PLAY:
+						room = tmp_session['cur_room']
+						if room:
+							if room.type == const.MODE_PVE:
+								status = "Играет с AI"
+							if room.type == const.MODE_PVP:
+								status = "Играет с " + room.players[not session['player_n']].name
+						else:
+							status = "Online"
+					else:
+						status = "Offline"
 				else:
 					status = 'Offline'
 
@@ -613,14 +643,6 @@ class Server:
 
 		@self.app.route('/api/users/check_online', methods=['GET'])
 		def check_online():
-			pass
-
-		@self.app.route('/api/open_page')
-		def open_page():
-			pass
-
-		@self.app.route('/api/leave_page')
-		def leave_page():
 			pass
 
 	def get_session(self, request_) -> Session:  # -> Session | False | None

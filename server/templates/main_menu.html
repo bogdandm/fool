@@ -26,9 +26,16 @@
                             /** @namespace val.status */
                             /** @namespace val.avatar */
                             var friendHTML = $('.hidden > .friend').clone();
+                            friendHTML.attr('name', val.name);
                             friendHTML.find('.name').text(val.name);
                             friendHTML.find('.status').text(val.status);
                             friendHTML.find('> img').attr('src', val.avatar);
+                            if (val.status=="Online")
+                                friendHTML.removeClass('play').addClass('online');
+                            else if (val.status=="Offline")
+                                friendHTML.removeClass('online').removeClass('play');
+                            else
+                                friendHTML.removeClass('online').addClass('play');
                             $("#friends-left").find(".body").append(friendHTML);
                         });
                     })
@@ -177,6 +184,18 @@
             background-color: white;
         }
 
+        .friend:hover {
+            background-color: #ebf5dc;
+        }
+
+        .friend.online {
+            border-right: 7px solid #9bed2f;
+        }
+
+        .friend.play {
+            border-right: 7px solid #5caef2;
+        }
+
         .friend > img {
             height: 40px;
             max-width: 40px;
@@ -195,10 +214,6 @@
             justify-content: center;
             align-content: space-between;
             flex-wrap: wrap;
-        }
-
-        .friend:hover {
-            background-color: #ebf5dc;
         }
 
         .friend > .friend-body > .name {

@@ -15,11 +15,17 @@ from server.database import DB
 
 
 class Session:
+	OFFLINE = 0
+	ONLINE = 1
+	PLAY = 3
+
 	def __init__(self, user, activated, uid, id_=None, admin=False, dict_data: dict = None):
 		self.user = user
 		self.uid = uid
 		self.activated = bool(activated)
 		self.admin = admin
+		self.last_request = None
+		self.status = self.OFFLINE
 		if id_ is None:
 			self.id = sha256(bytes(
 				user + int(time.time() * 256 * 1000).__str__() + randint(0, 2 ** 20).__str__(),
@@ -33,7 +39,7 @@ class Session:
 		self.data[key] = value
 
 	def __getitem__(self, key):
-		return self.data[key]
+		return self.data[key] if key in self.data else None
 
 	def __delitem__(self, key):
 		del self.data[key]
