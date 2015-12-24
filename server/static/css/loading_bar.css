@@ -1,0 +1,71 @@
+.loading-bar {
+    height: 5px;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+.background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #1B2024;
+    opacity: 0.1;
+}
+
+.loading {
+    height: 100%;
+    position: relative;
+    background-color: #1B2024;
+
+    animation-name: loading-animation;
+    animation-timing-function: linear;
+    animation-duration: 3s;
+    animation-iteration-count: infinite;
+
+    -webkit-animation-name: loading-animation;
+    -webkit-animation-timing-function: linear;
+    -webkit-animation-duration: 3s;
+    -webkit-animation-iteration-count: infinite;
+
+    -moz-animation-name: loading-animation;
+    -moz-animation-timing-function: linear;
+    -moz-animation-duration: 3s;
+    -moz-animation-iteration-count: infinite;
+
+    -o-animation-name: loading-animation;
+    -o-animation-timing-function: linear;
+    -o-animation-duration: 3s;
+    -o-animation-iteration-count: infinite;
+}
+
+@keyframes loading-animation {
+    0% {
+        left: 0;
+        width: 5px;
+    }
+
+    70% {
+        left: 100%;
+        width: 20%;
+    }
+
+    70.000000001% {
+        left: 0;
+        width: 0;
+    }
+
+    75% {
+        left: 0;
+        width: 20%;
+    }
+
+    100% {
+        left: 100%;
+        width: 30%;
+    }
+}

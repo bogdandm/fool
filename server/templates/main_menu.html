@@ -13,22 +13,42 @@
     <link href="/static/css/global.css" rel="stylesheet" type="text/css">
     <link href="/static/css/buttons.css" rel="stylesheet" type="text/css">
     <link href="/static/css/menu.css" rel="stylesheet" type="text/css">
-    <link href="/static/css/rotating_card.css" rel="stylesheet">
+    <script src="/static/js/global.js"></script>
+    <link href="/static/css/loading_bar.css" rel="stylesheet">
     <script>
+        function compareStrings(str1, str2) {
+            var rx = /([^\d]+|\d+)/ig;
+            var str1split = str1.match(rx);
+            var str2split = str2.match(rx);
+            for (var i = 0, l = Math.min(str1split.length, str2split.length); i < l; i++) {
+                var s1 = str1split[i],
+                        s2 = str2split[i];
+                if (s1 === s2) continue;
+                if (isNaN(+s1) || isNaN(+s2))
+                    return s1 > s2 ? 1 : -1;
+                else
+                    return +s1 - s2;
+            }
+            return 0;
+        }
+
         function findUser(userName) {
             var box = $('#find-user-box');
             box.find('.None').hide();
-            box.find('.rotating-card').show();
+            box.find('.user').remove();
+            $('header .loading-bar').slideDown();
             $.getJSON('api/users/find?name=' + userName,
                     function (data) {//.user
                         var box = $('#find-user-box');
                         var none = box.find('.None');
-                        box.find('.user').remove();
-                        box.find('.rotating-card').hide();
                         if (data.length) {
                             none.hide();
                             data.sort(function (a, b) {
-                                return b.mutual_friends.length - a.mutual_friends.length;
+                                var d = b.mutual_friends.length - a.mutual_friends.length;
+                                if (d)
+                                    return d;
+                                else
+                                    return compareStrings(a.name, b.name);
                             });
                             $.each(data, function (key, val) {
                                 /** @namespace val.name */
@@ -52,6 +72,7 @@
                         } else {
                             none.show();
                         }
+                        $('header .loading-bar').slideUp();
                     })
         }
 
@@ -61,9 +82,11 @@
             });
 
             $("#find-user-box").find(".result").mCustomScrollbar({
-                theme: 'minimal-dark'
+                theme: 'minimal-dark',
+                axis: 'y'
             });
 
+            $('header .loading-bar').slideDown();
             $.getJSON('/api/users/get_friend_list',
                     function (data) {
                         $.each(data, function (key, val) {
@@ -83,6 +106,7 @@
                                 friendHTML.removeClass('online').addClass('play');
                             $("#friends-left").find(".body").append(friendHTML);
                         });
+                        $('header .loading-bar').slideUp();
                     });
 
             $('#find-user-btn').click(function () {
@@ -96,9 +120,8 @@
         }
 
         $(function () {
+            addLoadBar($('header')).hide();
             friendInit();
-
-            $('.rotating-card').hide();
 
             $(".selector").add(".menu > .selection").add(".container").add(".container-mini").
             add(".menu > .selection").hide();
@@ -170,13 +193,6 @@
             justify-content: flex-start;
             align-items: flex-start;
             height: calc(100% - 60px);
-        }
-
-        .rotating-card {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            perspective: 200px;
         }
 
         .container {
@@ -314,14 +330,15 @@
 
     </style>
     <style>
-        #friends-right .body {
+        #friends-right > .body {
             height: 100%;
             box-sizing: border-box;
         }
 
         #find-user-box {
             min-height: 35px;
-            max-height: calc(100% - 2 * 7px);
+            height: calc(100% - 2 * 7px);
+            overflow: hidden;
         }
 
         #find-user-box > .top {
@@ -359,6 +376,10 @@
 
         #find-user-btn:active {
             background-color: rgba(27, 32, 36, 0.3);
+        }
+
+        #find-user-box > .result {
+            height: 100%;
         }
 
         #find-user-box > .result .None {
@@ -491,10 +512,6 @@
                     </div>
                     <div class="result">
                         <div class="body">
-                            <div class="rotating-card">
-                                <div class="card-front"><img src="/static_/svg/simple_card_red.svg"></div>
-                                <div class="card-back"><img src="/static_/svg/simple_card_dark.svg"></div>
-                            </div>
                             <div class="None">Ничего не найдено</div>
                         </div>
                     </div>
