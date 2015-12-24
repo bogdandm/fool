@@ -566,32 +566,7 @@ class Server:
 				return 'Fail', 401
 
 			name = request.args.get('name')
-
-			res = DB.find_user(name)
-			result = []
-			for uid, u_name, u_avatar in res:
-				if uid == 1: continue
-				if u_name in self.sessions_by_user_name:
-					tmp_session = self.sessions_by_user_name[u_name]
-					status = tmp_session['status'] if 'status' in tmp_session.data else 'Offline'
-				else:
-					status = 'Offline'
-
-				if u_avatar is not None and u_avatar != 'None':
-					u_avatar = "/static/avatar/{user_name}{file_ext}".format(user_name=u_name, file_ext=u_avatar)
-				else:
-					u_avatar = "/static_/svg/ic_person_24px.svg"
-
-				mutual_friends = [name for name, _ in DB.get_mutual_friends(session.uid, uid)]
-
-				result.append({
-					'name': u_name,
-					'status': status,
-					'avatar': u_avatar,
-					'mutual_friends': mutual_friends
-				})
-
-			return dumps(result)
+			return dumps(self.users_to_JSON(DB.find_user(name), session))
 
 		@self.app.route('/api/users/send_friend_invite', methods=['GET'])
 		def send_friend_invite():
@@ -604,42 +579,7 @@ class Server:
 			if not session:
 				return 'Fail', 401
 
-			res = DB.get_friends(id=session.uid)
-			result = []
-			for uid, u_name, u_avatar in res:
-				if u_name in self.sessions_by_user_name:
-					tmp_session = self.sessions_by_user_name[u_name]
-					if tmp_session.status==Session.ONLINE:
-						status = "Online"
-					elif tmp_session.status==Session.PLAY:
-						room = tmp_session['cur_room']
-						if room:
-							if room.type == const.MODE_PVE:
-								status = "Играет с AI"
-							if room.type == const.MODE_PVP:
-								status = "Играет с " + room.players[not session['player_n']].name
-						else:
-							status = "Online"
-					else:
-						status = "Offline"
-				else:
-					status = 'Offline'
-
-				if u_avatar is not None and u_avatar != 'None':
-					u_avatar = "/static/avatar/{user_name}{file_ext}".format(user_name=u_name, file_ext=u_avatar)
-				else:
-					u_avatar = "/static_/svg/account-circle.svg"
-
-				mutual_friends = [name for name, _ in DB.get_mutual_friends(session.uid, uid)]
-
-				result.append({
-					'name': u_name,
-					'status': status,
-					'avatar': u_avatar,
-					'mutual_friends': mutual_friends
-				})
-
-			return dumps(result)
+			return dumps(self.users_to_JSON(DB.get_friends(id=session.uid), session))
 
 		@self.app.route('/api/users/check_online', methods=['GET'])
 		def check_online():
@@ -675,6 +615,43 @@ class Server:
 			del self.rooms[room.id]
 			return thin_room
 		return None
+
+	def users_to_JSON(self, res, session):
+		result=[]
+		for uid, u_name, u_avatar in res:
+			if u_name in self.sessions_by_user_name:
+				tmp_session = self.sessions_by_user_name[u_name]
+				if tmp_session.status == Session.ONLINE:
+					status = "Online"
+				elif tmp_session.status == Session.PLAY:
+					room = tmp_session['cur_room']
+					if room:
+						if room.type == const.MODE_PVE:
+							status = "Играет с AI"
+						else:
+							status = "Играет с " + room.players[not session['player_n']].name
+					else:
+						status = "Online"
+				else:
+					status = "Offline"
+			else:
+				status = 'Offline'
+
+			if u_avatar is not None and u_avatar != 'None':
+				u_avatar = "/static/avatar/{user_name}{file_ext}".format(user_name=u_name, file_ext=u_avatar)
+			else:
+				u_avatar = "/static_/svg/account-circle.svg"
+
+			mutual_friends = [name for name, _ in DB.get_mutual_friends(session.uid, uid)]
+
+			result.append({
+				'name': u_name,
+				'status': status,
+				'avatar': u_avatar,
+				'mutual_friends': mutual_friends
+			})
+
+		return result
 
 
 class ServerSentEvent(object):

@@ -13,9 +13,54 @@
     <link href="/static/css/global.css" rel="stylesheet" type="text/css">
     <link href="/static/css/buttons.css" rel="stylesheet" type="text/css">
     <link href="/static/css/menu.css" rel="stylesheet" type="text/css">
+    <link href="/static/css/rotating_card.css" rel="stylesheet">
     <script>
+        function findUser(userName) {
+            var box = $('#find-user-box');
+            box.find('.None').hide();
+            box.find('.rotating-card').show();
+            $.getJSON('api/users/find?name=' + userName,
+                    function (data) {//.user
+                        var box = $('#find-user-box');
+                        var none = box.find('.None');
+                        box.find('.user').remove();
+                        box.find('.rotating-card').hide();
+                        if (data.length) {
+                            none.hide();
+                            data.sort(function (a, b) {
+                                return b.mutual_friends.length - a.mutual_friends.length;
+                            });
+                            $.each(data, function (key, val) {
+                                /** @namespace val.name */
+                                /** @namespace val.status */
+                                /** @namespace val.avatar */
+                                /** @namespace val.mutual_friends */
+                                var friendHTML = $('.hidden > .user').clone();
+                                friendHTML.attr('name', val.name);
+                                friendHTML.find('.name').text(val.name);
+                                friendHTML.find('.status').text(val.status);
+                                friendHTML.find('.mutual').text(val.mutual_friends.length);
+                                friendHTML.find('img.avatar').attr('src', val.avatar);
+                                if (val.status == "Online")
+                                    friendHTML.removeClass('play').addClass('online');
+                                else if (val.status == "Offline")
+                                    friendHTML.removeClass('online').removeClass('play');
+                                else
+                                    friendHTML.removeClass('online').addClass('play');
+                                $("#friends-right").find("#find-user-box  .result .body").append(friendHTML);
+                            });
+                        } else {
+                            none.show();
+                        }
+                    })
+        }
+
         function friendInit() {
             $("#friends-left").mCustomScrollbar({
+                theme: 'minimal-dark'
+            });
+
+            $("#find-user-box").find(".result").mCustomScrollbar({
                 theme: 'minimal-dark'
             });
 
@@ -30,19 +75,31 @@
                             friendHTML.find('.name').text(val.name);
                             friendHTML.find('.status').text(val.status);
                             friendHTML.find('> img').attr('src', val.avatar);
-                            if (val.status=="Online")
+                            if (val.status == "Online")
                                 friendHTML.removeClass('play').addClass('online');
-                            else if (val.status=="Offline")
+                            else if (val.status == "Offline")
                                 friendHTML.removeClass('online').removeClass('play');
                             else
                                 friendHTML.removeClass('online').addClass('play');
                             $("#friends-left").find(".body").append(friendHTML);
                         });
-                    })
+                    });
+
+            $('#find-user-btn').click(function () {
+                findUser($('#find-user').val());
+            });
+
+            $('#find-user').keypress(function (e) {
+                if (e.which == 13)
+                    findUser($('#find-user').val());
+            })
         }
 
         $(function () {
             friendInit();
+
+            $('.rotating-card').hide();
+
             $(".selector").add(".menu > .selection").add(".container").add(".container-mini").
             add(".menu > .selection").hide();
 
@@ -115,6 +172,13 @@
             height: calc(100% - 60px);
         }
 
+        .rotating-card {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            perspective: 200px;
+        }
+
         .container {
             position: relative;
             height: 100%;
@@ -158,27 +222,29 @@
             margin-right: 7px;
             margin-top: 3px;
         }
-
-        #friends-left {
-            min-width: 350px;
-            width: 50%;
-            max-width: 400px;
-        }
-
-        #friends-right {
-            max-width: 430px;
-            width: 50%;
+    </style>
+    <style>
+        #friends {
+            padding-left: 10px;
         }
 
         #friends, #friends-right, #friends-left {
             height: 100%;
         }
 
-        #friends-left .body {
+        #friends-left, #friends-right {
+            float: left;
+            min-width: 350px;
+            width: 50%;
+            max-width: 400px;
+            display: inline-block;
+        }
+
+        #friends-left .body, #friends-right > .body {
             padding: 10px;
         }
 
-        .friend {
+        .friend, #find-user-box {
             margin: 7px;
             max-width: 400px;
             background-color: white;
@@ -196,7 +262,7 @@
             border-right: 7px solid #5caef2;
         }
 
-        .friend > img {
+        .friend > img, #find-user-box .user img.avatar {
             height: 40px;
             max-width: 40px;
             margin: 10px 10px 10px 7px;
@@ -205,23 +271,26 @@
         }
 
         .friend > .friend-body {
-            height: 60px;
-            padding-right: 15px;
             border-radius: 0 2px 2px 0;
             cursor: pointer;
-            display: flex;
             flex-direction: column;
             justify-content: center;
             align-content: space-between;
             flex-wrap: wrap;
         }
 
-        .friend > .friend-body > .name {
+        .friend > .friend-body, #find-user-box .user {
+            height: 60px;
+            padding-right: 15px;
+            display: flex;
+        }
+
+        .friend > .friend-body > .name, #find-user-box .user .name {
             font-size: 14pt;
             font-weight: 400;
         }
 
-        .friend > .friend-body > .status {
+        .friend > .friend-body > .status, #find-user-box .user .status {
             font-size: 10pt;
             font-weight: 300;
             color: #6e7375;
@@ -242,6 +311,109 @@
         .friend > .friend-body button > img {
             height: 30px;
         }
+
+    </style>
+    <style>
+        #friends-right .body {
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        #find-user-box {
+            min-height: 35px;
+            max-height: calc(100% - 2 * 7px);
+        }
+
+        #find-user-box > .top {
+            position: relative;
+            height: 35px;
+            padding: 7px;
+            border-radius: 2px;
+            background-color: #1B2024;
+        }
+
+        #find-user {
+            box-sizing: border-box;
+            height: 100%;
+            width: 100%;
+            padding: 7px;
+            border-radius: 2px;
+            border: none;
+            font-size: 14pt;
+            font-weight: 300;
+        }
+
+        #find-user-btn {
+            position: absolute;
+            top: 7px;
+            right: 7px;
+            height: 35px;
+            width: 35px;
+            padding: 5px;
+        }
+
+        #find-user-btn > img {
+            height: 25px;
+            width: 25px;
+        }
+
+        #find-user-btn:active {
+            background-color: rgba(27, 32, 36, 0.3);
+        }
+
+        #find-user-box > .result .None {
+            padding: 30px 0;
+            text-align: center;
+            font-size: 16pt;
+            font-weight: 500;
+            color: #9f9f9f;
+        }
+
+        #find-user-box .user {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #find-user-box .user:hover {
+            background-color: #F0F0F0;
+        }
+
+        #find-user-box .user > div {
+            display: flex;
+            align-items: center;
+        }
+
+        #find-user-box .user .mutual {
+            cursor: pointer;
+            height: 30px;
+            line-height: 30px;
+            width: 30px;
+            background-color: #1B2024;
+            color: white;
+            text-align: center;
+            border-radius: 2px;
+        }
+
+        #find-user-box .user .add {
+            background-color: transparent;
+            margin-left: 7px;
+            height: 30px;
+            width: 30px;
+            padding: 2px;
+            transform: rotate(0deg);
+            transition: 0.2s easy;
+            transition-property: transform;
+        }
+
+        #find-user-box .user .add:hover {
+            transform: rotate(-90deg);
+        }
+
+        #find-user-box .user .add > img {
+            height: 26px;
+            width: 26px;
+        }
     </style>
 </head>
 <body>
@@ -255,11 +427,25 @@
                 <div class="name">Leon</div>
                 <div class="status">offline</div>
                 <div class="buttons">
-                    <button class="remove red easy"><img src="/static_/svg/delete_people.svg"></button>
+                    <button class="remove easy"><img src="/static_/svg/delete_people.svg"></button>
                     <button class="chat easy"><img src="/static_/svg/ic_chat_24px.svg"></button>
                     <button class="play easy"><img src="/static_/svg/play.svg"></button>
                     <button class="info easy"><img src="/static_/svg/ic_info_outline_24px.svg"></button>
                 </div>
+            </div>
+        </div>
+        <div class="user">
+            <div>
+                <img class="avatar" src="/static_/svg/account-circle.svg">
+
+                <div style="display: inline-block">
+                    <div class="name">Leon</div>
+                    <div class="status">offline</div>
+                </div>
+            </div>
+            <div>
+                <div class="mutual">N</div>
+                <button class="add"><img src="/static_/svg/ic_add_24px.svg"></button>
             </div>
         </div>
     </div>
@@ -297,6 +483,23 @@
             </div>
         </div>
         <div id="friends-right">
+            <div class="body">
+                <div id="find-user-box" class="standard-box">
+                    <div class="top">
+                        <input id="find-user" placeholder="Введите имя пользователя">
+                        <button id="find-user-btn"><img src="/static_/svg/ic_search_24px.svg"></button>
+                    </div>
+                    <div class="result">
+                        <div class="body">
+                            <div class="rotating-card">
+                                <div class="card-front"><img src="/static_/svg/simple_card_red.svg"></div>
+                                <div class="card-back"><img src="/static_/svg/simple_card_dark.svg"></div>
+                            </div>
+                            <div class="None">Ничего не найдено</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </main>
