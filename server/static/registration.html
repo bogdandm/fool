@@ -10,7 +10,8 @@
     <link href="css/global.css" rel="stylesheet">
     <link href="css/a.css" rel="stylesheet">
     <link href="css/buttons.css" rel="stylesheet">
-    <link href="css/rotating_card.css" rel="stylesheet">
+    <script src="js/global.js"></script>
+    <link href="css/loading_bar.css" rel="stylesheet">
     <style>
         .error, .grey {
             font-size: 12pt !important;
@@ -173,14 +174,6 @@
             padding-right: 2px;
         }
 
-        #right > .rotating-card {
-            position: absolute;
-            top: 3px;
-            right: 3px;
-            width: 40px;
-            height: 40px;
-        }
-
         #patch {
             position: absolute;
             top: 0;
@@ -247,7 +240,7 @@
                 if (!email_b) return;
                 var email = $('#e_mail');
                 var error = $('#e_mail_error2');
-                $('.rotating-card').show();
+                $('form .loading-bar').slideDown();
                 $.ajax({
                             method: 'post',
                             url: "/api/check_user",
@@ -266,7 +259,7 @@
                                 }
                             },
                             complete: function () {
-                                $('.rotating-card').hide();
+                                $('form .loading-bar').slideUp();
                             }
                         }
                 );
@@ -276,7 +269,7 @@
                 if (!userName_b) return;
                 var userName = $('#user_name');
                 var error = $('#user_name_error2');
-                $('.rotating-card').show();
+                $('form .loading-bar').slideDown();
                 $.ajax({
                             method: 'post',
                             url: "/api/check_user",
@@ -295,7 +288,7 @@
                                 }
                             },
                             complete: function () {
-                                $('.rotating-card').hide();
+                                $('form .loading-bar').slideUp();
                             }
                         }
                 );
@@ -345,7 +338,8 @@
         }
 
         $(function () {
-            $('.rotating-card').add('#loading-progress').add('.error').hide();
+            addLoadBar($('#right'), {position: 'top'}).hide();
+            $('#loading-progress').add('.error').hide();
             $('#login-btn').click(function () {
                 window.location.href = '/';
             });
@@ -369,7 +363,7 @@
                 data.append('email', $('#e_mail').val());
                 data.append('name', $('#user_name').val());
                 data.append('pass', $('#pass').val());
-                $('.rotating-card').show();
+                $('form .loading-bar').slideDown();
                 $.ajax({
                     url: '/api/add_user',
                     type: 'POST',
@@ -383,7 +377,7 @@
                         if (data == 'True' || data == 'OK') {
                             window.location.href = '/';
                         }
-                        $('.rotating-card').hide();
+                        $('form .loading-bar').slideUp();
                     }
                 });
             })
@@ -424,10 +418,6 @@
                 <a class="raised" href="/">Войти</a>
                 <span class="grey">или</span>
                 <button class="raised_color" type="button" id="reg-btn">Зарег.</button>
-            </div>
-            <div class="rotating-card">
-                <div class="card-front"><img src="/static_/svg/simple_card_red.svg"></div>
-                <div class="card-back"><img src="/static_/svg/simple_card_dark.svg"></div>
             </div>
         </div>
         <div id="patch"></div>

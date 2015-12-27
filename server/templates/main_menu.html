@@ -16,22 +16,6 @@
     <script src="/static/js/global.js"></script>
     <link href="/static/css/loading_bar.css" rel="stylesheet">
     <script>
-        function compareStrings(str1, str2) {
-            var rx = /([^\d]+|\d+)/ig;
-            var str1split = str1.match(rx);
-            var str2split = str2.match(rx);
-            for (var i = 0, l = Math.min(str1split.length, str2split.length); i < l; i++) {
-                var s1 = str1split[i],
-                        s2 = str2split[i];
-                if (s1 === s2) continue;
-                if (isNaN(+s1) || isNaN(+s2))
-                    return s1 > s2 ? 1 : -1;
-                else
-                    return +s1 - s2;
-            }
-            return 0;
-        }
-
         function findUser(userName) {
             var box = $('#find-user-box');
             box.find('.None').hide();
@@ -51,6 +35,7 @@
                                     return compareStrings(a.name, b.name);
                             });
                             $.each(data, function (key, val) {
+                                if (key > 50) return false;
                                 /** @namespace val.name */
                                 /** @namespace val.status */
                                 /** @namespace val.avatar */
@@ -67,17 +52,21 @@
                                     friendHTML.removeClass('online').removeClass('play');
                                 else
                                     friendHTML.removeClass('online').addClass('play');
-                                $("#friends-right").find("#find-user-box  .result .body").append(friendHTML);
+                                $("#friends-two").find("#find-user-box  .result .body").append(friendHTML);
                             });
                         } else {
                             none.show();
                         }
-                        $('header .loading-bar').slideUp();
-                    })
+                    }).always(function () {
+                $('header .loading-bar').slideUp();
+            }).fail(function () {
+                box.find('.None').show();
+            });
         }
 
-        function friendInit() {
-            $("#friends-left").mCustomScrollbar({
+        function initFriend() {
+            $('#friend-dialog').css({transform: 'scale(0, 0)'}).hide();
+            $("#friends-one").mCustomScrollbar({
                 theme: 'minimal-dark'
             });
 
@@ -104,10 +93,17 @@
                                 friendHTML.removeClass('online').removeClass('play');
                             else
                                 friendHTML.removeClass('online').addClass('play');
-                            $("#friends-left").find(".body").append(friendHTML);
+                            $("#friends-one").find(".body").append(friendHTML);
                         });
-                        $('header .loading-bar').slideUp();
-                    });
+                        $('.friend button.more').click(function (e) {
+                            showMenu($('#friend-dialog'), $(this).parents().filter('.friend'), {
+                                directVert: 'top',
+                                directHoriz: 'right'
+                            });
+                        })
+                    }).always(function () {
+                $('header .loading-bar').slideUp();
+            });
 
             $('#find-user-btn').click(function () {
                 findUser($('#find-user').val());
@@ -119,12 +115,8 @@
             })
         }
 
-        $(function () {
-            addLoadBar($('header')).hide();
-            friendInit();
-
-            $(".selector").add(".menu > .selection").add(".container").add(".container-mini").
-            add(".menu > .selection").hide();
+        function initMenu() {
+            $(".selector").add(".menu > .selection").add(".container").add(".container-mini").hide();
 
             $(".menu-item").hover(function () { // Перемещение блока выбора
                 $(".selector").filter('[group="' + $(this).attr('group') + '"]').show().css({
@@ -143,7 +135,6 @@
                     top: $(this).position().top + 'px'
                 })
             });
-
             x.find("> .menu-item:not([container-name])").click(function () { // Клик по не выпадающему эл-ту
                 $(".menu > .selection").add(".container").add(".container-mini").hide();
             });
@@ -163,6 +154,12 @@
 
                 setTimeout(f, 200);
             });
+        }
+
+        $(function () {
+            addLoadBar($('header'), {position: 'top'}).hide();
+            initFriend();
+            initMenu();
 
             $('#logout').click(function () {
                 $.ajax({
@@ -173,11 +170,10 @@
                 });
             });
 
-            var user = $(".user_name > span").text();
             $.ajax({
-                url: '/api/avatar?user=' + user + '&source=menu',
+                url: '/api/avatar?user=' + $(".user_name > span").text() + '&source=menu',
                 success: function (data) {
-                    $('.user_name').find('>img').attr('src', data);
+                    $('.user_name').find('img').attr('src', data);
                 }
             });
         })
@@ -241,14 +237,17 @@
     </style>
     <style>
         #friends {
+            display: flex;
+            flex-direction: row;
+            align-content: flex-start;
             padding-left: 10px;
         }
 
-        #friends, #friends-right, #friends-left {
+        #friends, #friends-two, #friends-one {
             height: 100%;
         }
 
-        #friends-left, #friends-right {
+        #friends-one, #friends-two {
             float: left;
             min-width: 350px;
             width: 50%;
@@ -256,18 +255,22 @@
             display: inline-block;
         }
 
-        #friends-left .body, #friends-right > .body {
-            padding: 10px;
+        #friends-one .body {
+            z-index: 1;
+            margin: 17px;
         }
 
-        .friend, #find-user-box {
-            margin: 7px;
+        .friend {
+            max-width: 400px;
+        }
+
+        #find-user-box {
             max-width: 400px;
             background-color: white;
         }
 
         .friend:hover {
-            background-color: #ebf5dc;
+            background-color: #f7f7f7;
         }
 
         .friend.online {
@@ -297,7 +300,7 @@
 
         .friend > .friend-body, #find-user-box .user {
             height: 60px;
-            padding-right: 15px;
+            padding-right: 12px;
             display: flex;
         }
 
@@ -328,10 +331,42 @@
             height: 30px;
         }
 
+        #friend-dialog {
+            position: absolute;
+            box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.1), 0 5px 10px 0 rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+
+            /*transition: 1s easy;
+            transition-property: transform;
+            transform-origin: top right;*/
+        }
+
+        #friend-dialog > button {
+            padding: 10px;
+            color: black;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-content: center;
+        }
+
+        #friend-dialog > button:hover {
+            background-color: #f7f7f7;
+        }
+
+        #friend-dialog > button:active {
+            background-color: #F0F0F0;
+        }
+
+        #friend-dialog > button > img {
+            margin-right: 5px;
+        }
     </style>
     <style>
-        #friends-right > .body {
-            height: 100%;
+        #friends-two > .body {
+            margin: 17px;
+            height: calc(100% - 17px);
             box-sizing: border-box;
         }
 
@@ -345,7 +380,7 @@
             position: relative;
             height: 35px;
             padding: 7px;
-            border-radius: 2px;
+            border-radius: 2px 2px 0 0;
             background-color: #1B2024;
         }
 
@@ -379,7 +414,7 @@
         }
 
         #find-user-box > .result {
-            height: 100%;
+            height: calc(100% - 35px - 2 * 7px);
         }
 
         #find-user-box > .result .None {
@@ -441,17 +476,14 @@
 <header>Дурак online</header>
 <main>
     <div class="hidden">
-        <div class="friend standard-box">
+        <div class="friend">
             <img src="/static/avatar/leon.jpg">
 
             <div class="friend-body">
                 <div class="name">Leon</div>
                 <div class="status">offline</div>
                 <div class="buttons">
-                    <button class="remove easy"><img src="/static_/svg/delete_people.svg"></button>
-                    <button class="chat easy"><img src="/static_/svg/ic_chat_24px.svg"></button>
-                    <button class="play easy"><img src="/static_/svg/play.svg"></button>
-                    <button class="info easy"><img src="/static_/svg/ic_info_outline_24px.svg"></button>
+                    <button class="more easy"><img src="/static_/svg/ic_more_vert_black_24px.svg"></button>
                 </div>
             </div>
         </div>
@@ -499,11 +531,22 @@
         </div>
     </div>
     <div id="friends" class="container">
-        <div id="friends-left">
-            <div class="body">
+        <div id="friends-one">
+            <div id="friend-dialog" class="standard-box">
+                <button class="remove">
+                    <img src="/static_/svg/delete_people.svg"> Удалить из друзей
+                </button>
+                <button class="chat">
+                    <img src="/static_/svg/ic_chat_24px.svg"> Начать диалог
+                </button>
+                <button class="play">
+                    <img src="/static_/svg/play.svg">Начать игру
+                </button>
+            </div>
+            <div class="body standard-box">
             </div>
         </div>
-        <div id="friends-right">
+        <div id="friends-two">
             <div class="body">
                 <div id="find-user-box" class="standard-box">
                     <div class="top">

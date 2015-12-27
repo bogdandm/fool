@@ -280,7 +280,7 @@ class DB:
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "SELECT id, name, file_extension FROM users U WHERE name LIKE '%%%s%%' ORDER BY name LIMIT 50" % user
+			query = "SELECT id, name, file_extension FROM users U WHERE name LIKE '%s%%' ORDER BY name" % user #LIMIT 50
 			cursor.execute(query)
 			res = cursor.fetchall()
 		except Error as e:

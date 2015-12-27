@@ -566,7 +566,9 @@ class Server:
 				return 'Fail', 401
 
 			name = request.args.get('name')
-			return dumps(self.users_to_JSON(DB.find_user(name), session))
+			if name and len(name)>3:
+				return dumps(self.users_to_JSON(DB.find_user(name), session))
+			else: return 'Bad request', 400
 
 		@self.app.route('/api/users/send_friend_invite', methods=['GET'])
 		def send_friend_invite():
@@ -629,7 +631,8 @@ class Server:
 						if room.type == const.MODE_PVE:
 							status = "Играет с AI"
 						else:
-							status = "Играет с " + room.players[not session['player_n']].name
+							player = room.players[1 - tmp_session['player_n']]
+							status = ("Играет с " + player.user) if player is not None else 'Ожидает оппонента'
 					else:
 						status = "Online"
 				else:

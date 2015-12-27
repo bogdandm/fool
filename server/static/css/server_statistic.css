@@ -123,9 +123,13 @@ button.hide > img.hide {
     text-decoration: underline;
     cursor: pointer;
     color: #001723;
+    border-radius: 2px;
 }
 
 .room_link:hover, .session_link:hover {
     background-color: rgba(0, 0, 0, 0.06);
-    border-radius: 2px;
+}
+
+.room_link:active, .session_link:active {
+    background-color: rgba(0, 0, 0, 0.2);
 }
