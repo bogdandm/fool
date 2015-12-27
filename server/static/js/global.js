@@ -28,25 +28,38 @@ function compareStrings(str1, str2) {
 function showMenu(menu, elem, data) {
     /** @namespace data.directVert */
     /** @namespace data.directHoriz */
-    menu.css({
-        transform: 'scale(0, 0)',
-        display: 'none',
-        transition: 'transform 0s easy'
-    });
-    menu.css('transform-origin', data.directHoriz + ' ' + data.directVert);
-    menu.addClass('transition-transform');
 
-    var x = elem.position();
-    menu.css({
-        transition: '0.5s',
-        display: 'block',
-        top: x.top + (data.directVert === 'bottom' ? elem.height() - menu.outerHeight() + 3 : -3),
-        left: x.left + (data.directHoriz === 'right' ? elem.width() - menu.outerWidth() + 3 : -3)
-    });
+    function init() {
+        $('html').unbind();
+        menu.css({transition: '0s'});
+        menu.css('transform-origin', data.directHoriz + ' ' + data.directVert);
+        menu.addClass('transition-transform');
+    }
 
-    $('html').unbind();
+    function step1() {
+        menu.css({
+            transform: 'scale(0, 0)',
+            display: 'none'
+        });
+    }
 
-    setTimeout(function () {
+    function step2() {
+        var x = elem.position();
+        menu.css({
+            transition: '0.5s',
+            display: 'block',
+            top: x.top + (data.directVert === 'bottom' ? elem.outerHeight() - menu.outerHeight() + 3 : -3),
+            left: x.left + (data.directHoriz === 'right' ? elem.outerWidth() - menu.outerWidth() + 3 : -3)
+        });
+        var d = $(window).height() - 15 - (menu.offset().top + menu.outerHeight());
+        if (d < 0)
+            menu.css({
+                top: x.top + elem.outerHeight() - menu.outerHeight() + 3,
+                'transform-origin': data.directHoriz + ' bottom'
+            });
+    }
+
+    function step3() {
         menu.css({transform: 'scale(1, 1)'});
 
         $('html').click(function () {
@@ -60,6 +73,10 @@ function showMenu(menu, elem, data) {
         menu.click(function (event) {
             event.stopPropagation();
         });
+    }
 
-    }, 32);
+    init();
+    setTimeout(step1, 16);
+    setTimeout(step2, 32);
+    setTimeout(step3, 48);
 }

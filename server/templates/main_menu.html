@@ -255,6 +255,10 @@
             display: inline-block;
         }
 
+        #friends-one .mCSB_container {
+            min-height: 100%;
+        }
+
         #friends-one .body {
             z-index: 1;
             margin: 17px;
@@ -335,20 +339,14 @@
             position: absolute;
             box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.1), 0 5px 10px 0 rgba(0, 0, 0, 0.1);
             z-index: 1000;
-
-            /*transition: 1s easy;
-            transition-property: transform;
-            transform-origin: top right;*/
+            width: 200px;
         }
 
         #friend-dialog > button {
             padding: 10px;
             color: black;
             width: 100%;
-            display: flex;
-            flex-direction: row;
-            justify-content: flex-start;
-            align-content: center;
+            text-align: left;
         }
 
         #friend-dialog > button:hover {
@@ -360,7 +358,12 @@
         }
 
         #friend-dialog > button > img {
+            float: left;
             margin-right: 5px;
+        }
+
+        #friend-dialog > button > span {
+            text-align: inherit;
         }
     </style>
     <style>
@@ -534,13 +537,13 @@
         <div id="friends-one">
             <div id="friend-dialog" class="standard-box">
                 <button class="remove">
-                    <img src="/static_/svg/delete_people.svg"> Удалить из друзей
+                    <img src="/static_/svg/delete_people.svg"><span>Удалить из друзей</span>
                 </button>
                 <button class="chat">
-                    <img src="/static_/svg/ic_chat_24px.svg"> Начать диалог
+                    <img src="/static_/svg/ic_chat_24px.svg"><span>Начать диалог</span>
                 </button>
                 <button class="play">
-                    <img src="/static_/svg/play.svg">Начать игру
+                    <img src="/static_/svg/play.svg"><span>Начать игру</span>
                 </button>
             </div>
             <div class="body standard-box">
