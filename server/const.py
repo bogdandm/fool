@@ -12,3 +12,6 @@ MAX_LOG_LENGTH_AFTER_CLEANING = 200
 IMAGES = {'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/png': '.png'}
 
 FILTRATE_REQUEST_FOR_LOG = True
+
+class Dummy(object):
+	pass
