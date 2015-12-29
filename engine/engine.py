@@ -23,12 +23,7 @@ class Change:
 		)
 
 	def __repr__(self):
-		return "<%s> %s: %s" % (
-			self.type,
-			str(self.player) if self.player is not None else '-',
-			self.card if self.card is not None else
-			(str(self.inf) if self.inf is not None else '-')
-		)
+		return self.__str__()
 
 	def to_dict(self):
 		return {
@@ -60,21 +55,14 @@ class Card:
 	KING = 13
 	ACE = 14"""
 
+	suits = [None, 'C', 'S', 'D', 'H']
+
 	def __init__(self, suit, card_number):
 		self.suit = suit
 		self.number = card_number
 
 	def __str__(self) -> str:  # Возвращает строку вида 00X
-		s = str(self.number)
-		if self.suit == 1:
-			s += 'C'
-		elif self.suit == 2:
-			s += 'S'
-		elif self.suit == 3:
-			s += 'D'
-		elif self.suit == 4:
-			s += 'H'
-		return s
+		return str(self.number) + self.suits[self.suit]
 
 	def __repr__(self) -> str:
 		return "'" + self.__str__() + "'"
@@ -105,14 +93,11 @@ class Set:  # Колода
 			self.cards = []  # set_to_copy.cards[:]
 		else:
 			random.seed(seed)
-			self.cards = []
-			for value in range(2, 15):
-				for suit in range(1, 5):
-					self.cards.append(Card(suit, value))
+			self.cards = [Card(suit, value) for value in range(2, 15) for suit in range(1, 5)]
 			random.shuffle(self.cards)
 
 	def take_card(self) -> Card:  # Выдаем карту из колоды
-		if not len(self.cards):
+		if not self.cards:
 			return None
 		return self.cards.pop()
 
@@ -121,10 +106,11 @@ class Set:  # Колода
 
 
 class Game:
-	def __init__(self, save_changes=True, log_on=False, seed: int=int(time.time() * 256 * 1000), game=None):
+	def __init__(self, save_changes=True, log_on=False, seed: int = int(time.time() * 256 * 1000), game=None):
 		self.log_on = log_on
 		self.save_changes = save_changes
 		if game is not None:
+			# Copy (not really full copy, only necessary fields are copied)
 			self.set = None
 			self.turn = game.turn
 			self.hand = [game.hand[0][:], game.hand[1][:]]
@@ -164,11 +150,13 @@ class Game:
 					self.changes.append(Change('set_decr', None, None, None))
 					self.changes.append(Change('get_card', int(not self.turn), card.__str__(), 0))
 				self.hand[not self.turn].append(card)
+
 				card = self.set.take_card()
 				if self.save_changes:
 					self.changes.append(Change('set_decr', None, None, None))
 					self.changes.append(Change('get_card', int(self.turn), card.__str__(), 0))
 				self.hand[self.turn].append(card)
+
 				if self.log_on:
 					self.log.write('p%i: get(%s)\n' % (self.turn, self.hand[self.turn][-1]))
 					self.log.write('p%i: get(%s)\n' % (not self.turn, self.hand[not self.turn][-1]))
@@ -216,7 +204,6 @@ class Game:
 		if card_number == -1:
 			if self.table and self.table[-1][1] is not None:
 				# Можно не атаковать если на столе есть побитая пара
-				# print('skip...')
 				self.continue_turn = False
 				return True
 			else:
@@ -252,8 +239,7 @@ class Game:
 			del self.hand[self.turn][card_number]
 		return can_attack
 
-	def defense(self, card_number: int, card_number_table: int=-1, ai=None) -> bool:  # Меняет состояние игры
-		# print('Take' if card_number == -1 else self.hand[not self.turn][card_number])
+	def defense(self, card_number: int, card_number_table: int = -1, ai=None) -> bool:  # Меняет состояние игры
 		if card_number == -1:
 			if self.table and self.table[-1][1] is None:
 				# Можно взять карты если стол не пустой и есть не побитая карта
@@ -262,13 +248,14 @@ class Game:
 			else:
 				return False
 
-		if not (0 <= card_number < len(self.hand[not self.turn])):
+		try:
+			card1 = self.hand[not self.turn][card_number]
+		except KeyError:
 			return False
 
-		card1 = self.hand[not self.turn][card_number]
 		card2 = self.table[card_number_table][0]
 
-		if not card1.more(card2, self.trump_suit) or card2 is None:
+		if not card1.more(card2, self.trump_suit):
 			return False
 
 		if ai is not None:
@@ -318,35 +305,35 @@ class Game:
 		if self.save_changes:
 			self.changes.append(Change('table_clear', None, None, None))
 
-		for turn in [self.turn, not self.turn]:
+		for player in [self.turn, not self.turn]:
 			if self.set is not None and self.set.remain() or self.trump_card is not None:  # Если есть что взять
-				for i in range(6 - len(self.hand[turn])):
+				for i in range(6 - len(self.hand[player])):
 					card = self.set.take_card()
 					if card is not None:
-						self.hand[turn].append(card)
+						self.hand[player].append(card)
 						if ai is not None:
 							for a in ai:
-								if a.hand_number == turn:
+								if a.hand_number == player:
 									a.update_memory('MY', card)
 						if self.save_changes:
 							self.changes.append(Change('set_decr', None, None, None))
-							self.changes.append(Change('get_card', int(turn), card.__str__(), 0))
+							self.changes.append(Change('get_card', int(player), card.__str__(), 0))
 						if self.log_on:
-							self.log.write('p%i: get(%s)\n' % (turn, card))
+							self.log.write('p%i: get(%s)\n' % (player, card))
 							self.log.flush()
 
 					elif self.trump_card is not None:
-						self.hand[turn].append(self.trump_card)
+						self.hand[player].append(self.trump_card)
 						if ai is not None:
 							for a in ai:
-								a.update_memory('TRUMP', inf=turn)
-								if a.hand_number == turn:
+								a.update_memory('TRUMP', inf=player)
+								if a.hand_number == player:
 									a.update_memory('MY', self.trump_card)
 						if self.save_changes:
-							self.changes.append(Change('get_card', int(turn), self.trump_card.__str__(), 0))
+							self.changes.append(Change('get_card', int(player), self.trump_card.__str__(), 0))
 							self.changes.append(Change('trump_card', None, 'None', None))
 						if self.log_on:
-							self.log.write('p%i: get(%s)\n' % (turn, self.trump_card))
+							self.log.write('p%i: get(%s)\n' % (player, self.trump_card))
 							self.log.flush()
 						self.trump_card = None
 
@@ -362,14 +349,6 @@ class Game:
 				self.log.flush()
 
 	def can_continue_turn(self) -> bool:
-		"""if self.table:
-			if self.table[-1][1] is None:
-				if not self.hand[not self.turn]:
-					return False
-			elif not self.hand[self.turn]:
-				# Если закончились карты
-				return False"""
-		# elif
 		if not self.hand[self.turn] or not self.hand[not self.turn]:
 			# Если закончились карты
 			return False
@@ -418,7 +397,7 @@ class Game:
 		if la and ld:
 			return None
 		elif not easy and (not la and ld and available_cards or
-								 available_cards and need_cards <= available_cards):
+								   available_cards and need_cards <= available_cards):
 			return None
 		elif not la and self.table and self.table[0][0] is not None and self.table[0][1] is None:
 			return None
@@ -452,36 +431,30 @@ class Game:
 				return -1
 
 	def print_state(self, player=-1):
-		print('==========================')
-		if self.trump_card is not None:
-			print('Trump card:\t%s' % self.trump_card, end='\t')
-		else:
-			print('Trump suit:\t%s' % (str(Card(self.trump_suit, 2))[-1]), end='\t')
-		print('Remaining:\t%i' % self.set.remain())
+		s = """==========================
+{trump}\tRemaining:\t{remaining}
 
-		print('\nPlayer 1 %s' % ('<-' if self.turn else ''))
-		if player == -1:
-			for card in self.hand[1]:
-				print(card, end='  ')
-		else:
-			print(len(self.hand[1]))
+Player 1 {turn_p1}
+{cards1}
 
-		print('\n')
-		if player == -1:
-			for card in self.hand[0]:
-				print(card, end='  ')
-		else:
-			for card in self.hand[player]:
-				print(card, end='  ')
-		print('\nPlayer 0 %s' % ('<-' if not self.turn else ''))
+{cards2}
+Player 0 {turn_p0}
 
-		print('\nTable:')
-		for pair in self.table:
-			print(pair[0], end='\t')
-		print()
-		for pair in self.table:
-			if pair[1]:
-				print(pair[1], end='\t')
-			else:
-				print(end='\t')
-		print('\n==========================')
+Table:
+{attack}
+{defense}
+==========================
+""".format(
+			trump = ('Trump card:\t%s' % self.trump_card) if self.trump_card is not None
+			else 'Trump suit:\t%s' % Card.suits[self.trump_suit],
+			remaining = self.set.remain(),
+			turn_p1 = '<-' if self.turn else '',
+			turn_p0 = '<-' if not self.turn else '',
+			cards1 = "\t".join(map(lambda c: c.__str__(), self.hand[1])) if player == -1 else len(self.hand[1]),
+			cards2 = "\t".join(map(lambda c: c.__str__(), self.hand[0])) if player == -1
+			else "\t".join(map(lambda c: c.__str__(), self.hand[player])),
+			attack = "\t".join(map(lambda c: c[0].__str__(), self.table)),
+			defense ="\t".join(map(lambda c: c[1].__str__() if c[1] is not None else '  ', self.table))
+		)
+
+		print(s)

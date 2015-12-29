@@ -4,6 +4,8 @@ from hashlib import sha256
 
 from mysql.connector import connect, Error
 
+from server.const import Dummy
+
 
 # Full static class
 class DB:
@@ -19,21 +21,22 @@ class DB:
 		return connect(**DB.config)
 
 	@staticmethod
-	def query(query):
-		connection = DB.connect()
-		cursor = connection.cursor()
+	def query(query, connection=None):
+		connection_ = connection if connection is not None else DB.connect()
+		cursor = connection_.cursor()
 		try:
 			cursor.execute(query)
 		except Error as e:
-			return e
+			raise e
 		finally:
-			connection.commit()
+			connection_.commit()
 			cursor.close()
-			connection.close()
+			if connection is None:
+				connection_.close()
 			return True
 
 	@staticmethod
-	def check_user(user_name: str, password: str = None) -> (bool, int, str, bool, bool):
+	def check_user(user_name: str, password: str = None):
 		if user_name is None:
 			return False
 		connection = DB.connect()
@@ -45,15 +48,15 @@ class DB:
 			cursor.execute(query)
 			row = cursor.fetchone()
 			if row is not None:
-				(uid, file, activated, admin) = row
+				obj = Dummy()
+				(obj.uid, obj.file, obj.activated, obj.admin) = row
 			else:
-				uid = file = activated = admin = None
-			res = (cursor.rowcount > 0)
+				obj = None
 		except Error as e:
-			return e
+			raise e
 		finally:
 			connection.close()
-		return (res, uid, file, activated, admin)
+		return obj
 
 	@staticmethod
 	def check_email(email: str) -> bool:
@@ -67,7 +70,7 @@ class DB:
 			cursor.fetchone()
 			res = (cursor.rowcount > 0)
 		except Error as e:
-			return e
+			raise e
 		finally:
 			connection.close()
 		return res
@@ -87,8 +90,10 @@ class DB:
 
 	@staticmethod
 	def add_session(s, uid):
-		DB.query("DELETE FROM sessions WHERE user_id=%i" % uid)
-		DB.query("INSERT INTO sessions VALUES ('%s', %i)" % (s.get_id(), uid))
+		c = DB.connect()
+		DB.query("DELETE FROM sessions WHERE user_id=%i" % uid, c)
+		DB.query("INSERT INTO sessions VALUES ('%s', %i)" % (s.get_id(), uid), c)
+		c.close()
 
 	@staticmethod
 	def delete_session(id):
@@ -104,10 +109,17 @@ class DB:
 			cursor.execute(query)
 			res = cursor.fetchall()
 		except Error as e:
-			return e
+			raise e
 		finally:
 			connection.close()
-		return res
+		for row in res:
+			obj = Dummy()
+			obj.name = row[0]
+			obj.activated = row[1]
+			obj.uid = row[2]
+			obj.id = row[3]
+			obj.admin = row[4]
+			yield obj
 
 	@staticmethod
 	def write_log_record(ip, url, method, status):
@@ -119,9 +131,6 @@ class DB:
 
 	@staticmethod
 	def activate_account(token):
-		"""
-		:rtype : (name, uid, file_ext, activated)
-		"""
 		DB.query("UPDATE users SET is_activated=TRUE WHERE activation_code='%s'" % token)
 
 		connection = DB.connect()
@@ -129,15 +138,16 @@ class DB:
 			cursor = connection.cursor()
 			query = "SELECT name, id, file_extension, is_activated FROM users WHERE activation_code='%s'" % token
 			cursor.execute(query)
-			res = cursor.fetchone()
+			res = Dummy()
+			(res.name, res.uid, res.file, res.activated) = cursor.fetchone()
 		except Error as e:
-			return e
+			raise e
 		finally:
 			connection.close()
 		return res
 
 	@staticmethod
-	def get_email(user):
+	def get_email_adress(user):
 		random.seed(time.time() * 256)
 		activation_code = sha256(bytes(
 			user + int(time.time() * 256).__str__() + random.randint(0, 2 ** 20).__str__() + 'email activation',
@@ -153,15 +163,15 @@ class DB:
 			cursor.execute(query)
 			res = cursor.fetchone()
 		except Error as e:
-			return e
+			raise e
 		finally:
 			connection.close()
 		return res
 
 	@staticmethod
-	def get_friends_table(user=None, id=None) -> (list, list):
+	def get_friends_table(user=None, id=None) -> (list, list):  # test only, will be deleted later
 		if user is not None:
-			id = DB.check_user(user)[0]
+			id = DB.check_user(user).uid
 
 		friends = []
 		edges = []
@@ -169,14 +179,14 @@ class DB:
 		try:
 			cursor = connection.cursor()
 			query = (
-				"SELECT "
-				"friends.user   id1, "
-				"u1.name        name1, "
-				"friends.friend id2, "
-				"u2.name        name2 "
-				"FROM friends "
-				"INNER JOIN users u1 ON friends.user = u1.id "
-				"INNER JOIN users u2 ON friends.friend = u2.id "
+				"""SELECT
+				friends.user   id1,
+				u1.name        name1,
+				friends.friend id2,
+				u2.name        name2
+				FROM friends
+				INNER JOIN users u1 ON friends.user = u1.id
+				INNER JOIN users u2 ON friends.friend = u2.id """
 			)
 			query += ("WHERE friends.user=%i OR friends.friend=%i;" % (id, id)) if id is not None else ";"
 			cursor.execute(query)
@@ -189,18 +199,18 @@ class DB:
 					'name2': row[3]
 				})
 		except Error as e:
-			return e
+			raise e
 		try:
 			cursor = connection.cursor()
 			query = "SELECT id, name FROM users "
 			query += (
-				"WHERE "
-				"id IN (SELECT user "
-				"		FROM friends "
-				"		WHERE friend = %i) OR "
-				"id IN (SELECT friend "
-				"		FROM friends "
-				"		WHERE user = %i);" % (id, id)) if id is not None else ";"
+				"""WHERE
+				id IN (SELECT user
+						FROM friends
+						WHERE friend = %i) OR
+				id IN (SELECT friend
+						FROM friends
+						WHERE user = %i);""" % (id, id)) if id is not None else ";"
 
 			cursor.execute(query)
 			res = cursor.fetchall()  # id, name
@@ -210,81 +220,94 @@ class DB:
 					'name': row[1]
 				})
 		except Error as e:
-			return e
+			raise e
 		finally:
 			connection.close()
 		return friends, edges
 
 	@staticmethod
-	def get_friends(user=None, id=None):
+	def get_friends(user=None, uid=None):
 		if user is not None:
-			id = DB.check_user(user)[0]
+			uid = DB.check_user(user).uid
 
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "SELECT y.id, name, file_extension " \
-					"FROM (SELECT user id " \
-					"      FROM friends " \
-					"      WHERE friend = %i " \
-					"      UNION " \
-					"      SELECT friend id " \
-					"      FROM friends " \
-					"      WHERE user = %i " \
-					"     ) y " \
-					"INNER JOIN users ON y.id = users.id " \
-					"ORDER BY name" % (id, id)
+			query = """SELECT y.id, name, file_extension
+				  	FROM (SELECT user id
+					      FROM friends
+					      WHERE friend = %i
+					      UNION
+					      SELECT friend id
+					      FROM friends
+					      WHERE user = %i
+					     ) y
+					INNER JOIN users ON y.id = users.id
+					ORDER BY name""" % (uid, uid)
 			cursor.execute(query)
-			res = cursor.fetchall()
+			while True:
+				res = cursor.fetchone()
+				if res:
+					yield res
+				else:
+					break
 		except Error as e:
-			return e
+			raise e
 		finally:
 			connection.close()
-		return res
 
 	@staticmethod
-	def get_mutual_friends(you: int, other: int):
-		connection = DB.connect()
+	def get_mutual_friends(you: int, other: int, connection_=None):
+		connection = DB.connect() if connection_ is None else connection_
 		try:
 			cursor = connection.cursor()
-			query = "SELECT name, y.id " \
-					"FROM ( " \
-					"	SELECT * " \
-					"	FROM (SELECT USER id " \
-					"		FROM friends " \
-					"		WHERE friend = %i " \
-					"		UNION " \
-					"		SELECT friend id " \
-					"		FROM friends " \
-					"		WHERE USER = %i) x1 " \
-					"	WHERE id IN (" \
-					"			SELECT USER id " \
-					"			FROM friends " \
-					"			WHERE friend = %i " \
-					"			UNION " \
-					"			SELECT friend id " \
-					"			FROM friends " \
-					"			WHERE USER = %i" \
-					"	) " \
-					") y INNER JOIN users ON y.id = users.id" % (you, you, other, other)
+			query = """SELECT U.name, Y.id
+					FROM (
+						SELECT *
+						FROM (SELECT USER id
+							FROM friends
+							WHERE friend = %i
+							UNION
+							SELECT friend id
+							FROM friends
+							WHERE USER = %i) F1
+						WHERE id IN (
+								SELECT USER id
+								FROM friends
+								WHERE friend = %i
+								UNION
+								SELECT friend id
+								FROM friends
+								WHERE USER = %i
+						)
+					) Y INNER JOIN users U ON Y.id = U.id""" % (you, you, other, other)
 			cursor.execute(query)
-			res = cursor.fetchall()
+			while True:
+				res = cursor.fetchone()
+				if res:
+					yield res
+				else:
+					break
 		except Error as e:
-			return e
+			raise e
 		finally:
-			connection.close()
-		return res
+			if connection_ is None:
+				connection.close()
 
 	@staticmethod
 	def find_user(user):
 		connection = DB.connect()
 		try:
 			cursor = connection.cursor()
-			query = "SELECT id, name, file_extension FROM users U WHERE name LIKE '%s%%' ORDER BY name" % user #LIMIT 50
+			query = "SELECT id, name, file_extension FROM users U WHERE name LIKE '%s%%' ORDER BY name" % user  # LIMIT 50
 			cursor.execute(query)
-			res = cursor.fetchall()
+			while True:
+				res = cursor.fetchone()
+				if res:
+					yield res
+				else:
+					break
 		except Error as e:
-			return e
+			raise e
 		finally:
 			connection.close()
-		return res

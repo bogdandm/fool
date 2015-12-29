@@ -57,7 +57,7 @@ class Session:
 		return self.id
 
 	def update_activation_status(self):
-		self.activated = bool(DB.check_user(self.user)[3])
+		self.activated = bool(DB.check_user(self.user).activated)
 
 	def to_json(self) -> dict:
 		return {

@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timedelta
 from json import dumps
 from re import search
+from types import GeneratorType
 
 import gevent
 from flask import Flask, Response, make_response, request, redirect, render_template, send_from_directory
@@ -31,14 +32,12 @@ class Server:
 		self.app = Flask(__name__)
 		self.app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
 
-		res = DB.get_sessions()
 		self.sessions = dict()
 		self.sessions_by_user_name = dict()
-		if res is not None:
-			for row in res:
-				s = Session(*row)
-				self.sessions[row[3]] = s
-				self.sessions_by_user_name[s.user] = s
+		for obj in DB.get_sessions():
+			s = Session(obj.name, obj.activated, obj.uid, obj.id, obj.admin)
+			self.sessions[obj.id] = s
+			self.sessions_by_user_name[obj.name] = s
 		self.rooms = dict()
 		self.logger = Logger()
 		self.logger.write_msg('==Server run at %s==' % ip)
@@ -159,10 +158,10 @@ class Server:
 			if result is None:
 				return 'Bad token'
 
-			session = Session(result[0], result[3], result[1])
+			session = Session(result.name, result.activated, result.uid)
 			self.sessions[session.get_id()] = session
-			session['avatar'] = result[2]
-			DB.add_session(session, result[1])
+			session['avatar'] = result.file
+			DB.add_session(session, result.uid)
 
 			response = redirect('/')
 			session.add_cookie_to_resp(response)
@@ -174,7 +173,7 @@ class Server:
 				session = self.sessions[request.cookies['sessID']]
 			else:
 				return 'Fail', 401
-			(email, activation_token) = DB.get_email(session.user)
+			(email, activation_token) = DB.get_email_adress(session.user)
 			email_.send_email(
 				"Для подтвеждения регистрации пожалуйста перейдите по ссылке "
 				"http://{domain}/activate_account?token={token}".format(
@@ -365,7 +364,7 @@ class Server:
 			name = request.form.get('name')
 
 			if name is not None:
-				result = DB.check_user(name, sha256)[0]
+				result = DB.check_user(name, sha256)
 				response = make_response((not result).__str__())
 			elif email is not None:
 				result = DB.check_email(email)
@@ -384,7 +383,7 @@ class Server:
 					return "/static_/svg/ic_computer_24px.svg"
 				else:
 					return "/static_/svg/ic_computer_24px_white.svg"
-			file_ext = DB.check_user(user)[2]
+			file_ext = DB.check_user(user).file
 			if file_ext is not None and file_ext != 'None':
 				return "/static/avatar/{user_name}{file_ext}".format(user_name=user, file_ext=file_ext)
 			else:
@@ -400,7 +399,7 @@ class Server:
 			name = request.form.get('name')
 			email = request.form.get('email')
 
-			result = not DB.check_user(name)[0] and not DB.check_email(email)
+			result = not DB.check_user(name) and not DB.check_email(email)
 
 			if not (search('^.+@.+\..+$', email) and search('^[a-zA-Z0-9_]+$', name) and result):
 				return make_response('Wrong data', 400)
@@ -420,12 +419,12 @@ class Server:
 			if result:
 				response = make_response('OK')
 
-				(result2, uid, file_ext, activated, admin) = DB.check_user(name, sha256)
+				result2 = DB.check_user(name, sha256)
 				if result2:
-					session = Session(name, activated, uid)
+					session = Session(name, result2.activated, result2.uid)
 					self.sessions[session.get_id()] = session
-					session['avatar'] = file_ext
-					DB.add_session(session, uid)
+					session['avatar'] = result2.file
+					DB.add_session(session, result2.uid)
 					session.add_cookie_to_resp(response)
 
 					email_.send_email(
@@ -455,17 +454,18 @@ class Server:
 			user_name = request.form.get('user_name')
 			password = request.form.get('pass')
 			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
-			(result, uid, file_ext, activated, admin) = DB.check_user(request.form.get('user_name'), sha256)
+			result = DB.check_user(request.form.get('user_name'), sha256)
+			#(result, uid, file_ext, activated, admin)
 			if result:
 
 				if user_name in self.sessions_by_user_name:
 					session = self.sessions_by_user_name[user_name]
 				else:
-					session = Session(user_name, activated, uid, admin=admin)
+					session = Session(user_name, result.activated, result.uid, admin=result.admin)
 					self.sessions[session.get_id()] = session
 					self.sessions_by_user_name[user_name] = session
-					session['avatar'] = file_ext
-					DB.add_session(session, uid)
+					session['avatar'] = result.file
+					DB.add_session(session, result.uid)
 				session['ip'] = request.remote_addr
 
 				response = make_response('True')
@@ -539,7 +539,7 @@ class Server:
 			else:
 				return 'Fail', 401
 
-		@self.app.route('/api/get_friends')
+		@self.app.route('/api/get_friends') # test only, will be deleted later
 		# need: session@admin
 		def get_friends():
 			session = self.get_session(request)
@@ -567,7 +567,7 @@ class Server:
 
 			name = request.args.get('name')
 			if name and len(name)>3:
-				return dumps(self.users_to_JSON(DB.find_user(name), session))
+				return dumps([user for user in self.users_to_JSON(DB.find_user(name), session)])
 			else: return 'Bad request', 400
 
 		@self.app.route('/api/users/send_friend_invite', methods=['GET'])
@@ -581,7 +581,7 @@ class Server:
 			if not session:
 				return 'Fail', 401
 
-			return dumps(self.users_to_JSON(DB.get_friends(id=session.uid), session))
+			return dumps([user for user in self.users_to_JSON(DB.get_friends(uid=session.uid), session)])
 
 		@self.app.route('/api/users/check_online', methods=['GET'])
 		def check_online():
@@ -618,8 +618,7 @@ class Server:
 			return thin_room
 		return None
 
-	def users_to_JSON(self, res, session):
-		result=[]
+	def users_to_JSON(self, res: GeneratorType, session):
 		for uid, u_name, u_avatar in res:
 			if u_name in self.sessions_by_user_name:
 				tmp_session = self.sessions_by_user_name[u_name]
@@ -645,16 +644,16 @@ class Server:
 			else:
 				u_avatar = "/static_/svg/account-circle.svg"
 
-			mutual_friends = [name for name, _ in DB.get_mutual_friends(session.uid, uid)]
+			c = DB.connect()
+			mutual_friends = [name for name, _ in DB.get_mutual_friends(session.uid, uid, c)]
+			c.close()
 
-			result.append({
+			yield {
 				'name': u_name,
 				'status': status,
 				'avatar': u_avatar,
 				'mutual_friends': mutual_friends
-			})
-
-		return result
+			}
 
 
 class ServerSentEvent(object):
