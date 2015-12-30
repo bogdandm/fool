@@ -22,8 +22,7 @@ class Server:
 	service_pages = [
 		'\/api\/ping(\?data=[0-9]+)?$',
 		'\/api\/getRequestPerSec$',
-		'\/api\/get_sessions(\?(id=[0-9a-z]+|name=[a-zA-Z0-9_]+))?$',
-		'\/api\/get_rooms(\?id=.+)?$'
+		'\/api\/get_table\?(table=.+)$'
 	]
 
 	def __init__(self, ip, domain=None, seed=None):
@@ -48,7 +47,7 @@ class Server:
 			while True:
 				delta = timedelta(minutes=5)
 				now = datetime.now()
-				for _, s in this.sessions.items():
+				for s in this.sessions.values():
 					if not s.last_request or (s.last_request + delta < now and s.status == Session.ONLINE):
 						s.status = Session.OFFLINE
 				gevent.sleep(5 * 60 + 1)
@@ -134,7 +133,7 @@ class Server:
 		def send_arena():
 			return redirect('/static/arena.html?mode=' + request.args.get('mode'))
 
-		@self.app.route('/static/server_statistic.html')  # static; need: session
+		@self.app.route('/static/server_statistic.html')  # static; need: session@admin
 		def send_server_statistic_file():
 			session = self.get_session(request)
 			if session:
@@ -149,7 +148,7 @@ class Server:
 			else:
 				return redirect('/')
 
-		@self.app.route('/activate_account')  # need: get@token
+		@self.app.route('/api/activate_account')  # need: get@token
 		def activate_account():
 			token = request.args.get('token')
 			if not search('^[a-zA-Z0-9]+$', token):
@@ -167,16 +166,17 @@ class Server:
 			session.add_cookie_to_resp(response)
 			return response
 
-		@self.app.route('/resend_email')  # need: session
+		@self.app.route('/api/resend_email')  # need: session
 		def resend_email():
 			if 'sessID' in request.cookies and request.cookies['sessID'] in self.sessions:
 				session = self.sessions[request.cookies['sessID']]
 			else:
 				return 'Fail', 401
+
 			(email, activation_token) = DB.get_email_adress(session.user)
 			email_.send_email(
 				"Для подтвеждения регистрации пожалуйста перейдите по ссылке "
-				"http://{domain}/activate_account?token={token}".format(
+				"http://{domain}/api/activate_account?token={token}".format(
 					domain=(self.domain if self.domain is not None else self.ip),
 					token=activation_token
 				),
@@ -238,9 +238,9 @@ class Server:
 
 			session.status = Session.ONLINE
 			room = session['cur_room']
+			response = make_response('OK')
+			response.headers["Cache-Control"] = "no-store"
 			if room is None:
-				response = make_response('OK')
-				response.headers["Cache-Control"] = "no-store"
 				return response
 			room_id = room.id
 			if room.type == const.MODE_PVE:
@@ -248,8 +248,6 @@ class Server:
 				del session['cur_room']
 				del room
 
-				response = make_response('OK')
-				response.headers["Cache-Control"] = "no-store"
 				return response
 			elif room.type == const.MODE_PVP:
 				if room.is_ready():
@@ -260,8 +258,6 @@ class Server:
 					del room
 				del session['cur_room']
 
-				response = make_response('OK')
-				response.headers["Cache-Control"] = "no-store"
 				return response
 
 		@self.app.route("/api/join")  # need: session@msg_queue, get@mode
@@ -273,13 +269,12 @@ class Server:
 			mode = int(request.args.get('mode'))
 			if mode == const.MODE_PVE:
 				room = RoomPvE(session, seed=self.seed)
-				self.rooms[room.id] = room
-				session['cur_room'] = room
+				self.rooms[room.id] = session['cur_room'] = room
 				session['player_n'] = const.PLAYER_HAND
 				room.send_player_inf()
 				room.send_changes()
 			elif mode == const.MODE_PVP:
-				for _, room in self.rooms.items():
+				for room in self.rooms.values():
 					if room.type == const.MODE_PVP and not room.is_ready():
 						break
 				else:
@@ -429,7 +424,7 @@ class Server:
 
 					email_.send_email(
 						"Для подтвеждения регистрации пожалуйста перейдите по ссылке "
-						"http://{domain}/activate_account?token={token}".format(
+						"http://{domain}/api/activate_account?token={token}".format(
 							domain=(self.domain if self.domain is not None else self.ip),
 							token=activation_token
 						),
@@ -441,7 +436,7 @@ class Server:
 				response.headers["Content-type"] = "text/plain"
 				return response
 			else:
-				return 'Error'
+				return 'Error', 500
 
 		@self.app.route("/api/init_session", methods=['POST'])
 		# need: post@user_name, post@pass
@@ -453,11 +448,12 @@ class Server:
 
 			user_name = request.form.get('user_name')
 			password = request.form.get('pass')
-			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest() if password is not None else None
-			result = DB.check_user(request.form.get('user_name'), sha256)
-			#(result, uid, file_ext, activated, admin)
-			if result:
+			if user_name is None or password is None:
+				return 'Bad request', 400
 
+			sha256 = hashlib.sha256(bytes(password, encoding='utf-8')).hexdigest()
+			result = DB.check_user(request.form.get('user_name'), sha256)
+			if result:
 				if user_name in self.sessions_by_user_name:
 					session = self.sessions_by_user_name[user_name]
 				else:
@@ -509,49 +505,40 @@ class Server:
 			else:
 				return 'Fail', 401
 
-		@self.app.route('/api/get_sessions')
-		# need: session@admin
+		@self.app.route('/api/get_table', methods=['GET'])
+		# need: session@admin, get@table
 		def get_sessions():
 			session = self.get_session(request)
 			if session:
 				if self.get_session(request).admin:
-					result = []
-					for sid, session in self.sessions.items():
-						result.append(session.to_json())
+					table_s = request.args.get('table')
+					if table_s == 'sessions':
+						table = self.sessions
+					elif table_s == 'rooms':
+						table = self.rooms
+					else:
+						return 'Bad request', 400
+					result = list(map(lambda s: s.to_json(), table.values()))
 					return dumps(result)
 				else:
 					return 'Permission denied', 401
 			else:
 				return 'Fail', 401
 
-		@self.app.route('/api/get_rooms')
-		# need: session@admin
-		def get_rooms():
-			session = self.get_session(request)
-			if session:
-				if self.get_session(request).admin:
-					result = []
-					for rid, room in self.rooms.items():
-						result.append(room.to_json())
-					return dumps(result)
-				else:
-					return 'Permission denied', 401
-			else:
-				return 'Fail', 401
-
-		@self.app.route('/api/get_friends') # test only, will be deleted later
+		@self.app.route('/api/get_friends')  # test only, will be deleted later
 		# need: session@admin
 		def get_friends():
 			session = self.get_session(request)
 			if session:
 				if self.get_session(request).admin:
 					friends, edges = DB.get_friends_table()
-					result = {"nodes": friends, "edges": []}
-					for edge in edges:
-						result["edges"].append({
+					result = {
+						"nodes": friends,
+						"edges": list(map(lambda edge: {
 							"src": edge["name1"],
 							"dest": edge["name2"]
-						})
+						}, edges))
+					}
 					return dumps(result)
 				else:
 					return 'Permission denied', 401
@@ -566,9 +553,10 @@ class Server:
 				return 'Fail', 401
 
 			name = request.args.get('name')
-			if name and len(name)>3:
-				return dumps([user for user in self.users_to_JSON(DB.find_user(name), session)])
-			else: return 'Bad request', 400
+			if name and len(name) > 3:
+				return dumps(list(self.users_to_JSON(DB.find_user(name), session)))
+			else:
+				return 'Bad request', 400
 
 		@self.app.route('/api/users/send_friend_invite', methods=['GET'])
 		def send_friend_invite():
@@ -581,7 +569,7 @@ class Server:
 			if not session:
 				return 'Fail', 401
 
-			return dumps([user for user in self.users_to_JSON(DB.get_friends(uid=session.uid), session)])
+			return dumps(list(self.users_to_JSON(DB.get_friends(uid=session.uid), session)))
 
 		@self.app.route('/api/users/check_online', methods=['GET'])
 		def check_online():
@@ -598,7 +586,7 @@ class Server:
 			return None
 
 	def merge_room(self, room):
-		for _, thin_room in self.rooms.items():
+		for thin_room in self.rooms.values():
 			if thin_room.is_ready() or thin_room is room: continue
 			session = room.players[0] if room.players[0] is not None else room.players[1]
 			session['player_n'] = thin_room.add_player(session)
@@ -618,8 +606,8 @@ class Server:
 			return thin_room
 		return None
 
-	def users_to_JSON(self, res: GeneratorType, session):
-		for uid, u_name, u_avatar in res:
+	def users_to_JSON(self, users: GeneratorType, session):
+		for uid, u_name, u_avatar in users:
 			if u_name in self.sessions_by_user_name:
 				tmp_session = self.sessions_by_user_name[u_name]
 				if tmp_session.status == Session.ONLINE:
@@ -645,7 +633,7 @@ class Server:
 				u_avatar = "/static_/svg/account-circle.svg"
 
 			c = DB.connect()
-			mutual_friends = [name for name, _ in DB.get_mutual_friends(session.uid, uid, c)]
+			mutual_friends = list(map(lambda x: x[0], DB.get_mutual_friends(session.uid, uid, c)))
 			c.close()
 
 			yield {

@@ -17,7 +17,7 @@ from server.database import DB
 class Session:
 	OFFLINE = 0
 	ONLINE = 1
-	PLAY = 3
+	PLAY = 2
 
 	def __init__(self, user, activated, uid, id_=None, admin=False, dict_data: dict = None):
 		self.user = user
@@ -26,23 +26,21 @@ class Session:
 		self.admin = admin
 		self.last_request = None
 		self.status = self.OFFLINE
-		if id_ is None:
-			self.id = sha256(bytes(
-				user + int(time.time() * 256 * 1000).__str__() + randint(0, 2 ** 20).__str__(),
-				encoding='utf-8'
-			)).hexdigest()
-		else:
-			self.id = id_
+		self.id = sha256(bytes(
+			user + int(time.time() * 256 * 1000).__str__() + randint(0, 2 ** 20).__str__(),
+			encoding='utf-8'
+		)).hexdigest() if id_ is None else id_
 		self.data = dict() if dict_data is None else dict_data
 
 	def __setitem__(self, key, value):
 		self.data[key] = value
 
 	def __getitem__(self, key):
-		return self.data[key] if key in self.data else None
+		return self.data.get(key)
 
 	def __delitem__(self, key):
-		del self.data[key]
+		if key in self.data:
+			del self.data[key]
 
 	def __str__(self):
 		return self.user
@@ -93,7 +91,6 @@ class Room:
 		self.id = id_tmp
 		self.ids.add(id_tmp)
 		self.type = None
-		self.lock = False
 
 	def __hash__(self):
 		return self.id
@@ -102,12 +99,13 @@ class Room:
 		def notify():
 			for player in [0, 1]:
 				if player < len(self.queues):
-					changes = [change.copy() for change in self.game.changes]
-					for change in changes:
-						change.filter(player)
-					json_dict = {'data': [ch.to_dict() for ch in changes]}
+					json_dict = {
+						'data': list(map(
+							lambda change: change.copy().filter(player).to_dict(),
+							self.game.changes
+						))}
 					text = dumps(json_dict)
-					self.queues[:][player].put(text)
+					self.queues[player].put(text)
 			self.game.changes = []
 
 		gevent.spawn(notify)
@@ -116,7 +114,7 @@ class Room:
 		def notify():
 			for player in [0, 1]:
 				if player < len(self.queues):
-					self.queues[:][player].put(dumps({
+					self.queues[player].put(dumps({
 						'you': self.players[player].__str__(),
 						'other': self.players[not player].__str__(),
 						'your_hand': player
@@ -128,7 +126,7 @@ class Room:
 		def notify():
 			for i in [0, 1]:
 				if i < len(self.queues) and self.queues[i] is not None:
-					self.queues[:][i].put(msg)
+					self.queues[i].put(msg)
 
 		gevent.spawn(notify)
 
@@ -161,25 +159,15 @@ class RoomPvP(Room):
 		self.type = const.MODE_PVP
 
 	def attack(self, player, card):
-		# x = True
-		# while self.lock:
-		# if x: DB.write_log_msg('Lock fired')
-		# x = False
-
-		if self.lock: DB.write_log_msg('Lock fired')
-		self.lock = True
 		if player != self.game.turn:
-			self.lock = False
 			return "You can't attack now"
 		if not self.game.attack(card):
-			self.lock = False
 			return "Can't attack using this card"
 		if card == -1:
 			self.game.switch_turn()
 
 		if not self.game.can_continue_turn() and self.game.can_play() is not None:
 			self.send_changes()
-			self.lock = False
 			return 'END'
 		# wait for defense or attack
 		self.send_changes()
@@ -191,29 +179,18 @@ class RoomPvP(Room):
 				'inf': None
 			}]
 		}))
-		self.lock = False
 		return 'OK'
 
 	def defense(self, player, card):
-		# x = True
-		# while self.lock:
-		# if x: DB.write_log_msg('Lock fired')
-		# x = False
-
-		if self.lock: DB.write_log_msg('Lock fired')
-		self.lock = True
 		if player == self.game.turn:
-			self.lock = False
 			return "You can't defense now"
 		if not self.game.defense(card):
-			self.lock = False
 			return "Can't defense using this card"
 		if card == -1:
 			self.game.switch_turn()
 
 		if not self.game.can_continue_turn() and self.game.can_play() is not None:
 			self.send_changes()
-			self.lock = False
 			return 'END'
 		# wait for attack
 		self.send_changes()
@@ -225,7 +202,6 @@ class RoomPvP(Room):
 				'inf': None
 			}]
 		}))
-		self.lock = False
 		return 'OK'
 
 	def add_player(self, player):
@@ -343,16 +319,16 @@ class Logger:
 		self.log_file = open("server/log/log.txt", 'a') if log_file else None
 		self.write_to_DB = db_log
 
-		def timer_handler():
-			while self.thread_run:
-				self.time_log.append(self.request_in_last_sec)
-				self.request_in_last_sec = 0
-				if len(self.time_log) > 60 * 10:
-					self.time_log = self.time_log[-60 * 5:]
-				time.sleep(1)
+		def timer_handler(this):
+			while this.thread_run:
+				this.time_log.append(this.request_in_last_sec)
+				this.request_in_last_sec = 0
+				if len(this.time_log) > 60 * 10:
+					this.time_log = this.time_log[-60 * 5:]
+				gevent.sleep(1)
 
 		self.thread_run = True
-		self.thread = Thread(target=timer_handler, name="RequestPerSecTimer", daemon=True).start()
+		self.thread = gevent.spawn(timer_handler, self)
 
 	def write_record(self, request: Request, response: Response):
 		self.request_in_last_sec += 1

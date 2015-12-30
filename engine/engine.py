@@ -38,6 +38,7 @@ class Change:
 			self.card = None
 		elif self.type == 'game_end':
 			self.player = player
+		return self
 
 	def copy(self):
 		return Change(self.type, self.player, self.card, self.inf)

@@ -178,7 +178,7 @@
 
         function updateRoomsTable() {
             $.ajax({
-                url: '/api/get_rooms',
+                url: '/api/get_table?table=rooms',
                 success: function (data) {
                     var roomsBox = $('#rooms_box');
                     roomsBox.find('table tr:not(:first)').remove();
@@ -232,7 +232,7 @@
 
         function updateSessionsTable() {
             $.ajax({
-                url: '/api/get_sessions',
+                url: '/api/get_table?table=sessions',
                 success: function (data) {
                     var sessions_box = $('#sessions_box');
                     sessions_box.find('table tr:not(:first)').remove();
