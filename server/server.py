@@ -185,10 +185,7 @@ class Server:
 				session = self.sessions[sess_id]
 				session['msg_queue'] = q
 
-				def notify():
-					q.put('init')
-
-				gevent.spawn(notify)
+				yield ServerSentEvent('init').encode()
 
 				while True:  # MainLoop for SSE, use threads
 					result = q.get()
