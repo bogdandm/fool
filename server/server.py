@@ -137,7 +137,7 @@ class Server:
 		def send_server_statistic_file():
 			session = self.get_session(request)
 			if session:
-				if self.get_session(request).admin:
+				if session.admin:
 					file = open(const.SERVER_FOLDER + const.STATIC_FOLDER + '/server_statistic.html',
 								encoding='utf-8').read()
 					response = make_response(file)
@@ -199,10 +199,7 @@ class Server:
 				session = self.sessions[sess_id]
 				session['msg_queue'] = q
 
-				def notify():
-					q.put('init')
-
-				gevent.spawn(notify)
+				yield ServerSentEvent('init').encode()
 
 				while True:  # MainLoop for SSE, use threads
 					result = q.get()
@@ -510,7 +507,7 @@ class Server:
 		def get_sessions():
 			session = self.get_session(request)
 			if session:
-				if self.get_session(request).admin:
+				if session.admin:
 					table_s = request.args.get('table')
 					if table_s == 'sessions':
 						table = self.sessions
@@ -530,7 +527,7 @@ class Server:
 		def get_friends():
 			session = self.get_session(request)
 			if session:
-				if self.get_session(request).admin:
+				if session.admin:
 					friends, edges = DB.get_friends_table()
 					result = {
 						"nodes": friends,
