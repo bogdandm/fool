@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>500 Error</title>
+    <title>{{ text }}</title>
     <link rel="shortcut icon" href="/static/favicon.ico">
     <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&subset=latin,cyrillic-ext,cyrillic'
           rel='stylesheet' type='text/css'>
@@ -15,12 +15,8 @@
 </head>
 <body>
 <div class="standard-box">
-    <div class="title">
-        500 Internal server error
-    </div>
-    <div class="msg">
-        The server encountered an unexpected condition which prevented it from fulfilling the request
-    </div>
+    <div class="title">{{ text }}</div>
+    <div class="msg">{{ description }}</div>
     <div class="button-box"></div>
 </div>
 </body>

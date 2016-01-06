@@ -2,7 +2,7 @@
 import hashlib
 import os
 from datetime import datetime, timedelta
-from json import dumps
+from json import dumps, loads
 from re import search
 
 import gevent
@@ -53,6 +53,28 @@ class Server:
 
 		gevent.spawn(update_status, self)
 
+		# Error handling
+		def error_handler_generator(e, data_):
+			def func1(e):
+				return render_template(
+					'error_page.html',
+					text=data_['text'],
+					description=data_['description']
+				), int(error)
+
+			func1.__name__ = "error" + e
+			return func1
+
+		http_errors = loads(open('server/configs/http_errors.json').read())
+		for error, data in http_errors.items():
+			self.app.error_handler_spec[None][int(error)] = error_handler_generator(error, data)
+
+		@self.app.route('/500')  # static
+		def error_500_generator():
+			return None
+
+		# Error handling end
+
 		@self.app.after_request
 		def after_request(response):
 			session = self.get_session(request)
@@ -101,27 +123,6 @@ class Server:
 				os.path.join(self.app.root_path, 'static'),
 				'favicon.ico', mimetype='image/vnd.microsoft.icon'
 			)
-
-		@self.app.errorhandler(404)
-		def page_not_found(e):
-			return send_from_directory(
-				os.path.join(self.app.root_path, 'static'),
-				'errors/404.html', mimetype='text/html'
-			), 404
-
-		@self.app.errorhandler(400)
-		def page_not_found(e):
-			return send_from_directory(
-				os.path.join(self.app.root_path, 'static'),
-				'errors/400.html', mimetype='text/html'
-			), 400
-
-		@self.app.errorhandler(500)
-		def page_not_found(e):
-			return send_from_directory(
-				os.path.join(self.app.root_path, 'static'),
-				'errors/500.html', mimetype='text/html'
-			), 500
 
 		@self.app.route('/api')  # static
 		def send_api_methods():
