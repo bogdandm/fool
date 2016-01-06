@@ -1,17 +1,48 @@
-SERVER_FOLDER = './server'
-STATIC_FOLDER = '/static'
+from configparser import ConfigParser
+
+
+class Dummy(object):
+	pass
+
 
 PLAYER_HAND = 0  # use in PvE
 MODE_PVE = 0
 MODE_PVP = 1
-
-ENABLE_GAME_LOGGING = True
-LOG_MAX_LENGTH = 1000
-MAX_LOG_LENGTH_AFTER_CLEANING = 200
-
 IMAGES = {'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/png': '.png'}
 
-FILTRATE_REQUEST_FOR_LOG = True
+INICONFIG = ConfigParser()
+INICONFIG.read('server/configs/settings.ini')
+# INICONFIG = INICONFIG['DEFAULT']
 
-class Dummy(object):
-	pass
+if 'SERVER_FOLDER' not in INICONFIG['DEFAULT']:
+	SERVER_FOLDER = './server'
+else:
+	SERVER_FOLDER = INICONFIG['DEFAULT']['SERVER_FOLDER']
+
+if 'STATIC_FOLDER' not in INICONFIG['DEFAULT']:
+	STATIC_FOLDER = '/static'
+else:
+	STATIC_FOLDER = INICONFIG['DEFAULT']['STATIC_FOLDER']
+
+# ===========================================
+if 'ENABLE_GAME_LOGGING' not in INICONFIG['LOG']:
+	ENABLE_GAME_LOGGING = True
+else:
+	ENABLE_GAME_LOGGING = INICONFIG['LOG']['ENABLE_GAME_LOGGING'] == 'True'
+
+if 'FILTRATE_REQUEST_FOR_LOG' not in INICONFIG['LOG']:
+	FILTRATE_REQUEST_FOR_LOG = True
+else:
+	FILTRATE_REQUEST_FOR_LOG = INICONFIG['LOG']['FILTRATE_REQUEST_FOR_LOG'] == 'True'
+
+if 'LOG_MAX_LENGTH' not in INICONFIG['LOG']:
+	LOG_MAX_LENGTH = 1000
+else:
+	LOG_MAX_LENGTH = int(INICONFIG['LOG']['LOG_MAX_LENGTH'])
+
+if 'MAX_LOG_LENGTH_AFTER_CLEANING' not in INICONFIG['LOG']:
+	MAX_LOG_LENGTH_AFTER_CLEANING = 200
+else:
+	MAX_LOG_LENGTH_AFTER_CLEANING = int(INICONFIG['LOG']['MAX_LOG_LENGTH_AFTER_CLEANING'])
+
+del INICONFIG
