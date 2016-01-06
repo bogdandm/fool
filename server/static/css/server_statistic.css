@@ -61,8 +61,7 @@ main {
 
 .standard-box {
     margin: 20px;
-    transition: 0.5s easy;
-    transition-property: width;
+    transition: width 0.5s ease;
 }
 
 .standard-box > .title {
@@ -72,9 +71,7 @@ main {
     border-bottom: 1px solid #F0F0F0;
     font-size: 16pt;
     font-weight: 500;
-
-    transition: 0.5s easy;
-    transition-property: background-color;
+    transition: background-color 0.5s ease;
 }
 
 .update {
@@ -99,8 +96,7 @@ button.hide {
 
 button.hide > img {
     transform: rotate(0deg);
-    transition: 0.2s easy;
-    transition-property: transform;
+    transition: transform 0.2s ease;
 }
 
 button.hide > img.hide {

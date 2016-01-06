@@ -131,8 +131,7 @@ html, body {
 }
 
 #menu-container {
-    transition: 0.5s easy;
-    transition-property: top;
+    transition: top 0.5s ease;
     position: absolute;
     top: calc(-100% + 30px);
     z-index: 101;
@@ -188,8 +187,7 @@ html, body {
 }
 
 #open-btn > img {
-    transition: 0.5s easy;
-    transition-property: transform;
+    transition: transform 0.5s ease;
     transform-origin: center center;
     height: 100%;
 }
@@ -392,8 +390,7 @@ main {
     font-size: 22pt;
     color: white;
     border-right: 0 solid #ff433e;
-    transition: 0.2s easy;
-    transition-property: border;
+    transition: border 0.2s ease;
 }
 
 .user-name.on {

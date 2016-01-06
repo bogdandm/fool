@@ -29,7 +29,7 @@ function receiveMsg(msg, from, hand) {
     var DOMmsg = $("<div class='msg" + ((hand == myHand) ? " my'" : "'") + ">" +
         "   <span class='from'>" + from + ": </span>" +
         "   <span class='body'>" + msg + "</span>" +
-        "</div>").css({opacity: 0, transition: '0.5s easy', transitionProperty: 'opacity'});
+        "</div>").css({opacity: 0, transition: 'opacity 0.5s ease'});
     $('.chat .msgs .container').append(DOMmsg);
     setTimeout(function () {
         DOMmsg.css({opacity: 1})

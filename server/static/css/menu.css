@@ -47,7 +47,7 @@
 }
 
 .selector {
-    transition: 0.2s easy;
+    transition: 0.2s ease;
     transition-property: top, background-color;
     position: absolute;
     z-index: 1;

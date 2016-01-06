@@ -216,7 +216,7 @@
                     $('.session_link').click(function () {
                         var name = $(this).text();
                         var tr = $('#sessions_box').find('tr[name_=' + name + ']').addClass('update').
-                        css({transition: '0.5s easy', transitionProperty: 'background-color, color'});
+                        css({transition: '0.5s ease', transitionProperty: 'background-color, color'});
 
                         setTimeout(function () {
                             tr.removeClass('update');
@@ -270,7 +270,7 @@
                     $('.room_link').click(function () {
                         var id = $(this).attr('id_');
                         var tr = $('#rooms_box').find('tr[id_=' + id + ']').addClass('update').
-                        css({transition: '0.5s easy', transitionProperty: 'background-color, color'});
+                        css({transition: '0.5s ease', transitionProperty: 'background-color, color'});
 
                         setTimeout(function () {
                             tr.removeClass('update');

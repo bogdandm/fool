@@ -4,7 +4,6 @@ import os
 from datetime import datetime, timedelta
 from json import dumps
 from re import search
-from types import GeneratorType
 
 import gevent
 from flask import Flask, Response, make_response, request, redirect, render_template, send_from_directory
@@ -551,13 +550,13 @@ class Server:
 
 			name = request.args.get('name')
 			if name and len(name) > 3:
-				return dumps(list(self.users_to_JSON(DB.find_user(name), session)))
+				return dumps(list(map(lambda x: self.user_to_JSON(x, session), DB.find_user(name))))
 			else:
 				return 'Bad request', 400
 
 		@self.app.route('/api/users/send_friend_invite', methods=['GET'])
 		def send_friend_invite():
-			pass
+			pass  # TODO
 
 		@self.app.route('/api/users/get_friend_list')
 		# need: session;
@@ -566,11 +565,14 @@ class Server:
 			if not session:
 				return 'Fail', 401
 
-			return dumps(list(self.users_to_JSON(DB.get_friends(uid=session.uid), session)))
+			return dumps(list(map(
+				lambda x: self.user_to_JSON(x, session),
+				DB.get_friends(uid=session.uid)
+			)))
 
 		@self.app.route('/api/users/check_online', methods=['GET'])
 		def check_online():
-			pass
+			pass  # TODO
 
 	def get_session(self, request_) -> Session:  # -> Session | False | None
 		if 'sessID' in request_.cookies and request_.cookies['sessID'] in self.sessions:
@@ -603,42 +605,42 @@ class Server:
 			return thin_room
 		return None
 
-	def users_to_JSON(self, users: GeneratorType, session):
-		for uid, u_name, u_avatar in users:
-			if u_name in self.sessions_by_user_name:
-				tmp_session = self.sessions_by_user_name[u_name]
-				if tmp_session.status == Session.ONLINE:
-					status = "Online"
-				elif tmp_session.status == Session.PLAY:
-					room = tmp_session['cur_room']
-					if room:
-						if room.type == const.MODE_PVE:
-							status = "Играет с AI"
-						else:
-							player = room.players[1 - tmp_session['player_n']]
-							status = ("Играет с " + player.user) if player is not None else 'Ожидает оппонента'
+	def user_to_JSON(self, user, session):
+		(uid, u_name, u_avatar) = user
+		if u_name in self.sessions_by_user_name:
+			tmp_session = self.sessions_by_user_name[u_name]
+			if tmp_session.status == Session.ONLINE:
+				status = "Online"
+			elif tmp_session.status == Session.PLAY:
+				room = tmp_session['cur_room']
+				if room:
+					if room.type == const.MODE_PVE:
+						status = "Играет с AI"
 					else:
-						status = "Online"
+						player = room.players[1 - tmp_session['player_n']]
+						status = ("Играет с " + player.user) if player is not None else 'Ожидает оппонента'
 				else:
-					status = "Offline"
+					status = "Online"
 			else:
-				status = 'Offline'
+				status = "Offline"
+		else:
+			status = 'Offline'
 
-			if u_avatar is not None and u_avatar != 'None':
-				u_avatar = "/static/avatar/{user_name}{file_ext}".format(user_name=u_name, file_ext=u_avatar)
-			else:
-				u_avatar = "/static_/svg/account-circle.svg"
+		if u_avatar is not None and u_avatar != 'None':
+			u_avatar = "/static/avatar/{user_name}{file_ext}".format(user_name=u_name, file_ext=u_avatar)
+		else:
+			u_avatar = "/static_/svg/account-circle.svg"
 
-			c = DB.connect()
-			mutual_friends = list(map(lambda x: x[0], DB.get_mutual_friends(session.uid, uid, c)))
-			c.close()
+		c = DB.connect()
+		mutual_friends = list(map(lambda x: x[0], DB.get_mutual_friends(session.uid, uid, c)))
+		c.close()
 
-			yield {
-				'name': u_name,
-				'status': status,
-				'avatar': u_avatar,
-				'mutual_friends': mutual_friends
-			}
+		return {
+			'name': u_name,
+			'status': status,
+			'avatar': u_avatar,
+			'mutual_friends': mutual_friends
+		}
 
 
 class ServerSentEvent(object):

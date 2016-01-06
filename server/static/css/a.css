@@ -15,8 +15,7 @@ a:hover {
 }
 
 a:active {
-    background-color: #1B2024;
-    color: #F0F0F0;
+    background-color: rgba(27, 32, 36, 0.25);
 }
 
 /*==========================*/

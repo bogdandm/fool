@@ -33,7 +33,7 @@ class DB:
 			cursor.close()
 			if connection is None:
 				connection_.close()
-			return True
+		return True
 
 	@staticmethod
 	def check_user(user_name: str, password: str = None):
@@ -107,19 +107,19 @@ class DB:
 			query = "SELECT users.name, users.is_activated, users.id, sessions.id, users.is_admin" \
 					" FROM sessions INNER JOIN users ON users.id = sessions.user_id"
 			cursor.execute(query)
-			res = cursor.fetchall()
+			while True:
+				row = cursor.fetchone()
+				if row:
+					obj = Dummy()
+					(obj.name, obj.activated, obj.uid, obj.id, obj.admin) = row
+					yield obj
+				else:
+					break
 		except Error as e:
 			raise e
 		finally:
 			connection.close()
-		for row in res:
-			obj = Dummy()
-			obj.name = row[0]
-			obj.activated = row[1]
-			obj.uid = row[2]
-			obj.id = row[3]
-			obj.admin = row[4]
-			yield obj
+
 
 	@staticmethod
 	def write_log_record(ip, url, method, status):

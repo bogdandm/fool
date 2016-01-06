@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from hashlib import sha256
 from json import dumps
 from random import randint
-from threading import Thread
 
 import gevent
 from flask import Response, Request

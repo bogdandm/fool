@@ -6,7 +6,7 @@
 
     background-color: transparent;
     box-shadow: 0 0 6px 0 transparent, 0 2px 3px 0 transparent;
-    transition: 0.2s easy;
+    transition: 0.2s ease;
     transition-property: background-color, box-shadow;
 }
 
