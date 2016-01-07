@@ -65,7 +65,7 @@ class AI:
 	def __str__(self):
 		return 'AI'
 
-	def update_memory(self, mode='all', card: Card=None, inf=None):
+	def update_memory(self, mode='ALL', card: Card=None, inf=None):
 		# mode=ALL|OFF|TAKE|TRUMP|TABLE
 
 		# MY

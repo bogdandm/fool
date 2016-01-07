@@ -16,6 +16,61 @@
     <script src="/static/js/global.js"></script>
     <link href="/static/css/loading_bar.css" rel="stylesheet">
     <script>
+        var loaders = {
+            "default": {
+                false: function () {
+                },
+                true: function () {
+                },
+                "load": true,
+                "title": "Fool | Главное меню"
+            },
+            "friends": {
+                false: function () {
+                    $('header .loading-bar').slideDown();
+                    $.getJSON('/api/users/get_friend_list',
+                            function (data) {
+                                if (!data.length) {
+                                    $("#friends-one").hide();
+                                    return;
+                                }
+                                else
+                                    $("#friends-one").show();
+                                $.each(data, function (key, val) {
+                                    /** @namespace val.name */
+                                    /** @namespace val.status */
+                                    /** @namespace val.avatar */
+                                    var friendHTML = $('.hidden > .friend').clone();
+                                    friendHTML.attr('name', val.name);
+                                    friendHTML.find('.name').text(val.name);
+                                    friendHTML.find('.status').text(val.status);
+                                    friendHTML.find('> img').attr('src', val.avatar);
+                                    if (val.status == "Online")
+                                        friendHTML.removeClass('play').addClass('online');
+                                    else if (val.status == "Offline")
+                                        friendHTML.removeClass('online').removeClass('play');
+                                    else
+                                        friendHTML.removeClass('online').addClass('play');
+                                    $("#friends-one").find(".body").append(friendHTML);
+                                });
+                                $('.friend button.more').click(function (e) {
+                                    showMenu($('#friend-dialog'), $(this).parents().filter('.friend'), {
+                                        directVert: 'top',
+                                        directHoriz: 'right'
+                                    });
+                                })
+                            }).always(function () {
+                        $('header .loading-bar').slideUp();
+                    });
+                },
+                true: function () {
+                    $("#friends-one").find(".body").empty();
+                },
+                "load": false,
+                "title": "Fool | Друзья"
+            }
+        };
+
         function findUser(userName) {
             var box = $('#find-user-box');
             box.find('.None').hide();
@@ -75,36 +130,6 @@
                 axis: 'y'
             });
 
-            $('header .loading-bar').slideDown();
-            $.getJSON('/api/users/get_friend_list',
-                    function (data) {
-                        $.each(data, function (key, val) {
-                            /** @namespace val.name */
-                            /** @namespace val.status */
-                            /** @namespace val.avatar */
-                            var friendHTML = $('.hidden > .friend').clone();
-                            friendHTML.attr('name', val.name);
-                            friendHTML.find('.name').text(val.name);
-                            friendHTML.find('.status').text(val.status);
-                            friendHTML.find('> img').attr('src', val.avatar);
-                            if (val.status == "Online")
-                                friendHTML.removeClass('play').addClass('online');
-                            else if (val.status == "Offline")
-                                friendHTML.removeClass('online').removeClass('play');
-                            else
-                                friendHTML.removeClass('online').addClass('play');
-                            $("#friends-one").find(".body").append(friendHTML);
-                        });
-                        $('.friend button.more').click(function (e) {
-                            showMenu($('#friend-dialog'), $(this).parents().filter('.friend'), {
-                                directVert: 'top',
-                                directHoriz: 'right'
-                            });
-                        })
-                    }).always(function () {
-                $('header .loading-bar').slideUp();
-            });
-
             $('#find-user-btn').click(function () {
                 findUser($('#find-user').val());
             });
@@ -116,25 +141,16 @@
         }
 
         function initMenu() {
-            $(".selector").add(".menu > .selection").add(".container").add(".container-mini").hide();
+            $(".selector").add(".menu > .selection").add(".container").filter(":not(#default)").add(".container-mini").hide();
 
             $(".menu-item").hover(function () { // Перемещение блока выбора
                 $(".selector").filter('[group="' + $(this).attr('group') + '"]').show().css({
                     top: $(this).position().top + "px"
                 });
-            }, function () {
             });
 
             var x = $("#main-menu");
-            x.find("> .menu-item[container-name]").click(function () { // Клик по выпадающему элементу
-                $(".menu > .selection").show().css({
-                    top: $(this).position().top + 'px'
-                }).show();
-                $(".container").add(".container-mini").filter(':not(#' + $(this).attr('container-name') + ')').hide();
-                $("#" + $(this).attr('container-name')).toggle().filter('.container-mini').css({
-                    top: $(this).position().top + 'px'
-                })
-            });
+            x.find("> .menu-item[container-name]").click(onMenuItemClick);
             x.find("> .menu-item:not([container-name])").click(function () { // Клик по не выпадающему эл-ту
                 $(".menu > .selection").add(".container").add(".container-mini").hide();
             });
@@ -154,6 +170,37 @@
 
                 setTimeout(f, 200);
             });
+        }
+
+        function onMenuItemClick() {// Клик по выпадающему элементу
+            var selection = $(".menu > .selection");
+            var containerToShow = $(this).attr('container-name');
+            var containerToHide = selection.attr('position');
+
+            if (containerToShow == containerToHide)
+                containerToShow = 'default';
+
+            if (containerToShow != 'default') {
+                selection.attr('position', containerToShow).css({
+                    top: $(this).position().top + 'px'
+                }).show();
+            } else
+                selection.attr('position', 'default').hide();
+
+            $("#" + containerToHide).hide();
+            $("#" + containerToShow).show().filter('.container-mini').css({
+                top: $(this).position().top + 'px'
+            });
+
+            if (loaders[containerToShow]) {
+                loaders[containerToShow][loaders[containerToShow].load]();
+                loaders[containerToShow].load = true;
+                document.title = loaders[containerToShow].title;
+            }
+            if (loaders[containerToHide]) {
+                loaders[containerToShow][loaders[containerToShow].load]();
+                loaders[containerToShow].load = false;
+            }
         }
 
         $(function () {
@@ -196,6 +243,7 @@
             height: 100%;
             width: 100%;
             z-index: -10;
+            padding-left: 10px;
         }
 
         .container-mini {
@@ -240,7 +288,6 @@
             display: flex;
             flex-direction: row;
             align-content: flex-start;
-            padding-left: 10px;
         }
 
         #friends, #friends-two, #friends-one {
@@ -530,7 +577,10 @@
         </div>
         {% endif %}
         <div id="logout" class="menu-item" group="1">Выйти из аккаунта</div>
-        <div class="selection"></div>
+        <div class="selection" position="default"></div>
+    </div>
+    <div id="default" class="container">
+        <div class="standard-box"></div>
     </div>
     <div id="new-games" class="container-mini">
         <div class="menu standard-box">

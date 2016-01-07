@@ -65,4 +65,5 @@
     z-index: 2;
     height: 40px;
     border-right: 8px solid #9bed2f;
+    transition: top 0.2s ease;
 }
