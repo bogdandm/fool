@@ -120,7 +120,6 @@ class DB:
 		finally:
 			connection.close()
 
-
 	@staticmethod
 	def write_log_record(ip, url, method, status):
 		DB.query("INSERT INTO log VALUES (DEFAULT, NULL, '%s', '%s', '%s', '%s', DEFAULT)" % (url, method, status, ip))
@@ -169,64 +168,7 @@ class DB:
 		return res
 
 	@staticmethod
-	def get_friends_table(user=None, id=None) -> (list, list):  # test only, will be deleted later
-		if user is not None:
-			id = DB.check_user(user).uid
-
-		friends = []
-		edges = []
-		connection = DB.connect()
-		try:
-			cursor = connection.cursor()
-			query = (
-				"""SELECT
-				friends.user   id1,
-				u1.name        name1,
-				friends.friend id2,
-				u2.name        name2
-				FROM friends
-				INNER JOIN users u1 ON friends.user = u1.id
-				INNER JOIN users u2 ON friends.friend = u2.id """
-			)
-			query += ("WHERE friends.user=%i OR friends.friend=%i;" % (id, id)) if id is not None else ";"
-			cursor.execute(query)
-			res = cursor.fetchall()  # id1, name1, id2, name2
-			for row in res:
-				edges.append({
-					'id1': row[0],
-					'name1': row[1],
-					'id2': row[2],
-					'name2': row[3]
-				})
-		except Error as e:
-			raise e
-		try:
-			cursor = connection.cursor()
-			query = "SELECT id, name FROM users "
-			query += (
-				"""WHERE
-				id IN (SELECT user
-						FROM friends
-						WHERE friend = %i) OR
-				id IN (SELECT friend
-						FROM friends
-						WHERE user = %i);""" % (id, id)) if id is not None else ";"
-
-			cursor.execute(query)
-			res = cursor.fetchall()  # id, name
-			for row in res:
-				friends.append({
-					'id': row[0],
-					'name': row[1]
-				})
-		except Error as e:
-			raise e
-		finally:
-			connection.close()
-		return friends, edges
-
-	@staticmethod
-	def get_friends(user=None, uid=None):
+	def get_friends(user=None, uid=None, accepted=1):
 		if user is not None:
 			uid = DB.check_user(user).uid
 
@@ -234,16 +176,17 @@ class DB:
 		try:
 			cursor = connection.cursor()
 			query = """SELECT y.id, name, file_extension
-				  	FROM (SELECT user id
+				  	FROM (SELECT user id, accepted
 					      FROM friends
 					      WHERE friend = %i
 					      UNION
-					      SELECT friend id
+					      SELECT friend id, accepted
 					      FROM friends
 					      WHERE user = %i
 					     ) y
 					INNER JOIN users ON y.id = users.id
-					ORDER BY name""" % (uid, uid)
+					WHERE accepted = %i
+					ORDER BY name""" % (uid, uid, accepted)
 			cursor.execute(query)
 			while True:
 				res = cursor.fetchone()
@@ -311,3 +254,15 @@ class DB:
 			raise e
 		finally:
 			connection.close()
+
+	@staticmethod
+	def invite_friend(user: str, friend: str):
+		pass # TODO
+
+	@staticmethod
+	def accept_invite(user: str, friend: str):
+		pass # TODO
+
+	@staticmethod
+	def reject_invite(user: str, friend: str):
+		pass # TODO

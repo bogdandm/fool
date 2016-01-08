@@ -522,25 +522,28 @@ class Server:
 			else:
 				return 'Fail', 401
 
-		@self.app.route('/api/get_friends')  # test only, will be deleted later
-		# need: session@admin
-		def get_friends():
+		@self.app.route('/api/users/check_online', methods=['GET'])
+		# need: session; get@name
+		def check_online():
 			session = self.get_session(request)
-			if session:
-				if session.admin:
-					friends, edges = DB.get_friends_table()
-					result = {
-						"nodes": friends,
-						"edges": list(map(lambda edge: {
-							"src": edge["name1"],
-							"dest": edge["name2"]
-						}, edges))
-					}
-					return dumps(result)
-				else:
-					return 'Permission denied', 401
-			else:
+			if not session:
 				return 'Fail', 401
+
+			u_name = request.args.get('name')
+			return self.get_user_status(u_name)
+
+		@self.app.route('/api/users/get_friend_list')
+		# need: session;
+		def get_friend_list():
+			session = self.get_session(request)
+			if not session:
+				return 'Fail', 401
+
+			invited = 'invited' in request.args
+			return dumps(list(map(
+				lambda x: self.user_to_JSON(x, session),
+				DB.get_friends(uid=session.uid, accepted=not invited)
+			)))
 
 		@self.app.route('/api/users/find', methods=['GET'])
 		# need: session; get@name
@@ -555,24 +558,9 @@ class Server:
 			else:
 				return 'Bad request', 400
 
-		@self.app.route('/api/users/send_friend_invite', methods=['GET'])
-		def send_friend_invite():
-			pass  # TODO
-
-		@self.app.route('/api/users/get_friend_list')
-		# need: session;
-		def get_friend_list():
-			session = self.get_session(request)
-			if not session:
-				return 'Fail', 401
-
-			return dumps(list(map(
-				lambda x: self.user_to_JSON(x, session),
-				DB.get_friends(uid=session.uid)
-			)))
-
-		@self.app.route('/api/users/check_online', methods=['GET'])
-		def check_online():
+		@self.app.route('/api/users/friend_invite', methods=['GET'])
+		# need: session; get@user; maybe get@accept; maybe get@reject
+		def friend_invite():
 			pass  # TODO
 
 	def get_session(self, request_) -> Session:  # -> Session | False | None
@@ -608,24 +596,7 @@ class Server:
 
 	def user_to_JSON(self, user, session):
 		(uid, u_name, u_avatar) = user
-		if u_name in self.sessions_by_user_name:
-			tmp_session = self.sessions_by_user_name[u_name]
-			if tmp_session.status == Session.ONLINE:
-				status = "Online"
-			elif tmp_session.status == Session.PLAY:
-				room = tmp_session['cur_room']
-				if room:
-					if room.type == const.MODE_PVE:
-						status = "Играет с AI"
-					else:
-						player = room.players[1 - tmp_session['player_n']]
-						status = ("Играет с " + player.user) if player is not None else 'Ожидает оппонента'
-				else:
-					status = "Online"
-			else:
-				status = "Offline"
-		else:
-			status = 'Offline'
+		status = self.get_user_status(u_name)
 
 		if u_avatar is not None and u_avatar != 'None':
 			u_avatar = "/static/avatar/{user_name}{file_ext}".format(user_name=u_name, file_ext=u_avatar)
@@ -642,6 +613,26 @@ class Server:
 			'avatar': u_avatar,
 			'mutual_friends': mutual_friends
 		}
+
+	def get_user_status(self, u_name):
+		if u_name in self.sessions_by_user_name:
+			tmp_session = self.sessions_by_user_name[u_name]
+			if tmp_session.status == Session.ONLINE:
+				return "Online"
+			elif tmp_session.status == Session.PLAY:
+				room = tmp_session['cur_room']
+				if room:
+					if room.type == const.MODE_PVE:
+						return "Играет с AI"
+					else:
+						player = room.players[1 - tmp_session['player_n']]
+						return ("Играет с " + player.user) if player is not None else 'Ожидает оппонента'
+				else:
+					return "Online"
+			else:
+				return "Offline"
+		else:
+			return 'Offline'
 
 
 class ServerSentEvent(object):

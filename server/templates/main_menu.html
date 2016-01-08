@@ -13,8 +13,10 @@
     <link href="/static/css/global.css" rel="stylesheet" type="text/css">
     <link href="/static/css/buttons.css" rel="stylesheet" type="text/css">
     <link href="/static/css/menu.css" rel="stylesheet" type="text/css">
-    <script src="/static/js/global.js"></script>
+    <link href="/static/css/friends_main_menu.css" rel="stylesheet" type="text/css">
     <link href="/static/css/loading_bar.css" rel="stylesheet">
+    <script src="/static/js/global.js"></script>
+    <script src="/static/js/friends_main_menu.js"></script>
     <script>
         var loaders = {
             "default": {
@@ -26,119 +28,12 @@
                 "title": "Fool | Главное меню"
             },
             "friends": {
-                false: function () {
-                    $('header .loading-bar').slideDown();
-                    $.getJSON('/api/users/get_friend_list',
-                            function (data) {
-                                if (!data.length) {
-                                    $("#friends-one").hide();
-                                    return;
-                                }
-                                else
-                                    $("#friends-one").show();
-                                $.each(data, function (key, val) {
-                                    /** @namespace val.name */
-                                    /** @namespace val.status */
-                                    /** @namespace val.avatar */
-                                    var friendHTML = $('.hidden > .friend').clone();
-                                    friendHTML.attr('name', val.name);
-                                    friendHTML.find('.name').text(val.name);
-                                    friendHTML.find('.status').text(val.status);
-                                    friendHTML.find('> img').attr('src', val.avatar);
-                                    if (val.status == "Online")
-                                        friendHTML.removeClass('play').addClass('online');
-                                    else if (val.status == "Offline")
-                                        friendHTML.removeClass('online').removeClass('play');
-                                    else
-                                        friendHTML.removeClass('online').addClass('play');
-                                    $("#friends-one").find(".body").append(friendHTML);
-                                });
-                                $('.friend button.more').click(function (e) {
-                                    showMenu($('#friend-dialog'), $(this).parents().filter('.friend'), {
-                                        directVert: 'top',
-                                        directHoriz: 'right'
-                                    });
-                                })
-                            }).always(function () {
-                        $('header .loading-bar').slideUp();
-                    });
-                },
-                true: function () {
-                    $("#friends-one").find(".body").empty();
-                },
+                false: friendsLoad,
+                true: friendsUnload,
                 "load": false,
                 "title": "Fool | Друзья"
             }
         };
-
-        function findUser(userName) {
-            var box = $('#find-user-box');
-            box.find('.None').hide();
-            box.find('.user').remove();
-            $('header .loading-bar').slideDown();
-            $.getJSON('api/users/find?name=' + userName,
-                    function (data) {//.user
-                        var box = $('#find-user-box');
-                        var none = box.find('.None');
-                        if (data.length) {
-                            none.hide();
-                            data.sort(function (a, b) {
-                                var d = b.mutual_friends.length - a.mutual_friends.length;
-                                if (d)
-                                    return d;
-                                else
-                                    return compareStrings(a.name, b.name);
-                            });
-                            $.each(data, function (key, val) {
-                                if (key > 50) return false;
-                                /** @namespace val.name */
-                                /** @namespace val.status */
-                                /** @namespace val.avatar */
-                                /** @namespace val.mutual_friends */
-                                var friendHTML = $('.hidden > .user').clone();
-                                friendHTML.attr('name', val.name);
-                                friendHTML.find('.name').text(val.name);
-                                friendHTML.find('.status').text(val.status);
-                                friendHTML.find('.mutual').text(val.mutual_friends.length);
-                                friendHTML.find('img.avatar').attr('src', val.avatar);
-                                if (val.status == "Online")
-                                    friendHTML.removeClass('play').addClass('online');
-                                else if (val.status == "Offline")
-                                    friendHTML.removeClass('online').removeClass('play');
-                                else
-                                    friendHTML.removeClass('online').addClass('play');
-                                $("#friends-two").find("#find-user-box  .result .body").append(friendHTML);
-                            });
-                        } else {
-                            none.show();
-                        }
-                    }).always(function () {
-                $('header .loading-bar').slideUp();
-            }).fail(function () {
-                box.find('.None').show();
-            });
-        }
-
-        function initFriend() {
-            $('#friend-dialog').css({transform: 'scale(0, 0)'}).hide();
-            $("#friends-one").mCustomScrollbar({
-                theme: 'minimal-dark'
-            });
-
-            $("#find-user-box").find(".result").mCustomScrollbar({
-                theme: 'minimal-dark',
-                axis: 'y'
-            });
-
-            $('#find-user-btn').click(function () {
-                findUser($('#find-user').val());
-            });
-
-            $('#find-user').keypress(function (e) {
-                if (e.which == 13)
-                    findUser($('#find-user').val());
-            })
-        }
 
         function initMenu() {
             $(".selector").add(".menu > .selection").add(".container").filter(":not(#default)").add(".container-mini").hide();
@@ -193,19 +88,18 @@
             });
 
             if (loaders[containerToShow]) {
-                loaders[containerToShow][loaders[containerToShow].load]();
+                setTimeout(loaders[containerToShow][loaders[containerToShow].load], 0);
                 loaders[containerToShow].load = true;
                 document.title = loaders[containerToShow].title;
             }
             if (loaders[containerToHide]) {
-                loaders[containerToShow][loaders[containerToShow].load]();
+                setTimeout(loaders[containerToShow][loaders[containerToShow].load], 0);
                 loaders[containerToShow].load = false;
             }
         }
 
         $(function () {
             addLoadBar($('header'), {position: 'top'}).hide();
-            initFriend();
             initMenu();
 
             $('#logout').click(function () {
@@ -283,251 +177,6 @@
             margin-top: 3px;
         }
     </style>
-    <style>
-        #friends {
-            display: flex;
-            flex-direction: row;
-            align-content: flex-start;
-        }
-
-        #friends, #friends-two, #friends-one {
-            height: 100%;
-        }
-
-        #friends-one, #friends-two {
-            float: left;
-            min-width: 350px;
-            width: 50%;
-            max-width: 400px;
-            display: inline-block;
-        }
-
-        #friends-one .mCSB_container {
-            min-height: 100%;
-        }
-
-        #friends-one .body {
-            z-index: 1;
-            margin: 17px;
-        }
-
-        .friend {
-            max-width: 400px;
-        }
-
-        #find-user-box {
-            max-width: 400px;
-            background-color: white;
-        }
-
-        .friend:hover {
-            background-color: #f7f7f7;
-        }
-
-        .friend:first-child {
-            border-radius: 2px 2px 0 0;
-        }
-
-        .friend:last-child {
-            border-radius: 0 0 2px 2px;
-        }
-
-        .friend.online {
-            border-right: 7px solid #9bed2f;
-        }
-
-        .friend.play {
-            border-right: 7px solid #5caef2;
-        }
-
-        .friend > img, #find-user-box .user img.avatar {
-            height: 40px;
-            max-width: 40px;
-            margin: 10px 10px 10px 7px;
-            border-radius: 20px;
-            float: left;
-        }
-
-        .friend > .friend-body {
-            border-radius: 0 2px 2px 0;
-            cursor: pointer;
-            flex-direction: column;
-            justify-content: center;
-            align-content: space-between;
-            flex-wrap: wrap;
-        }
-
-        .friend > .friend-body, #find-user-box .user {
-            height: 60px;
-            padding-right: 12px;
-            display: flex;
-        }
-
-        .friend > .friend-body > .name, #find-user-box .user .name {
-            font-size: 14pt;
-            font-weight: 400;
-        }
-
-        .friend > .friend-body > .status, #find-user-box .user .status {
-            font-size: 10pt;
-            font-weight: 300;
-            color: #6e7375;
-        }
-
-        .friend > .friend-body > .buttons {
-            opacity: 0;
-        }
-
-        .friend:hover > .friend-body > .buttons {
-            opacity: 1;
-        }
-
-        .friend > .friend-body button {
-            padding: 5px;
-        }
-
-        .friend > .friend-body button > img {
-            height: 30px;
-        }
-
-        #friend-dialog {
-            position: absolute;
-            box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.1), 0 5px 10px 0 rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            width: 200px;
-        }
-
-        #friend-dialog > button {
-            padding: 10px;
-            color: black;
-            width: 100%;
-            text-align: left;
-        }
-
-        #friend-dialog > button:hover {
-            background-color: #f7f7f7;
-        }
-
-        #friend-dialog > button:active {
-            background-color: #F0F0F0;
-        }
-
-        #friend-dialog > button > img {
-            float: left;
-            margin-right: 5px;
-        }
-
-        #friend-dialog > button > span {
-            text-align: inherit;
-        }
-    </style>
-    <style>
-        #friends-two > .body {
-            margin: 17px;
-            height: calc(100% - 17px);
-            box-sizing: border-box;
-        }
-
-        #find-user-box {
-            min-height: 35px;
-            height: calc(100% - 2 * 7px);
-            overflow: hidden;
-        }
-
-        #find-user-box > .top {
-            position: relative;
-            height: 35px;
-            padding: 7px;
-            border-radius: 2px 2px 0 0;
-            background-color: #1B2024;
-        }
-
-        #find-user {
-            box-sizing: border-box;
-            height: 100%;
-            width: 100%;
-            padding: 7px;
-            border-radius: 2px;
-            border: none;
-            font-size: 14pt;
-            font-weight: 300;
-        }
-
-        #find-user-btn {
-            position: absolute;
-            top: 7px;
-            right: 7px;
-            height: 35px;
-            width: 35px;
-            padding: 5px;
-        }
-
-        #find-user-btn > img {
-            height: 25px;
-            width: 25px;
-        }
-
-        #find-user-btn:active {
-            background-color: rgba(27, 32, 36, 0.3);
-        }
-
-        #find-user-box > .result {
-            height: calc(100% - 35px - 2 * 7px);
-        }
-
-        #find-user-box > .result .None {
-            padding: 30px 0;
-            text-align: center;
-            font-size: 16pt;
-            font-weight: 500;
-            color: #9f9f9f;
-        }
-
-        #find-user-box .user {
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #find-user-box .user:hover {
-            background-color: #F0F0F0;
-        }
-
-        #find-user-box .user > div {
-            display: flex;
-            align-items: center;
-        }
-
-        #find-user-box .user .mutual {
-            cursor: pointer;
-            height: 30px;
-            line-height: 30px;
-            width: 30px;
-            background-color: #1B2024;
-            color: white;
-            text-align: center;
-            border-radius: 2px;
-        }
-
-        #find-user-box .user .add {
-            background-color: transparent;
-            margin-left: 7px;
-            height: 30px;
-            width: 30px;
-            padding: 2px;
-            transform: rotate(0deg);
-            transition: transform 0.2s ease;
-        }
-
-        #find-user-box .user .add:hover {
-            transform: rotate(-90deg);
-        }
-
-        #find-user-box .user .add > img {
-            height: 26px;
-            width: 26px;
-        }
-    </style>
 </head>
 <body>
 <header>Дурак online</header>
@@ -540,7 +189,15 @@
                 <div class="name">Leon</div>
                 <div class="status">offline</div>
                 <div class="buttons">
-                    <button class="more easy"><img src="/static_/svg/ic_more_vert_black_24px.svg"></button>
+                    <button class="more easy">
+                        <img src="/static_/svg/ic_more_vert_black_24px.svg">
+                    </button>
+                    <button class="reject easy" style="display: none">
+                        <img src="/static_/svg/ic_close_24px.svg">
+                    </button>
+                    <button class="add easy" style="display: none">
+                        <img src="/static_/svg/ic_done_24px.svg">
+                    </button>
                 </div>
             </div>
         </div>
@@ -571,9 +228,6 @@
         {% if admin %}
         <div class="menu-item" group="1">
             <a href="/static/server_statistic.html">Статистика сервера</a>
-        </div>
-        <div class="menu-item" group="1">
-            <a href="/static/test_friends_graph.html">Граф друзей</a>
         </div>
         {% endif %}
         <div id="logout" class="menu-item" group="1">Выйти из аккаунта</div>
