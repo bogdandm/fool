@@ -88,13 +88,13 @@
             });
 
             if (loaders[containerToShow]) {
-                setTimeout(loaders[containerToShow][loaders[containerToShow].load], 0);
+                setTimeout(loaders[containerToShow][false], 0);
                 loaders[containerToShow].load = true;
                 document.title = loaders[containerToShow].title;
             }
             if (loaders[containerToHide]) {
-                setTimeout(loaders[containerToShow][loaders[containerToShow].load], 0);
-                loaders[containerToShow].load = false;
+                setTimeout(loaders[containerToHide][true], 0);
+                loaders[containerToHide].load = false;
             }
         }
 
@@ -157,7 +157,7 @@
 
         .menu {
             float: left;
-            min-width: 310px;
+            min-width: 270px;
         }
 
         .user_name {
@@ -212,7 +212,7 @@
             </div>
             <div>
                 <div class="mutual">N</div>
-                <button class="add"><img src="/static_/svg/ic_add_24px.svg"></button>
+                <button class="add on"><img src="/static_/svg/ic_add_24px.svg"></button>
             </div>
         </div>
     </div>
@@ -224,10 +224,10 @@
         </div>
         <div class="menu-item" group="1" container-name="new-games">Новая игра</div>
         <div class="menu-item" group="1" container-name="friends">Друзья</div>
-        <div class="menu-item" group="1">Статистика (coming soon)</div>
+        <div class="menu-item" group="1" container-name="server-statistic">Статистика по серверу</div>
         {% if admin %}
         <div class="menu-item" group="1">
-            <a href="/static/server_statistic.html">Статистика сервера</a>
+            <a href="/static/server_statistic.html">Данные сервера</a>
         </div>
         {% endif %}
         <div id="logout" class="menu-item" group="1">Выйти из аккаунта</div>
@@ -269,6 +269,9 @@
                     </div>
                     <div class="result">
                         <div class="body">
+                            <div id="mutual_friends_dialog" class="standard-box" state="hide">
+                                <span class="title">Общие друзья</span>
+                            </div>
                             <div class="None">Ничего не найдено</div>
                         </div>
                     </div>
@@ -276,6 +279,7 @@
             </div>
         </div>
     </div>
+    <div id="server-statistic" class="container"></div>
 </main>
 </body>
 </html>

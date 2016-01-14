@@ -10,7 +10,7 @@ from flask import Response, Request
 import server.const as const
 from engine.ai import AI
 from engine.engine import Game
-from server.database import DB
+import server.database as DB
 
 
 class Session:

@@ -11,8 +11,8 @@ from gevent.queue import Queue
 from werkzeug.contrib.cache import SimpleCache
 
 import server.const as const
+import server.database as DB
 import server.email as email_
-from server.database import DB
 from server.server_classes import RoomPvE, RoomPvP, Session, Logger
 
 
@@ -367,7 +367,7 @@ class Server:
 			return response
 
 		@self.app.route("/api/avatar", methods=['GET'])
-		# need: get@user; maybe: get@source := menu | any
+		# need: get@user; maybe: get@source := menu | round_white any
 		def get_avatar():
 			user = request.args.get('user')
 			if user == 'AI' or user == 'root':
@@ -381,6 +381,10 @@ class Server:
 			else:
 				if request.args.get('source') == 'menu':
 					return "/static_/svg/ic_person_24px.svg"
+				elif request.args.get('source') == 'round':
+					return "/static_/svg/account-circle.svg"
+				elif request.args.get('source') == 'round_white':
+					return "/static_/svg/account-circle_white.svg"
 				else:
 					return "/static_/svg/ic_person_24px_white.svg"
 
@@ -541,7 +545,7 @@ class Server:
 
 			invited = 'invited' in request.args
 			return dumps(list(map(
-				lambda x: self.user_to_JSON(x, session),
+				lambda x: self.user_to_json(x, session),
 				DB.get_friends(uid=session.uid, accepted=not invited)
 			)))
 
@@ -554,14 +558,31 @@ class Server:
 
 			name = request.args.get('name')
 			if name and len(name) > 3:
-				return dumps(list(map(lambda x: self.user_to_JSON(x, session), DB.find_user(name))))
+				return dumps(list(map(lambda x: self.user_to_json(x, session), DB.find_user(name))))
 			else:
 				return 'Bad request', 400
 
 		@self.app.route('/api/users/friend_invite', methods=['GET'])
-		# need: session; get@user; maybe get@accept; maybe get@reject
+		# need: session; get@user; maybe get@accept XOR get@reject
 		def friend_invite():
-			pass  # TODO
+			session = self.get_session(request)
+			if not session:
+				return 'Fail', 401
+
+			friend = request.args.get('user')
+			accept = 'accept' in request.args
+			reject = 'reject' in request.args
+			if friend:
+				if accept and DB.is_friend(session.user, friend):
+					DB.accept_invite(session.user, friend)
+					return 'OK'
+				elif reject and DB.is_friend(session.user, friend):
+					DB.reject_invite(session.user, friend)
+					return 'OK'
+				elif not (accept or reject or DB.is_friend(session.user, friend)):
+					DB.invite_friend(session.user, friend)
+					return 'OK'
+			return 'Fail'
 
 	def get_session(self, request_) -> Session:  # -> Session | False | None
 		if 'sessID' in request_.cookies and request_.cookies['sessID'] in self.sessions:
@@ -594,16 +615,16 @@ class Server:
 			return thin_room
 		return None
 
-	def user_to_JSON(self, user, session):
+	def user_to_json(self, user, session, color=""):
 		(uid, u_name, u_avatar) = user
 		status = self.get_user_status(u_name)
 
 		if u_avatar is not None and u_avatar != 'None':
 			u_avatar = "/static/avatar/{user_name}{file_ext}".format(user_name=u_name, file_ext=u_avatar)
 		else:
-			u_avatar = "/static_/svg/account-circle.svg"
+			u_avatar = "/static_/svg/account-circle%s.svg" % (("_" + color) if color else "")
 
-		c = DB.connect()
+		c = DB.connect_()
 		mutual_friends = list(map(lambda x: x[0], DB.get_mutual_friends(session.uid, uid, c)))
 		c.close()
 
@@ -611,7 +632,8 @@ class Server:
 			'name': u_name,
 			'status': status,
 			'avatar': u_avatar,
-			'mutual_friends': mutual_friends
+			'mutual_friends': mutual_friends,
+			'is_friend': DB.is_friend(session.user, u_name)
 		}
 
 	def get_user_status(self, u_name):

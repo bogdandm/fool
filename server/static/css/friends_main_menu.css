@@ -58,7 +58,7 @@
     border-right: 7px solid #5caef2;
 }
 
-.friend > img, #find-user-box .user img.avatar {
+.friend > img, .user img.avatar {
     height: 40px;
     max-width: 40px;
     margin: 10px 10px 10px 7px;
@@ -108,7 +108,7 @@
     height: 30px;
 }
 
-#friend-dialog {
+#friend-dialog, #mutual_friends_dialog {
     position: absolute;
     box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.1), 0 5px 10px 0 rgba(0, 0, 0, 0.1);
     z-index: 1000;
@@ -200,6 +200,10 @@
     color: #9f9f9f;
 }
 
+#find-user-box .mCSB_container {
+    min-height: 100%;
+}
+
 #find-user-box .user {
     flex-direction: row;
     justify-content: space-between;
@@ -236,11 +240,53 @@
     transition: transform 0.2s ease;
 }
 
-#find-user-box .user .add:hover {
+#find-user-box .user .add.on:hover {
     transform: rotate(-90deg);
 }
 
 #find-user-box .user .add > img {
     height: 26px;
     width: 26px;
+}
+
+#mutual_friends_dialog {
+    background-color: #1B2024;
+    padding: 15px;
+}
+
+#mutual_friends_dialog * {
+    color: white;
+}
+
+#mutual_friends_dialog > .user {
+    height: 30px;
+    justify-content: flex-start;
+}
+
+#mutual_friends_dialog > .user:last-child {
+    margin: 10px 0 0 0;
+}
+
+#mutual_friends_dialog > .user:not(:last-child) {
+    margin: 10px 0 10px 0;
+}
+
+#mutual_friends_dialog > .user:hover {
+    background-color: transparent;
+}
+
+#mutual_friends_dialog .user > .title {
+    font-size: 16pt;
+    font-weight: 500;
+}
+
+#mutual_friends_dialog .user > .name {
+    font-size: 12pt;
+    font-weight: 300;
+}
+
+#mutual_friends_dialog .avatar {
+    height: 30px;
+    max-width: 30px;
+    margin: 0 10px 0 0;
 }

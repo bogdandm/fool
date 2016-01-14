@@ -28,11 +28,17 @@ function compareStrings(str1, str2) {
 function showMenu(menu, elem, data) {
     /** @namespace data.directVert */
     /** @namespace data.directHoriz */
+    /** @namespace data.action */
+    menu.attr('for', elem.attr('name'));
 
     function init() {
-        $('html').unbind();
+        if (data.action && data.action == 'hover') {
+        }
+        else
+            $('html').unbind();
         menu.css({transition: '0s'});
-        menu.css('transform-origin', data.directHoriz + ' ' + data.directVert);
+        menu.css('transform-origin',
+            (data.directHoriz == "left" ? "5%" : "95%") + ' ' + (data.directVert == "top" ? "10%" : "90%"));
         menu.addClass('transition-transform');
     }
 
@@ -61,14 +67,30 @@ function showMenu(menu, elem, data) {
 
     function step3() {
         menu.css({transform: 'scale(1, 1)'});
+    }
 
-        $('html').click(function () {
-            menu.css({transform: 'scale(0, 0)'});
-            setTimeout(function () {
-                menu.hide();
-            }, 500);
-            $(this).unbind('click');
-        });
+    function step4(){
+        if (data.action && data.action == 'hover')
+            menu.mouseleave(function () {
+                menu.css({transform: 'scale(0, 0)'});
+                menu.attr('state', 'animateHide');
+                setTimeout(function () {
+                    if (menu.attr('state') != 'animate' && menu.attr('state') != 'show') {
+                        menu.hide();
+                        menu.attr('state', 'hide');
+                    }
+                }, 400);
+                $(this).unbind('mouseleave');
+            });
+        else
+            $('html').click(function () {
+                menu.css({transform: 'scale(0, 0)'});
+                setTimeout(function () {
+                    menu.hide();
+                    menu.attr('state', 'hide');
+                }, 400);
+                $(this).unbind('click');
+            });
 
         menu.click(function (event) {
             event.stopPropagation();
@@ -77,6 +99,12 @@ function showMenu(menu, elem, data) {
 
     init();
     setTimeout(step1, 16);
+    menu.attr('state', 'hide');
     setTimeout(step2, 32);
-    setTimeout(step3, 48);
+    setTimeout(step3, 64);
+    menu.attr('state', 'animate');
+    setTimeout(function () {
+        menu.attr('state', 'show');
+    }, 500);
+    setTimeout(step4, 100);
 }
