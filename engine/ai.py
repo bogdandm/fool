@@ -1,71 +1,29 @@
-import xml.dom.minidom as dom
+from configparser import ConfigParser
 from math import factorial
 
-from engine.end_game_ai import Turn
 from engine.engine import Card, difference
 
 
 class AI:
-	def __init__(self, game, hand_number: int, settings_path='./engine/settings/template.xml'):
-		xml = dom.parse(settings_path)
-		self.settings = {
-			'all': {
-				'trump_suit_penalty':
-					int(xml.getElementsByTagName('all')[0].
-						getElementsByTagName('trump_suit_penalty')[0].childNodes[0].data),
-				'enable_end_game':
-					int(xml.getElementsByTagName('all')[0].
-						getElementsByTagName('enable_end_game')[0].childNodes[0].data),
-				'hashes_in_tree':
-					int(xml.getElementsByTagName('all')[0].
-						getElementsByTagName('hashes_in_tree')[0].childNodes[0].data),
-				'card_to_enable_end_game':
-					int(xml.getElementsByTagName('all')[0].
-						getElementsByTagName('card_to_enable_end_game')[0].childNodes[0].data)
-			},
-			'attack': {
-				'pair_bonus':
-					int(xml.getElementsByTagName('attack')[0].
-						getElementsByTagName('pair_bonus')[0].childNodes[0].data),
-				'coefficient_of_probability':
-					int(xml.getElementsByTagName('attack')[0].
-						getElementsByTagName('coefficient_of_probability')[0].childNodes[0].data),
-				'limit':
-					float(xml.getElementsByTagName('attack')[0].
-						  getElementsByTagName('limit')[0].childNodes[0].data),
-			},
-			'defense': {
-				'coefficient_of_probability':
-					int(xml.getElementsByTagName('defense')[0].
-						getElementsByTagName('coefficient_of_probability')[0].childNodes[0].data),
-				'coefficient_of_stage':
-					int(xml.getElementsByTagName('defense')[0].
-						getElementsByTagName('coefficient_of_stage')[0].childNodes[0].data),
-				'limit':
-					float(xml.getElementsByTagName('defense')[0].
-						  getElementsByTagName('limit')[0].childNodes[0].data),
-				'count_of_cards':
-					int(xml.getElementsByTagName('defense')[0].
-						getElementsByTagName('count_of_cards')[0].childNodes[0].data),
-				'limit2':
-					float(xml.getElementsByTagName('defense')[0].
-						  getElementsByTagName('limit2')[0].childNodes[0].data),
-			}
-		}
+	def __init__(self, game, hand_number: int, settings_path='./engine/settings/template.ini'):
+		INICONFIG = ConfigParser()
+		INICONFIG.read(settings_path)
+		self.settings = {group:
+							 {value: float(INICONFIG[group][value]) for value in INICONFIG[group]}
+						 for group in INICONFIG}
 
 		self.game = game
 		self.hand = game.hand[hand_number]
 		self.hand_number = hand_number
-		self.unknown_cards = game.set.cards[:] + self.game.hand[not hand_number]
-		self.off_cards = []
-		self.enemy_cards = []
-		self.table_cards = []
-		self.turns_tree = None
+		self.unknown_cards = set(game.set.cards[:] + self.game.hand[not hand_number])
+		self.off_cards = set()
+		self.enemy_cards = set()
+		self.table_cards = set()
 
 	def __str__(self):
 		return 'AI'
 
-	def update_memory(self, mode='ALL', card: Card=None, inf=None):
+	def update_memory(self, mode='ALL', card: Card = None, inf=None):
 		# mode=ALL|OFF|TAKE|TRUMP|TABLE
 
 		# MY
@@ -75,29 +33,23 @@ class AI:
 		# TABLE - карты кладутся на стол
 
 		if mode == 'OFF' or mode == 'ALL':
-			if self.turns_tree is not None:
-				self.turns_tree = self.turns_tree.get_next_by_card(-1)
-
 			for tmp in self.game.table:
-				self.off_cards.append(tmp[0])
-				self.off_cards.append(tmp[1])
-			self.table_cards = []
+				self.off_cards.add(tmp[0])
+				self.off_cards.add(tmp[1])
+			self.table_cards.clear()
 
 		if mode == 'TAKE' or mode == 'ALL':
-			if self.turns_tree is not None:
-				self.turns_tree = self.turns_tree.get_next_by_card(-1)
-
 			if self.game.turn == self.hand_number:
 				for tmp in self.game.table:
 					if tmp[0] is not None:
-						self.enemy_cards.append(tmp[0])
+						self.enemy_cards.add(tmp[0])
 					if tmp[1] is not None:
-						self.enemy_cards.append(tmp[1])
-			self.table_cards = []
+						self.enemy_cards.add(tmp[1])
+			self.table_cards.clear()
 
 		if mode == 'TRUMP' or mode == 'ALL':
 			if inf != self.hand_number:
-				self.enemy_cards.append(self.game.trump_card)
+				self.enemy_cards.add(self.game.trump_card)
 
 		if mode == 'TABLE' or mode == 'ALL':
 			if inf != self.hand_number:
@@ -105,29 +57,19 @@ class AI:
 				# 	if self.game.trump_card is None and self.turns_tree is not None:
 				# 		self.turns_tree = self.turns_tree.get_next_by_card(card)
 
-				for c in self.enemy_cards:
+				for c in list(self.enemy_cards):
 					if card == c:
 						self.enemy_cards.remove(c)
-			self.table_cards.append(card)
+			self.table_cards.add(card)
 
-		self.unknown_cards = difference(self.unknown_cards,
-										self.off_cards + self.enemy_cards + self.table_cards + self.hand)
+		self.unknown_cards = self.unknown_cards.difference(
+				self.off_cards | self.enemy_cards | self.table_cards | set(self.hand))
 
 	def attack(self):
-		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
-			if self.turns_tree is not None:
-				return self.end_game_ai('D')
-			if len(self.game.hand[0]) <= self.settings['all']['card_to_enable_end_game'] / 2 and \
-							len(self.game.hand[1]) <= self.settings['all']['card_to_enable_end_game'] / 2:
-				if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= \
-						self.settings['all']['card_to_enable_end_game']:
-					return self.end_game_ai('D')
-
-		stage = (1 - self.game.set.remain() / 39) * 100
-		sums = []
+		stage = (1 - self.game.set.remain() / 39)
 		result = None
 		for card in self.hand:
-			sums.append([card, 0])
+			current_result = [card, 0]
 
 			can_attack = False
 			if self.game.table:
@@ -136,35 +78,28 @@ class AI:
 						if card2 is not None and card.number == card2.number:  # Если можно подкидывать
 							can_attack = True
 							if card.suit == self.game.trump_suit:
-								sums[-1][1] += self.settings['all']['trump_suit_penalty']
-						"""if stage < 50 and card2.weight(self.game.trump_suit) > 20:
-							# В начале игры сливаем крупные карты противника
-							return -1"""
+								current_result[1] += self.settings['all']['trump_suit_penalty']
 						if can_attack: break
 					if can_attack: break
 
 				if not can_attack:
-					sums[-1][1] = -1000
+					current_result[1] = -1000
 					continue
 
-			sums[-1][1] += 27 - card.weight(self.game.trump_suit)
+			current_result[1] += 27 - card.weight(self.game.trump_suit)
 
-			# if card.number < 11 or stage > 75: # до поздней игры бережем крупные карты
-			for card2 in self.hand:  # Ищем пары (тройки)
-				if card != card2 and card.number == card2.number:
-					if card.suit != self.game.trump_suit and card2.suit != self.game.trump_suit:
-						sums[-1][1] += self.settings['attack']['pair_bonus']
-					# print('pair')
+			if not self.game.table:
+				for card2 in self.hand:  # Ищем пары (тройки)
+					if card != card2 and card.number == card2.number:
+						if card.suit != self.game.trump_suit and card2.suit != self.game.trump_suit:
+							current_result[1] += self.settings['attack']['pair_bonus']
 
 			k = self.settings['attack']['coefficient_of_probability']
-			sums[-1][1] *= self.probability(card) ** (2 * stage / 100) / k + (1 - 1 / k)
-			# !!! Попробовать 1 - вер-сть при битве ИИ (для надежности)
+			current_result[1] *= self.probability(card) ** (2 * stage) / k + (1 - 1 / k)  # [1-1/k, 1]
 
-			if result is None or result[1] < sums[-1][1]:
-				result = sums[-1]
+			if result is None or result[1] < current_result[1]:
+				result = current_result
 
-		# for tmp in sums:
-		# 	print('%s|%f' % (tmp[0], tmp[1]))
 		if result is not None:
 			r = self.hand.index(result[0])
 			return r if not self.game.table or result[1] > self.settings['attack']['limit'] else -1
@@ -172,13 +107,6 @@ class AI:
 			return -1
 
 	def defense(self, card: Card):
-		if self.settings['all']['enable_end_game'] and not self.game.set.remain() and self.game.trump_card is None:
-			if self.turns_tree is not None:
-				return self.end_game_ai('A')
-			if (len(self.game.hand[0]) + len(self.game.hand[1]) + len(self.game.table) * 1.5) <= \
-					self.settings['all']['card_to_enable_end_game']:
-				return self.end_game_ai('A')
-
 		stage = (1 - self.game.set.remain() / 39) * 100
 		sums = []
 		result = None
@@ -191,8 +119,9 @@ class AI:
 				# if card.number == card_.number: sums[-1][1] += 10
 
 				k = self.settings['defense']['coefficient_of_probability']
-				sums[-1][1] *= self.probability_throw_up(card_) ** \
-							   (stage / 100 / 2 + self.settings['defense']['coefficient_of_stage']) / k + (1 - 1 / k)
+				k2 = self.settings['defense']['coefficient_of_stage']
+				sums[-1][1] *= (1 - self.probability_throw_up(card_)) ** \
+							   (stage / 100 / 2 + k2) / k + (1 - 1 / k)
 			# !!! Попробовать 1 - вер-сть при битве ИИ (для надежности)
 			else:
 				sums[-1][1] = -1000
@@ -209,24 +138,12 @@ class AI:
 				result[1] > self.settings['defense']['limit2'])
 		) else -1
 
-	def end_game_ai(self, mode, i=None):
-		# mode = 'A' | 'D' | 'U'
-		if self.turns_tree is None and mode != 'U':
-			games_hashes = set()
-			self.turns_tree = Turn(not self.hand_number, turn_type=mode, game=self.game, ai=self, hashes=games_hashes)
+	def probability(self, card: Card):
+		"""Вероятность того, что противник НЕ сможет побить card
 
-		if mode == 'A' or mode == 'D':
-			self.turns_tree = self.turns_tree.get_next()
-			if self.turns_tree is not None:
-				return self.turns_tree.card
-			else:
-				return 0
-		elif mode == 'U' and self.turns_tree is not None:
-			self.turns_tree = self.turns_tree.get_next_by_card(i)
-			return None
-
-	def probability(self, card):
-		# Вероятность того, что противник НЕ сможет побить card
+		return number in [0, 1]
+		:param card:
+		"""
 		for card_ in self.enemy_cards:  # Если у противника есть нужная карта, то 0%
 			if card_.more(card, self.game.trump_suit):
 				return 0
@@ -241,14 +158,16 @@ class AI:
 		if (total - yes) >= enemy_cards_count:
 			return factorial(total - yes) * factorial(total - enemy_cards_count) / \
 				   (factorial(total) * factorial(total - yes - enemy_cards_count))
-		else:
+		else:  # Если у противника гарантированно есть хотя бы одна нужная карта
 			return 0
 
-	def probability_throw_up(self, card):
-		# Вероятность того, что при защите с помощью card НЕ будет подкинута смежная карта
+	def probability_throw_up(self, card: Card):
+		"""Вероятность того, что при защите с помощью card НЕ будет подкинута смежная карта
+		:param card:
+		"""
 		for card_ in self.enemy_cards:  # Если у противника есть нужная карта, то 0%
 			if card_.more(card, self.game.trump_suit):
-				return 0
+				return 1
 
 		tmp = list(set(difference([Card(x, card.number) for x in range(1, 5)], [card])) & set(self.unknown_cards))
 		# Три карты того же достоинства
@@ -257,7 +176,7 @@ class AI:
 		total = len(self.unknown_cards)
 		enemy_cards_count = len(self.game.hand[not self.hand_number])
 		if (total - yes) >= enemy_cards_count:
-			return factorial(total - yes) * factorial(total - enemy_cards_count) / \
-				   (factorial(total) * factorial(total - yes - enemy_cards_count))
+			return 1 - (factorial(total - yes) * factorial(total - enemy_cards_count) /
+						(factorial(total) * factorial(total - yes - enemy_cards_count)))
 		else:
-			return 0
+			return 1

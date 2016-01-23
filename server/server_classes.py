@@ -238,7 +238,6 @@ class RoomPvE(Room):  # User - 0, AI - 1
 
 	def attack(self, player, card):
 		ai = self.players[not const.PLAYER_HAND]
-		ai.end_game_ai('U', card)
 		if not self.game.attack(card, ai=[ai]):
 			return "Can't attack using this card"
 		if card == -1:
@@ -269,7 +268,6 @@ class RoomPvE(Room):  # User - 0, AI - 1
 
 	def defense(self, player, card):
 		ai = self.players[not const.PLAYER_HAND]
-		ai.end_game_ai('U', card)
 		if not self.game.defense(card, ai=[ai]):
 			return "Can't attack using this card"
 		if card == -1:

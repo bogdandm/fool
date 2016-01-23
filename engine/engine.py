@@ -266,10 +266,10 @@ class Game:
 		self.table[card_number_table][1] = card1
 		if self.save_changes:
 			self.changes.append(Change(
-				'defense',
-				int(not self.turn),
-				self.hand[not self.turn][card_number].__str__(),
-				None
+					'defense',
+					int(not self.turn),
+					self.hand[not self.turn][card_number].__str__(),
+					None
 			))
 		if self.log_on:
 			self.log.write('p%i: d(%s)\n' % (not self.turn, self.hand[not self.turn][card_number]))
@@ -445,17 +445,15 @@ Table:
 {attack}
 {defense}
 ==========================
-""".format(
-			trump = ('Trump card:\t%s' % self.trump_card) if self.trump_card is not None
-			else 'Trump suit:\t%s' % Card.suits[self.trump_suit],
-			remaining = self.set.remain(),
-			turn_p1 = '<-' if self.turn else '',
-			turn_p0 = '<-' if not self.turn else '',
-			cards1 = "\t".join(map(lambda c: c.__str__(), self.hand[1])) if player == -1 else len(self.hand[1]),
-			cards2 = "\t".join(map(lambda c: c.__str__(), self.hand[0])) if player == -1
-			else "\t".join(map(lambda c: c.__str__(), self.hand[player])),
-			attack = "\t".join(map(lambda c: c[0].__str__(), self.table)),
-			defense ="\t".join(map(lambda c: c[1].__str__() if c[1] is not None else '  ', self.table))
-		)
-
+""".format(trump=('Trump card:\t%s' % self.trump_card) if self.trump_card is not None
+		else 'Trump suit:\t%s' % Card.suits[self.trump_suit],
+		   remaining=self.set.remain(),
+		   turn_p1='<-' if self.turn else '',
+		   turn_p0='<-' if not self.turn else '',
+		   cards1="\t".join(map(lambda c: c.__str__(), self.hand[1])) if player == -1 else len(self.hand[1]),
+		   cards2="\t".join(map(lambda c: c.__str__(), self.hand[0])) if player == -1
+		   else "\t".join(map(lambda c: c.__str__(), self.hand[player])),
+		   attack="\t".join(map(lambda c: c[0].__str__(), self.table)),
+		   defense="\t".join(map(lambda c: c[1].__str__() if c[1] is not None else '  ', self.table))
+		   )
 		print(s)

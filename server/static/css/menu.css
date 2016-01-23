@@ -9,8 +9,7 @@
 .user_name, .menu-item {
     position: relative;
     z-index: 3;
-    padding: 5px;
-    padding-left: 15px;
+    padding: 5px 5px 5px 15px;
     /*border-bottom: 1px solid #c2c2c2;*/
 }
 
