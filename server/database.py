@@ -186,15 +186,13 @@ def get_friends(user=None, uid=None, accepted=1):
 				ORDER BY name""" % (uid, uid)
 		else:
 			query = """SELECT y.id, name, file_extension
-				FROM ( SELECT
-						 user id,
-						 accepted
+				FROM ( SELECT user id, accepted
 					   FROM friends
 					   WHERE friend = %i
 					 ) y
 				  INNER JOIN users ON y.id = users.id
 				WHERE accepted = 0
-				ORDER BY name""" % (uid)
+				ORDER BY name""" % uid
 		cursor.execute(query)
 		while True:
 			res = cursor.fetchone()
@@ -232,21 +230,21 @@ def get_mutual_friends(you: int, other: int, connection_=None):
 		query = """SELECT U.name, Y.id
 				FROM (
 					SELECT *
-					FROM (SELECT USER id
+					FROM (SELECT user id
 						FROM friends
 						WHERE friend = %i
 						UNION
 						SELECT friend id
 						FROM friends
-						WHERE USER = %i) F1
+						WHERE user = %i) F1
 					WHERE id IN (
-							SELECT USER id
+							SELECT user id
 							FROM friends
 							WHERE friend = %i
 							UNION
 							SELECT friend id
 							FROM friends
-							WHERE USER = %i
+							WHERE user = %i
 					)
 				) Y INNER JOIN users U ON Y.id = U.id""" % (you, you, other, other)
 		cursor.execute(query)

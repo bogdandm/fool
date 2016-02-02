@@ -22,6 +22,7 @@ $(function () {
     });
 
     $('.chat input').keypress(function (e) {
+        /** @namespace e.which */
         if (e.which == 13) {
             send_msg();
         }
