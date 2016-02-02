@@ -53,3 +53,12 @@ footer {
 .transition-transform {
     transition-property: transform !important;
 }
+
+input {
+    margin-top: 20px;
+    font-size: 16pt;
+    font-weight: 300;
+    padding-bottom: 2px;
+    border: none;
+    border-bottom: 1px solid #9f9f9f;
+}

@@ -19,6 +19,30 @@ a:active {
 }
 
 /*==========================*/
+a.none, a.none:focus {
+    color: #1B2024;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+/*==========================*/
+a.easy, a.easy:focus {
+    background-color: transparent;
+    opacity: 0.50;
+}
+
+a.easy:hover {
+    opacity: 0.80;
+}
+
+a.easy:active {
+    opacity: 1;
+}
+
+/*==========================*/
 a.raised, a.raised:focus {
     background-color: #F0F0F0;
     box-shadow: 0 2px 0 0 #505456;

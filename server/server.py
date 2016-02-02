@@ -28,7 +28,7 @@ class Server:
 		self.ip = ip
 		self.domain = domain if domain != '' else None
 		self.app = Flask(__name__)
-		self.app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
+		self.app.config['MAX_CONTENT_LENGTH'] = const.MAX_AVATAR_SIZE * 1024
 
 		self.sessions = dict()
 		self.sessions_by_user_name = dict()
@@ -98,13 +98,26 @@ class Server:
 			session = self.get_session(request)
 			if session:
 				name = session.user
-				return render_template('main_menu.html', user_name=name, admin=bool(session.admin))
+				return render_template(
+					'main_menu.html', page_name='Дурак online', page_title='Главная',
+					user_name=name, admin=bool(session.admin))
 			elif session is None:
 				return redirect('/static/login.html')
 			else:
 				session = self.sessions[request.cookies['sessID']]
 				session.update_activation_status()
 				return redirect('/static/errors/not_activated.html')
+
+		@self.app.route('/account_settings.html')
+		def account_settings():
+			session = self.get_session(request)
+			if session:
+				user_data=DB.check_user(session.user)
+				return render_template(
+					'account_settings.html', page_name='Настройки аккаунта', page_title='Настройки',
+					u_name=session.user, email=user_data.email)
+			else:
+				return redirect('/')
 
 		@self.app.route('/static_/svg/<path:path>')  # static
 		def send_svg(path):

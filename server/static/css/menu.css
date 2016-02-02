@@ -21,7 +21,7 @@
 .menu-item {
     font-weight: 300;
     font-size: 16pt;
-    min-height: 25px;
+    min-height: 27px;
 }
 
 .menu-item > a {
@@ -52,7 +52,7 @@
 
 .selector, .selection {
     position: absolute;
-    height: 35px;
+    height: 37px;
     width: 100%;
 }
 

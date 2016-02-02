@@ -43,7 +43,7 @@
             margin-left: 50px;
         }
 
-        #left {
+        #avatar {
             position: absolute;
             top: 0;
             left: -200px;
@@ -52,14 +52,14 @@
             border-radius: 2px 0 0 2px;
         }
 
-        #left > img {
+        #avatar > img {
             height: 100%;
             width: 100%;
             box-sizing: border-box;
             padding: 30px;
         }
 
-        #left > #pseudo-file {
+        #avatar > #pseudo-file {
             position: absolute;
             left: 0;
             bottom: 0;
@@ -76,7 +76,7 @@
             transition: background-color 0.2s ease;
         }
 
-        #left > #loading-progress {
+        #avatar > #loading-progress {
             transition: width 0.2s ease;
             position: absolute;
             left: 0;
@@ -90,25 +90,25 @@
             font-weight: bold;
         }
 
-        #left > #pseudo-file:hover {
+        #avatar > #pseudo-file:hover {
             background-color: #1B2024;
         }
 
-        #left > #pseudo-file > span > span {
+        #avatar > #pseudo-file > span > span {
             float: left;
             height: 20px;
             color: white;
             font-weight: bold;
         }
 
-        #left > #pseudo-file > span > img {
+        #avatar > #pseudo-file > span > img {
             float: left;
             height: 20px;
             box-sizing: border-box;
             padding: 3px 2px 2px 2px;
         }
 
-        #left > input[type=file] {
+        #avatar > input[type=file] {
             position: absolute;
             top: 0;
             left: 0;
@@ -135,14 +135,6 @@
             margin-top: -5px;
             margin-bottom: 5px;
             font-weight: 300;
-        }
-
-        #right > input {
-            font-weight: 300;
-            margin-top: 20px;
-            padding-bottom: 2px;
-            border: none;
-            border-bottom: 1px solid #9f9f9f;
         }
 
         #right > #e_mail {
@@ -182,7 +174,7 @@
         }
     </style>
     <script>
-        var maxSize = 1.0;
+        var maxSize = 2048;
         var userName_b = false;
         var userName_unic_b = false;
         var email_b = false;
@@ -205,7 +197,7 @@
 
         function onFileChange() {
             var file = this.files[0];
-            if (!file.type.match(/image.*/) || file.size > maxSize * 1024 * 1024) {
+            if (!file.type.match(/image.*/) || file.size > maxSize * 1024) {
                 this.value = '';
                 $('#file').replaceWith('<input type="file" id="file">');
                 $('#file').change(onFileChange);
@@ -221,7 +213,7 @@
             var reader = new FileReader();
             reader.onload = (function (theFile) {
                 return function (e) {
-                    $('#left').find('> img').attr('src', e.target.result).css({padding: 0})
+                    $('#avatar').find('> img').attr('src', e.target.result).css({padding: 0})
                 };
             })(file);
             reader.onprogress = updateProgress;
@@ -371,7 +363,7 @@
                     processData: false,
                     contentType: false,
                     complete: function (x) {
-                        data= x.responseText;
+                        data = x.responseText;
                         if (data == 'True' || data == 'OK') {
                             window.location.href = '/';
                         }
@@ -386,7 +378,7 @@
 <header>Дурак online</header>
 <main>
     <form>
-        <div id="left" class="standard-box">
+        <div id="avatar" class="standard-box">
             <img src="/static_/svg/ic_person_24px_white.svg">
 
             <div id="pseudo-file">

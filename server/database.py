@@ -38,14 +38,14 @@ def check_user(user_name: str, password: str = None):
 	connection = connect_()
 	try:
 		cursor = connection.cursor()
-		query = "SELECT id, file_extension, is_activated, is_admin FROM users WHERE name='%s'" % user_name
+		query = "SELECT id, file_extension, is_activated, is_admin, email FROM users WHERE BINARY name='%s'" % user_name
 		if password is not None:
 			query += "and pass_sha256='%s'" % password
 		cursor.execute(query)
 		row = cursor.fetchone()
 		if row is not None:
 			obj = Dummy()
-			(obj.uid, obj.file, obj.activated, obj.admin) = row
+			(obj.uid, obj.file, obj.activated, obj.admin, obj.email) = row
 		else:
 			obj = None
 	except Error as e:

@@ -1,0 +1,289 @@
+{% extends "green_page.html" %}
+{% block head %}
+<script>
+    var maxSize = 2048;
+    var password_b = false;
+    function updateProgress(evt) {
+        if (evt.lengthComputable) {
+            var progress = $('#loading-progress');
+            var percentLoaded = Math.round((evt.loaded / evt.total) * 100);
+            console.log(percentLoaded);
+            if (percentLoaded < 100) {
+                progress.css({width: percentLoaded + '%'});
+                progress.text(percentLoaded + '%');
+            } else {
+                progress.hide();
+            }
+        }
+    }
+
+    function onFileChange() {
+        var file = this.files[0];
+        if (!file.type.match(/image.*/) || file.size > maxSize * 1024) {
+            this.value = '';
+            $('#file').replaceWith('<input type="file" id="file">');
+            $('#file').change(onFileChange);
+            $('#load_text').hide();
+            $('#file_error').show();
+            setTimeout(function () {
+                $('#load_text').show();
+                $('#file_error').hide();
+            }, 2000);
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = (function (theFile) {
+            return function (e) {
+                $('#avatar').find('> img').attr('src', e.target.result).css({padding: 0});
+                var file = $('#file')[0].files[0];
+                var data = new FormData();
+                data.append('file', file);
+                $('form .loading-bar').slideDown();
+                $.ajax({
+                    url: '/api/', //TODO
+                    type: 'POST',
+                    data: data,
+                    cache: false,
+                    dataType: 'json',
+                    processData: false,
+                    contentType: false,
+                    complete: function (x) {
+                        data = x.responseText;
+
+                        $('form .loading-bar').slideUp();
+                    }
+                });
+            };
+        })(file);
+        reader.onprogress = updateProgress;
+
+        reader.readAsDataURL(file);
+    }
+
+    function newPass() {
+        if (!password_b) return;
+        $.post(
+                "/api/", //TODO
+                {
+                    old_pass: $('#old_pass').val(),
+                    new_pass: $('#new_pass').val()
+                },
+                function(){
+                    //TODO
+                }
+        );
+    }
+
+    $(function () {
+        $('main > div').addClass('standard-box');
+        addLoadBar($('#right'), {position: 'top'}).hide();
+
+        //File start
+        $('#loading-progress').add('.error').hide();
+        $('#pseudo-file').click(function () {
+            $('#file').click();
+        });
+        $('#file').change(onFileChange);
+        //File end
+
+        //Pass start
+        $('#pass_box').find('input').add('#pass_enter').hide();
+        $('#pass_hidden').click(function () {
+            $(this).hide();
+            $('#pass_box').find('input').add('#pass_enter').fadeIn();
+        });
+
+        $('#new_pass_repeat').keypress(function (e) {
+            if (e.which == 13) newPass();
+        }).add('#new_pass').on('input', function () {
+            var pass = $('#new_pass_repeat');
+            var error = $('#pass_error');
+            if (pass.val() == $('#new_pass').val()) {
+                pass.css({borderBottomColor: '#9f9f9f'});
+                error.slideUp();
+                password_b = true;
+            } else {
+                pass.css({borderBottomColor: '#ff433e'});
+                error.slideDown();
+                password_b = false;
+            }
+        });
+        //Pass end
+    });
+</script>
+<style>
+
+    main {
+        width: auto;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+    }
+
+    main > div {
+        padding: 40px;
+    }
+</style>
+<style>
+    #avatar {
+        float: left;
+        position: relative;
+        width: 220px;
+        background-color: #32373a;
+        border-radius: 2px;
+        margin-right: 15px;
+    }
+
+    #avatar > img {
+        height: 100%;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 30px;
+    }
+
+    #avatar > #pseudo-file {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 30px;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 5px 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        cursor: pointer;
+        background-color: rgba(27, 32, 36, 0.75);
+        border-radius: 0 0 2px 2px;
+        transition: background-color 0.2s ease;
+    }
+
+    #avatar > #loading-progress {
+        transition: width 0.2s ease;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 30px;
+        width: 0;
+        box-sizing: border-box;
+        padding: 5px;
+        background-color: #6faa21;
+        border-radius: 2px;
+        font-weight: bold;
+    }
+
+    #avatar > #pseudo-file:hover {
+        background-color: #1B2024;
+    }
+
+    #avatar > #pseudo-file > span > span {
+        float: left;
+        height: 20px;
+        color: white;
+        font-weight: bold;
+    }
+
+    #avatar > #pseudo-file > span > img {
+        float: left;
+        height: 20px;
+        box-sizing: border-box;
+        padding: 3px 2px 2px 2px;
+    }
+
+    #avatar > input[type=file] {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+    }
+</style>
+<style>
+    #right {
+        display: inline-block;
+        height: 224px;
+    }
+
+    #user_name {
+        font-size: 26pt;
+        font-weight: 700;
+    }
+
+    #email {
+        font-size: 22pt;
+        font-weight: 300;
+    }
+
+    .error {
+        font-size: 12pt !important;
+        font-weight: 300;
+        word-wrap: break-word;
+    }
+
+    .error {
+        color: #ff433e !important;
+    }
+
+    #pass_box {
+        position: relative;
+    }
+
+    #pass_hidden {
+        margin-top: 15px;
+        font-size: 16pt;
+    }
+
+    #pass_box > input {
+        display: block;
+        width: 100%;
+    }
+
+    #pass_enter {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        padding: 0;
+    }
+</style>
+<style>
+    #bottom {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<div>
+    <div id="top">
+        <div id="avatar" class="standard-box">
+            <img src="/static_/svg/ic_person_24px_white.svg">
+
+            <div id="pseudo-file">
+        <span id="load_text">
+            <span>Загрузить аватар</span>
+            <img src="/static_/svg/ic_file_upload_24px_white.svg">
+        </span>
+                <span class="error" id="file_error">Файл слишком большой</span>
+            </div>
+            <div id="loading-progress"></div>
+            <input type="file" id="file">
+        </div>
+        <div id="right">
+            <div id="user_name">{{ u_name }}</div>
+            <div id="email">{{ email }}</div>
+            <div id="pass_box">
+                <button id="pass_hidden" class="raised">Сменить пароль</button>
+                <input id="old_pass" type="password" placeholder="Введите старый пароль">
+                <input id="new_pass" type="password" placeholder="Введите новый пароль">
+                <input id="new_pass_repeat" type="password" placeholder="Повторите пароль">
+                <span id="pass_error" class="error">Пароли не совпадают</span>
+                <button id="pass_enter"><img src="/static_/svg/ic_keyboard_enter_24px.svg"></button>
+            </div>
+        </div>
+    </div>
+    <div id="bottom">Место для дополнительной информации на будущее</div>
+</div>
+{% endblock %}

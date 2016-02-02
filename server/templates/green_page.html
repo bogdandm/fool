@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Fool | {{ page_name }}</title>
+    <title>Fool | {{ page_title }}</title>
     <script src="/static/js/jquery-2.1.4.min.js"></script>
     <script src="/static/js/jquery.mousewheel.min.js"></script>
     <script src="/static/js/jquery.mCustomScrollbar.concat.min.js"></script>
@@ -12,24 +12,45 @@
           rel='stylesheet' type='text/css'>
     <link href="/static/css/global.css" rel="stylesheet" type="text/css">
     <link href="/static/css/buttons.css" rel="stylesheet" type="text/css">
+    <link href="/static/css/a.css" rel="stylesheet" type="text/css">
     <script src="/static/js/global.js"></script>
     <style>
         header {
-            background-color: #90DD2B;
-        }
-
-        main {
             display: flex;
             flex-direction: row;
-            justify-content: flex-start;
-            align-items: flex-start;
-            height: calc(100% - 60px);
+            background-color: #9bed2f;
+        }
+
+        header > * {
+            box-sizing: border-box;
+            height: 100%;
+            display: inline-block;
+        }
+
+        #to_main_menu {
+            padding: 5px;
+            transition: transform 0.5s ease;
+            transform: translateX(0);
+        }
+
+        #to_main_menu:hover {
+            transform: translateX(-10px);
+        }
+
+        #to_main_menu > img {
+            float: left;
+            height: 100%;
         }
     </style>
     {% block head %}{% endblock %}
 </head>
 <body>
-<header>{{ page_name }}</header>
+<header>
+    <a class="none" href="/" id="to_main_menu">
+        <img src="/static_/svg/ic_arrow_back_24px.svg">
+    </a>
+    <span>{{ page_name }}</span>
+</header>
 <main>
     {% block body %}{% endblock %}
 </main>

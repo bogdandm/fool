@@ -1,285 +1,289 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Fool | Главное меню</title>
-    <script src="/static/js/jquery-2.1.4.min.js"></script>
-    <script src="/static/js/jquery.mousewheel.min.js"></script>
-    <script src="/static/js/jquery.mCustomScrollbar.concat.min.js"></script>
-    <link href="/static/css/jquery.mCustomScrollbar.min.css" rel="stylesheet" type="text/css">
-    <link rel="shortcut icon" href="/static/favicon.ico">
-    <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&subset=latin,cyrillic-ext,cyrillic'
-          rel='stylesheet' type='text/css'>
-    <link href="/static/css/global.css" rel="stylesheet" type="text/css">
-    <link href="/static/css/buttons.css" rel="stylesheet" type="text/css">
-    <link href="/static/css/menu.css" rel="stylesheet" type="text/css">
-    <link href="/static/css/friends_main_menu.css" rel="stylesheet" type="text/css">
-    <link href="/static/css/loading_bar.css" rel="stylesheet">
-    <script src="/static/js/global.js"></script>
-    <script src="/static/js/friends_main_menu.js"></script>
-    <script>
-        var loaders = {
-            "default": {
-                false: function () {
-                },
-                true: function () {
-                },
-                "load": true,
-                "title": "Fool | Главное меню"
+{% extends "green_page.html" %}
+{% block head%}
+<link href="/static/css/menu.css" rel="stylesheet" type="text/css">
+<link href="/static/css/friends_main_menu.css" rel="stylesheet" type="text/css">
+<link href="/static/css/loading_bar.css" rel="stylesheet">
+<script src="/static/js/global.js"></script>
+<script src="/static/js/friends_main_menu.js"></script>
+<script>
+    var loaders = {
+        "default": {
+            false: function () {
             },
-            "friends": {
-                false: friendsLoad,
-                true: friendsUnload,
-                "load": false,
-                "title": "Fool | Друзья"
-            }
-        };
-
-        function initMenu() {
-            $(".selector").add(".menu > .selection").add(".container").filter(":not(#default)").add(".container-mini").hide();
-
-            $(".menu-item").hover(function () { // Перемещение блока выбора
-                $(".selector").filter('[group="' + $(this).attr('group') + '"]').show().css({
-                    top: $(this).position().top + "px"
-                });
-            });
-
-            var x = $("#main-menu");
-            x.find("> .menu-item[container-name]").click(onMenuItemClick);
-            x.find("> .menu-item:not([container-name])").click(function () { // Клик по не выпадающему эл-ту
-                $(".menu > .selection").add(".container").add(".container-mini").hide();
-            });
-
-            x.find("> .menu-item").click(function () { // Псевдо-клик по блоку выбора
-                var self = this;
-
-                function f() {
-                    $(".selector").filter('[group="' + $(self).attr('group') + '"]').css({
-                        backgroundColor: "rgba(155, 237, 47, 0.5)"
-                    });
-                }
-
-                $(".selector").filter('[group="' + $(this).attr('group') + '"]').css({
-                    backgroundColor: "rgba(155, 237, 47, 0.8)"
-                });
-
-                setTimeout(f, 200);
-            });
+            true: function () {
+            },
+            "load": true,
+            "title": "Fool | Главное меню"
+        },
+        "friends": {
+            false: friendsLoad,
+            true: friendsUnload,
+            "load": false,
+            "title": "Fool | Друзья"
         }
+    };
 
-        function onMenuItemClick() {// Клик по выпадающему элементу
-            var selection = $(".menu > .selection");
-            var containerToShow = $(this).attr('container-name');
-            var containerToHide = selection.attr('position');
+    function initMenu() {
+        $(".selector").add(".menu > .selection").add(".container").filter(":not(#default)").add(".container-mini").hide();
 
-            if (containerToShow == containerToHide)
-                containerToShow = 'default';
+        $(".menu-item").hover(function () { // Перемещение блока выбора
+            $(".selector").filter('[group="' + $(this).attr('group') + '"]').show().css({
+                top: $(this).position().top + "px"
+            });
+        });
 
-            if (containerToShow != 'default') {
-                selection.attr('position', containerToShow).css({
+        var x = $("#main-menu");
+        x.find("> .menu-item[container-name]").add('#settings').click(onMenuItemClick);
+        x.find("> .menu-item:not([container-name])").click(function () { // Клик по не выпадающему эл-ту
+            $(".menu > .selection").add(".container").add(".container-mini").hide();
+        });
+
+        x.find("> .menu-item").click(function () { // Псевдо-клик по блоку выбора
+            var self = this;
+
+            function f() {
+                $(".selector").filter('[group="' + $(self).attr('group') + '"]').css({
+                    backgroundColor: "rgba(155, 237, 47, 0.5)"
+                });
+            }
+
+            $(".selector").filter('[group="' + $(this).attr('group') + '"]').css({
+                backgroundColor: "rgba(155, 237, 47, 0.8)"
+            });
+
+            setTimeout(f, 200);
+        });
+    }
+
+    function onMenuItemClick() {// Клик по выпадающему элементу
+        var selection = $(".menu > .selection");
+        var containerToShow = $(this).attr('container-name');
+        var containerToHide = selection.attr('position');
+
+        if (containerToShow == containerToHide)
+            containerToShow = 'default';
+
+        if (containerToShow != 'default') {
+            selection.attr('position', containerToShow);
+            if ($(this).attr('id') !== 'settings')
+                selection.css({
                     top: $(this).position().top + 'px'
                 }).show();
-            } else
-                selection.attr('position', 'default').hide();
+            else
+                selection.hide();
+        } else
+            selection.attr('position', 'default').hide();
 
-            $("#" + containerToHide).hide();
-            $("#" + containerToShow).show().filter('.container-mini').css({
-                top: $(this).position().top + 'px'
-            });
+        $("#" + containerToHide).hide();
+        $("#" + containerToShow).show().filter('.container-mini').css({
+            top: $(this).position().top + 'px'
+        });
 
-            if (loaders[containerToShow]) {
-                setTimeout(loaders[containerToShow][false], 0);
-                loaders[containerToShow].load = true;
-                document.title = loaders[containerToShow].title;
-            }
-            if (loaders[containerToHide]) {
-                setTimeout(loaders[containerToHide][true], 0);
-                loaders[containerToHide].load = false;
-            }
+        if (loaders[containerToShow]) {
+            setTimeout(loaders[containerToShow][false], 0);
+            loaders[containerToShow].load = true;
+            document.title = loaders[containerToShow].title;
         }
+        if (loaders[containerToHide]) {
+            setTimeout(loaders[containerToHide][true], 0);
+            loaders[containerToHide].load = false;
+        }
+    }
 
-        $(function () {
-            addLoadBar($('header'), {position: 'top'}).hide();
-            initMenu();
+    $(function () {
+        $('#to_main_menu').hide();
+        addLoadBar($('header'), {position: 'top'}).hide();
+        initMenu();
 
-            $('#logout').click(function () {
-                $.ajax({
-                    url: "/api/destroy_session",
-                    success: function () {
-                        window.location.href = '/static/login.html';
-                    }
-                });
-            });
-
+        $('#logout').click(function () {
             $.ajax({
-                url: '/api/avatar?user=' + $(".user_name > span").text() + '&source=menu',
-                success: function (data) {
-                    $('.user_name').find('img').attr('src', data);
+                url: "/api/destroy_session",
+                success: function () {
+                    window.location.href = '/static/login.html';
                 }
             });
-        })
-    </script>
-    <style>
-        header {
-            background-color: #90DD2B;
-        }
+        });
 
-        main {
-            display: flex;
-            flex-direction: row;
-            justify-content: flex-start;
-            align-items: flex-start;
-            height: calc(100% - 60px);
-        }
+        $.ajax({
+            url: '/api/avatar?user=' + $(".user_name > span").text() + '&source=menu',
+            success: function (data) {
+                $('.user_name').find('img').eq(0).attr('src', data);
+            }
+        });
+    })
+</script>
+<style>
+    header {
+        background-color: #90DD2B;
+    }
 
-        .container {
-            position: relative;
-            height: 100%;
-            width: 100%;
-            z-index: -10;
-            padding-left: 10px;
-        }
+    main {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: flex-start;
+        height: calc(100% - 60px);
+    }
 
-        .container-mini {
-            position: relative;
-            top: 41px;
-            z-index: -10;
-        }
+    .container {
+        position: relative;
+        height: 100%;
+        width: 100%;
+        z-index: -10;
+        padding-left: 10px;
+    }
 
-        .container-mini > .menu {
-            width: 400px;
-            margin-left: 0;
-        }
+    .container-mini {
+        position: relative;
+        top: 41px;
+        z-index: -10;
+    }
 
-        .container-mini > .menu > .menu-item:last-child {
-            border-bottom: none;
-        }
+    .container-mini > .menu {
+        width: 400px;
+        margin-left: 0;
+    }
 
-        .menu {
-            float: left;
-            min-width: 270px;
-        }
+    .container-mini > .menu > .menu-item:last-child {
+        border-bottom: none;
+    }
 
-        .user_name {
-            padding-top: 8px;
-        }
+    .menu {
+        float: left;
+        min-width: 270px;
+    }
 
-        .user_name > * {
-            float: left;
-        }
+    .user_name {
+        padding-top: 8px;
+    }
 
-        .user_name > img {
-            border-radius: 2px;
-            overflow: hidden;
-            height: 24px;
-            max-width: 50px;
-            margin-right: 7px;
-            margin-top: 3px;
-        }
-    </style>
-</head>
-<body>
-<header>Дурак online</header>
-<main>
-    <div class="hidden">
-        <div class="friend">
-            <img src="/static/avatar/leon.jpg">
+    .user_name > * {
+        float: left;
+    }
 
-            <div class="friend-body">
-                <div class="name">Leon</div>
+    .user_name > img {
+        border-radius: 2px;
+        overflow: hidden;
+        height: 24px;
+        max-width: 50px;
+        margin-right: 7px;
+        margin-top: 3px;
+    }
+
+    .user_name > #settings {
+        float: right;
+        padding: 0;
+        height: 30px;
+        width: 30px;
+    }
+
+    .user_name > #settings > img {
+        height: 30px;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<div class="hidden">
+    <div class="friend">
+        <img src="/static/avatar/leon.jpg">
+
+        <div class="friend-body">
+            <div class="name">Leon</div>
+            <div class="status">offline</div>
+            <div class="buttons">
+                <button class="more easy">
+                    <img src="/static_/svg/ic_more_vert_black_24px.svg">
+                </button>
+                <button class="reject easy" style="display: none">
+                    <img src="/static_/svg/ic_close_24px.svg">
+                </button>
+                <button class="add easy" style="display: none">
+                    <img src="/static_/svg/ic_done_24px.svg">
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="user">
+        <div>
+            <img class="avatar" src="/static_/svg/account-circle.svg">
+
+            <div style="display: inline-block">
+                <div class="name">-</div>
                 <div class="status">offline</div>
-                <div class="buttons">
-                    <button class="more easy">
-                        <img src="/static_/svg/ic_more_vert_black_24px.svg">
-                    </button>
-                    <button class="reject easy" style="display: none">
-                        <img src="/static_/svg/ic_close_24px.svg">
-                    </button>
-                    <button class="add easy" style="display: none">
-                        <img src="/static_/svg/ic_done_24px.svg">
-                    </button>
+            </div>
+        </div>
+        <div>
+            <div class="mutual">N</div>
+            <button class="add on"><img src="/static_/svg/ic_add_24px.svg"></button>
+        </div>
+    </div>
+</div>
+<div id="main-menu" class="menu standard-box">
+    <div class="selector" group="1"></div>
+    <div class="user_name" group="1">
+        <img src="">
+        <span>{{ user_name }}</span>
+        <a id="settings" class="easy" group="1" container-name="settings_page" href="account_settings.html">
+            <img src="/static_/svg/ic_settings_black_24px.svg">
+        </a>
+    </div>
+    <div class="menu-item" group="1" container-name="new-games">Новая игра</div>
+    <div class="menu-item" group="1" container-name="friends">Друзья</div>
+    <div class="menu-item" group="1" container-name="server-statistic">Статистика по серверу</div>
+    {% if admin %}
+    <div class="menu-item" group="1">
+        <a class="none" href="/static/server_statistic.html">Данные сервера</a>
+    </div>
+    {% endif %}
+    <div id="logout" class="menu-item" group="1">Выйти из аккаунта</div>
+    <div class="selection" position="default"></div>
+</div>
+<div id="default" class="container">
+    <div class="standard-box"></div>
+</div>
+<div id="new-games" class="container-mini">
+    <div class="menu standard-box">
+        <div class="selector" group="2"></div>
+        <div class="menu-item" group="2"><a href="/arena?mode=0" class="none">Играть против ИИ</a></div>
+        <div class="menu-item" group="2"><a href="/arena?mode=1" class="none">Игра против другого игрока</a></div>
+        <div class="menu-item" group="2"><a href="#" class="none">Играть с другом</a></div>
+    </div>
+</div>
+<div id="friends" class="container">
+    <div id="friends-one">
+        <div id="friend-dialog" class="standard-box">
+            <button class="remove">
+                <img src="/static_/svg/delete_people.svg"><span>Удалить из друзей</span>
+            </button>
+            <button class="chat">
+                <img src="/static_/svg/ic_chat_24px.svg"><span>Начать диалог</span>
+            </button>
+            <button class="play">
+                <img src="/static_/svg/play.svg"><span>Начать игру</span>
+            </button>
+        </div>
+        <div class="body standard-box">
+        </div>
+    </div>
+    <div id="friends-two">
+        <div class="body">
+            <div id="find-user-box" class="standard-box">
+                <div class="top">
+                    <input id="find-user" placeholder="Введите имя пользователя">
+                    <button id="find-user-btn"><img src="/static_/svg/ic_search_24px.svg"></button>
                 </div>
-            </div>
-        </div>
-        <div class="user">
-            <div>
-                <img class="avatar" src="/static_/svg/account-circle.svg">
-
-                <div style="display: inline-block">
-                    <div class="name">Leon</div>
-                    <div class="status">offline</div>
-                </div>
-            </div>
-            <div>
-                <div class="mutual">N</div>
-                <button class="add on"><img src="/static_/svg/ic_add_24px.svg"></button>
-            </div>
-        </div>
-    </div>
-    <div id="main-menu" class="menu standard-box">
-        <div class="selector" group="1"></div>
-        <div class="user_name" group="1">
-            <img src="">
-            <span>{{ user_name }}</span>
-        </div>
-        <div class="menu-item" group="1" container-name="new-games">Новая игра</div>
-        <div class="menu-item" group="1" container-name="friends">Друзья</div>
-        <div class="menu-item" group="1" container-name="server-statistic">Статистика по серверу</div>
-        {% if admin %}
-        <div class="menu-item" group="1">
-            <a href="/static/server_statistic.html">Данные сервера</a>
-        </div>
-        {% endif %}
-        <div id="logout" class="menu-item" group="1">Выйти из аккаунта</div>
-        <div class="selection" position="default"></div>
-    </div>
-    <div id="default" class="container">
-        <div class="standard-box"></div>
-    </div>
-    <div id="new-games" class="container-mini">
-        <div class="menu standard-box">
-            <div class="selector" group="2"></div>
-            <div class="menu-item" group="2"><a href="/arena?mode=0">Играть против ИИ</a></div>
-            <div class="menu-item" group="2"><a href="/arena?mode=1">Игра против другого игрока</a></div>
-            <div class="menu-item" group="2"><a href="#">Играть с другом</a></div>
-        </div>
-    </div>
-    <div id="friends" class="container">
-        <div id="friends-one">
-            <div id="friend-dialog" class="standard-box">
-                <button class="remove">
-                    <img src="/static_/svg/delete_people.svg"><span>Удалить из друзей</span>
-                </button>
-                <button class="chat">
-                    <img src="/static_/svg/ic_chat_24px.svg"><span>Начать диалог</span>
-                </button>
-                <button class="play">
-                    <img src="/static_/svg/play.svg"><span>Начать игру</span>
-                </button>
-            </div>
-            <div class="body standard-box">
-            </div>
-        </div>
-        <div id="friends-two">
-            <div class="body">
-                <div id="find-user-box" class="standard-box">
-                    <div class="top">
-                        <input id="find-user" placeholder="Введите имя пользователя">
-                        <button id="find-user-btn"><img src="/static_/svg/ic_search_24px.svg"></button>
-                    </div>
-                    <div class="result">
-                        <div class="body">
-                            <div id="mutual_friends_dialog" class="standard-box" state="hide">
-                                <span class="title">Общие друзья</span>
-                            </div>
-                            <div class="None">Ничего не найдено</div>
+                <div class="result">
+                    <div class="body">
+                        <div id="mutual_friends_dialog" class="standard-box" state="hide">
+                            <span class="title">Общие друзья</span>
                         </div>
+                        <div class="None">Ничего не найдено</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div id="server-statistic" class="container"></div>
-</main>
-</body>
-</html>
+</div>
+<div id="server-statistic" class="container">server statistic</div>
+<div id="settings_page" class="container"></div>
+{% endblock %}
