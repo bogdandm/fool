@@ -80,7 +80,7 @@ function findUser(userName) {
                             var elem = $('<div class="user"><img class="avatar" src=""><div class="name"/></div>');
                             elem.find('.name').text(val);
                             $.ajax({
-                                url: '/api/avatar?user=' + val + '&source=round_white',
+                                url: '/api/avatar?user=' + val + '&type=round_white',
                                 success: function (data) {
                                     elem.find('img').attr('src', data);
                                     dialog.append(elem);
@@ -95,15 +95,16 @@ function findUser(userName) {
                                 directHoriz: 'right',
                                 action: 'hover'
                             });
-                        }, 100);
+                        }, 10);
                     }
                 });
             } else {
                 none.show();
             }
         }).always(function () {
-        $('header .loading-bar').slideUp();
-    }).fail(function () {
+            $('header .loading-bar').slideUp();
+        }
+    ).fail(function () {
         box.find('.None').show();
     });
 }
@@ -195,8 +196,7 @@ function friendsLoad() {
                     })
                 }
             }
-        ).
-        always(function () {
+        ).always(function () {
             loading++;
             if (loading == 2) $('header .loading-bar').slideUp();
             if (!length && !loading)
@@ -220,8 +220,7 @@ function friendsLoad() {
                 })
             }
         }
-    ).
-    always(function () {
+    ).always(function () {
         loading++;
         if (loading == 2) $('header .loading-bar').slideUp();
         if (!length && !loading)

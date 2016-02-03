@@ -93,7 +93,8 @@ class Server:
 				self.logger.write_record(request, response)
 			return response
 
-		@self.app.route('/')  # static
+		@self.app.route('/')
+		# static
 		def send_root():
 			session = self.get_session(request)
 			if session:
@@ -112,14 +113,15 @@ class Server:
 		def account_settings():
 			session = self.get_session(request)
 			if session:
-				user_data=DB.check_user(session.user)
+				user_data = DB.check_user(session.user)
 				return render_template(
-					'account_settings.html', page_name='Настройки аккаунта', page_title='Настройки',
+					'account_settings.html', header_mini=True, page_name='Настройки аккаунта', page_title='Настройки',
 					u_name=session.user, email=user_data.email)
 			else:
 				return redirect('/')
 
-		@self.app.route('/static_/svg/<path:path>')  # static
+		@self.app.route('/static_/svg/<path:path>')
+		# static
 		def send_svg(path):
 			data = self.cache.get(path)
 			if data is None:
@@ -130,19 +132,22 @@ class Server:
 			response.headers["Cache-Control"] = "max-age=1000000, public"
 			return response
 
-		@self.app.route('/favicon.ico')  # static
+		@self.app.route('/favicon.ico')
+		# static
 		def send_favicon():
 			return send_from_directory(
 				os.path.join(self.app.root_path, 'static'),
 				'favicon.ico', mimetype='image/vnd.microsoft.icon'
 			)
 
-		@self.app.route('/api')  # static
+		@self.app.route('/api')
+		# static
 		def send_api_methods():
 			# TODO: rewrite documentation
 			return redirect('/static/api_methods.html')
 
-		@self.app.route('/arena')  # static; need: get@mode
+		@self.app.route('/arena')
+		# static; need: get@mode
 		def send_arena():
 			return redirect('/static/arena.html?mode=' + request.args.get('mode'))
 
@@ -161,7 +166,8 @@ class Server:
 			else:
 				return redirect('/')
 
-		@self.app.route('/api/activate_account')  # need: get@token
+		@self.app.route('/api/activate_account')
+		# need: get@token
 		def activate_account():
 			token = request.args.get('token')
 			if not search('^[a-zA-Z0-9]+$', token):
@@ -179,7 +185,8 @@ class Server:
 			session.add_cookie_to_resp(response)
 			return response
 
-		@self.app.route('/api/resend_email')  # need: session
+		@self.app.route('/api/resend_email')
+		# need: session
 		def resend_email():
 			if 'sessID' in request.cookies and request.cookies['sessID'] in self.sessions:
 				session = self.sessions[request.cookies['sessID']]
@@ -205,7 +212,8 @@ class Server:
 				return 'Fail', 401
 			return 'False' if 'cur_room' in session.data else 'True'
 
-		@self.app.route("/api/subscribe")  # need: session
+		@self.app.route("/api/subscribe")
+		# need: session
 		def subscribe():  # Create queue for updates from server
 			def gen(sess_id):
 				q = Queue()
@@ -232,7 +240,8 @@ class Server:
 
 			return Response(gen(session.id), mimetype="text/event-stream")
 
-		@self.app.route("/api/unsubscribe")  # need: session@msg_queue
+		@self.app.route("/api/unsubscribe")
+		# need: session@msg_queue
 		def unsubscribe():
 			session = self.get_session(request)
 			if not session:
@@ -270,7 +279,8 @@ class Server:
 
 				return response
 
-		@self.app.route("/api/join")  # need: session@msg_queue, get@mode
+		@self.app.route("/api/join")
+		# need: session@msg_queue, get@mode
 		def join_room():
 			session = self.get_session(request)
 			if not self.get_session(request):
@@ -309,7 +319,8 @@ class Server:
 
 			return 'OK'
 
-		@self.app.route("/api/attack", methods=['GET'])  # need: session@cur_room, get@card
+		@self.app.route("/api/attack", methods=['GET'])
+		# need: session@cur_room, get@card
 		def attack():
 			session = self.get_session(request)
 			if not session:
@@ -326,7 +337,8 @@ class Server:
 					return 'OK'
 			return result
 
-		@self.app.route("/api/defense", methods=['GET'])  # need: session@cur_room, get@card
+		@self.app.route("/api/defense", methods=['GET'])
+		# need: session@cur_room, get@card
 		def defense():
 			session = self.get_session(request)
 			if not session:
@@ -343,7 +355,8 @@ class Server:
 					return 'OK'
 			return result
 
-		@self.app.route("/api/chat", methods=['POST'])  # need: session@cur_room, post@msg
+		@self.app.route("/api/chat", methods=['POST'])
+		# need: session@cur_room, post@msg
 		def send_msg_to_chat():
 			session = self.get_session(request)
 			if not session:
@@ -380,26 +393,30 @@ class Server:
 			return response
 
 		@self.app.route("/api/avatar", methods=['GET'])
-		# need: get@user; maybe: get@source := menu | round_white any
+		# need: get@user; maybe: get@type := menu | round_white any
 		def get_avatar():
 			user = request.args.get('user')
 			if user == 'AI' or user == 'root':
-				if request.args.get('source') == 'menu':
-					return "/static_/svg/ic_computer_24px.svg"
+				if request.args.get('type') == 'menu':
+					response = make_response("/static_/svg/ic_computer_24px.svg")
 				else:
-					return "/static_/svg/ic_computer_24px_white.svg"
-			file_ext = DB.check_user(user).file
-			if file_ext is not None and file_ext != 'None':
-				return "/static/avatar/{user_name}{file_ext}".format(user_name=user, file_ext=file_ext)
+					response = make_response("/static_/svg/ic_computer_24px_white.svg")
 			else:
-				if request.args.get('source') == 'menu':
-					return "/static_/svg/ic_person_24px.svg"
-				elif request.args.get('source') == 'round':
-					return "/static_/svg/account-circle.svg"
-				elif request.args.get('source') == 'round_white':
-					return "/static_/svg/account-circle_white.svg"
+				file_ext = DB.check_user(user).file
+				if file_ext is not None and file_ext != 'None':
+					response = make_response("/static/avatar/{user_name}{file_ext}".
+											 format(user_name=user, file_ext=file_ext))
 				else:
-					return "/static_/svg/ic_person_24px_white.svg"
+					if request.args.get('type') == 'menu':
+						response = make_response("/static_/svg/ic_person_24px.svg")
+					elif request.args.get('type') == 'round':
+						response = make_response("/static_/svg/account-circle.svg")
+					elif request.args.get('type') == 'round_white':
+						response = make_response("/static_/svg/account-circle_white.svg")
+					else:
+						response = make_response("/static_/svg/ic_person_24px_white.svg")
+			response.headers["Cache-Control"] = "no-store"
+			return response
 
 		@self.app.route("/api/add_user", methods=['POST'])
 		# need: post@user_name, post@pass, post@email; maybe: post@file(image)
@@ -451,6 +468,40 @@ class Server:
 				return response
 			else:
 				return 'Error', 500
+
+		@self.app.route("/api/change_avatar", methods=['POST'])
+		# need: session, post@file(image)
+		def change_avatar():
+			session = self.get_session(request)
+			if not session:
+				return 'Fail', 401
+
+			if request.files:
+				file = request.files['file']
+				if file.mimetype in const.IMAGES:
+					file_ext = const.IMAGES[file.mimetype]
+					file.save("./server/static/avatar/{}{}".format(session.user, file_ext))
+					DB.set_avatar_ext(session.user, file_ext)
+				else:
+					return 'Wrong data', 400
+			else:
+				return 'Wrong data', 400
+			return 'OK'
+
+		@self.app.route("/api/change_pass", methods=['POST'])
+		# need: session, post@old_pass, post@new_pass
+		def change_pass():
+			session = self.get_session(request)
+			if not session:
+				return 'Fail', 401
+
+			sha256 = hashlib.sha256(bytes(request.form.get('old_pass'), encoding='utf-8')).hexdigest()
+			if DB.check_user(session.user, sha256):
+				sha256 = hashlib.sha256(bytes(request.form.get('new_pass'), encoding='utf-8')).hexdigest()
+				DB.set_new_pass(session.user, sha256)
+				return 'OK'
+			else:
+				return 'Wrong password'
 
 		@self.app.route("/api/init_session", methods=['POST'])
 		# need: post@user_name, post@pass

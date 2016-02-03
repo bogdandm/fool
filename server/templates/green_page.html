@@ -42,6 +42,19 @@
             height: 100%;
         }
     </style>
+    {% if header_mini %}
+    <style>
+        header {
+            padding: 3px;
+            height: 30px;
+            font-size: 24px;
+        }
+
+        #to_main_menu:hover {
+            transform: translateX(-5px);
+        }
+    </style>
+    {% endif %}
     {% block head %}{% endblock %}
 </head>
 <body>

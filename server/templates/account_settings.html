@@ -41,7 +41,7 @@
                 data.append('file', file);
                 $('form .loading-bar').slideDown();
                 $.ajax({
-                    url: '/api/', //TODO
+                    url: '/api/change_avatar', //TODO
                     type: 'POST',
                     data: data,
                     cache: false,
@@ -64,13 +64,19 @@
     function newPass() {
         if (!password_b) return;
         $.post(
-                "/api/", //TODO
+                "/api/change_pass",
                 {
                     old_pass: $('#old_pass').val(),
                     new_pass: $('#new_pass').val()
                 },
-                function(){
-                    //TODO
+                function (data) {
+                    if (data === 'OK') {
+                        $('#pass_box').find('input').add('#pass_enter').add('#pass_error').add('#pass_error_wrong')
+                                .hide();
+                        $('#pass_ok').fadeIn();
+                    } else {
+                        $('#pass_error_wrong').slideDown();
+                    }
                 }
         );
     }
@@ -87,8 +93,18 @@
         $('#file').change(onFileChange);
         //File end
 
+        $.ajax({
+            url: '/api/avatar?user={{ u_name }}',
+            success: function (data) {
+                var avatar = $('#avatar-image');
+                if (data != '/static_/svg/ic_person_24px_white.svg')
+                    avatar.css('padding', 0);
+                avatar.attr('src', data);
+            }
+        });
+
         //Pass start
-        $('#pass_box').find('input').add('#pass_enter').hide();
+        $('#pass_box').find('input').add('#pass_enter').add('#pass_ok').hide();
         $('#pass_hidden').click(function () {
             $(this).hide();
             $('#pass_box').find('input').add('#pass_enter').fadeIn();
@@ -113,7 +129,6 @@
     });
 </script>
 <style>
-
     main {
         width: auto;
         height: auto;
@@ -129,9 +144,9 @@
 </style>
 <style>
     #avatar {
-        float: left;
         position: relative;
-        width: 220px;
+        float: left;
+        width: 204px;
         background-color: #32373a;
         border-radius: 2px;
         margin-right: 15px;
@@ -205,16 +220,16 @@
 <style>
     #right {
         display: inline-block;
-        height: 224px;
+        min-height: 200px;
     }
 
     #user_name {
-        font-size: 26pt;
+        font-size: 20pt;
         font-weight: 700;
     }
 
     #email {
-        font-size: 22pt;
+        font-size: 16pt;
         font-weight: 300;
     }
 
@@ -234,10 +249,15 @@
 
     #pass_hidden {
         margin-top: 15px;
-        font-size: 16pt;
+        font-size: 12pt;
+    }
+
+    #pass_ok {
+        margin-top: 15px;
     }
 
     #pass_box > input {
+        font-size: 14pt;
         display: block;
         width: 100%;
     }
@@ -259,13 +279,13 @@
 <div>
     <div id="top">
         <div id="avatar" class="standard-box">
-            <img src="/static_/svg/ic_person_24px_white.svg">
+            <img id="avatar-image" src="/static_/svg/ic_person_24px_white.svg">
 
             <div id="pseudo-file">
-        <span id="load_text">
-            <span>Загрузить аватар</span>
-            <img src="/static_/svg/ic_file_upload_24px_white.svg">
-        </span>
+                <span id="load_text">
+                    <span>Загрузить аватар</span>
+                    <img src="/static_/svg/ic_file_upload_24px_white.svg">
+                </span>
                 <span class="error" id="file_error">Файл слишком большой</span>
             </div>
             <div id="loading-progress"></div>
@@ -276,7 +296,11 @@
             <div id="email">{{ email }}</div>
             <div id="pass_box">
                 <button id="pass_hidden" class="raised">Сменить пароль</button>
+
+                <div id="pass_ok" class="raised">Пароль изменен</div>
+
                 <input id="old_pass" type="password" placeholder="Введите старый пароль">
+                <span id="pass_error_wrong" class="error">Не верный пароль</span>
                 <input id="new_pass" type="password" placeholder="Введите новый пароль">
                 <input id="new_pass_repeat" type="password" placeholder="Повторите пароль">
                 <span id="pass_error" class="error">Пароли не совпадают</span>
@@ -284,6 +308,8 @@
             </div>
         </div>
     </div>
-    <div id="bottom">Место для дополнительной информации на будущее</div>
+    <div id="bottom" style="font-size: 10pt; font-weight: 300; color: #9f9f9f;">
+        Место для дополнительной информации на будущее
+    </div>
 </div>
 {% endblock %}

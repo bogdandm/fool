@@ -32,15 +32,15 @@ def exec_query(query, connection=None):
 	return True
 
 
-def check_user(user_name: str, password: str = None):
+def check_user(user_name: str, sha256: str = None):
 	if user_name is None:
 		return False
 	connection = connect_()
 	try:
 		cursor = connection.cursor()
 		query = "SELECT id, file_extension, is_activated, is_admin, email FROM users WHERE BINARY name='%s'" % user_name
-		if password is not None:
-			query += "and pass_sha256='%s'" % password
+		if sha256 is not None:
+			query += "and pass_sha256='%s'" % sha256
 		cursor.execute(query)
 		row = cursor.fetchone()
 		if row is not None:
@@ -72,7 +72,7 @@ def check_email(email: str) -> bool:
 	return res
 
 
-def add_user(user_name, password, avatar: str, email) -> (str, bool):
+def add_user(user_name, sha256, avatar: str, email) -> (str, bool):
 	random.seed(time.time() * 256)
 	activation_code = sha256(bytes(
 		user_name + int(time.time() * 256).__str__() + random.randint(0, 2 ** 20).__str__() + 'email activation',
@@ -81,8 +81,15 @@ def add_user(user_name, password, avatar: str, email) -> (str, bool):
 	return (activation_code, exec_query(
 		"INSERT INTO users(name, pass_sha256, email, has_avatar, activation_code, file_extension) "
 		"VALUES ('%s', '%s', '%s', %s, '%s', '%s')" %
-		(user_name, password, email, (avatar is not None).__str__(), activation_code, avatar)
+		(user_name, sha256, email, (avatar is not None).__str__(), activation_code, avatar)
 	))
+
+
+def set_avatar_ext(user, ext):
+	exec_query("UPDATE users SET file_extension='%s' WHERE name='%s'" % (ext, user))
+
+def set_new_pass(user, sha256):
+	exec_query("UPDATE users SET pass_sha256='%s' WHERE name='%s'" % (sha256, user))
 
 
 def add_session(s, uid):

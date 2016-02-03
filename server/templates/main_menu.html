@@ -20,8 +20,19 @@
             true: friendsUnload,
             "load": false,
             "title": "Fool | Друзья"
+        },
+        "server-statistic": {
+            false: serverStatisticLoad,
+            true: serverStatisticUnload,
+            "load": false,
+            "title": "Fool | Статистиска по серверу"
         }
     };
+
+    function serverStatisticLoad() {
+    }
+    function serverStatisticUnload() {
+    }
 
     function initMenu() {
         $(".selector").add(".menu > .selection").add(".container").filter(":not(#default)").add(".container-mini").hide();
@@ -105,7 +116,7 @@
         });
 
         $.ajax({
-            url: '/api/avatar?user=' + $(".user_name > span").text() + '&source=menu',
+            url: '/api/avatar?user=' + $(".user_name > span").text() + '&type=menu',
             success: function (data) {
                 $('.user_name').find('img').eq(0).attr('src', data);
             }
@@ -239,7 +250,7 @@
     <div class="selection" position="default"></div>
 </div>
 <div id="default" class="container">
-    <div class="standard-box"></div>
+    <div class="standard-box">Main page</div>
 </div>
 <div id="new-games" class="container-mini">
     <div class="menu standard-box">
@@ -285,5 +296,4 @@
     </div>
 </div>
 <div id="server-statistic" class="container">server statistic</div>
-<div id="settings_page" class="container"></div>
 {% endblock %}

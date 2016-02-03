@@ -69,19 +69,24 @@ function showMenu(menu, elem, data) {
         menu.css({transform: 'scale(1, 1)'});
     }
 
-    function step4(){
-        if (data.action && data.action == 'hover')
-            menu.mouseleave(function () {
-                menu.css({transform: 'scale(0, 0)'});
-                menu.attr('state', 'animateHide');
-                setTimeout(function () {
-                    if (menu.attr('state') != 'animate' && menu.attr('state') != 'show') {
-                        menu.hide();
-                        menu.attr('state', 'hide');
-                    }
-                }, 400);
-                $(this).unbind('mouseleave');
-            });
+    function step4() {
+        function hide() {
+            menu.css({transform: 'scale(0, 0)'});
+            menu.attr('state', 'animateHide');
+            setTimeout(function () {
+                if (menu.attr('state') != 'animate' && menu.attr('state') != 'show') {
+                    menu.hide();
+                    menu.attr('state', 'hide');
+                }
+            }, 400);
+            $(this).unbind('mouseout');
+        }
+
+        if (data.action && data.action == 'hover') {
+            var hover = $(':hover');
+            if (!(hover.filter(menu).length || hover.filter(elem).length)) hide();
+            menu.mouseout(hide);
+        }
         else
             $('html').click(function () {
                 menu.css({transform: 'scale(0, 0)'});
@@ -106,5 +111,5 @@ function showMenu(menu, elem, data) {
     setTimeout(function () {
         menu.attr('state', 'show');
     }, 500);
-    setTimeout(step4, 100);
+    setTimeout(step4, 600);
 }
