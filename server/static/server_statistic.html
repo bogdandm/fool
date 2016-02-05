@@ -245,6 +245,7 @@
                         /** @namespace item.queue */
                         /** @namespace item.room */
                         /** @namespace item.room_id */
+                        /** @namespace item.status */
                         var tr = $('#sessions_box').find('table').append('<tr id="session' + i + '"></tr>').find('tr:last');
                         tr.attr('id_', item.id).attr('name_', item.name);
                         tr.append('<td>' + item.name + '</td>');
@@ -255,6 +256,7 @@
                         var td = $('<td>' + item.room + '</td>').attr('id_', item.room_id);
                         if (item.room != 'None') td.addClass('room_link');
                         tr.append(td);
+                        tr.append('<td>' + item.status + '</td>');
 
                         sessions[item.id] = item;
                     });
@@ -293,7 +295,7 @@
     </a>
     <span id="timer_value">
         <label for="timer_value_input">Обновлять каждые</label>
-        <input id="timer_value_input" maxlength="3" size="3em">
+        <input id="timer_value_input" maxlength="3" size="3em" style="font-size: inherit; font-weight: inherit">
         сек
     </span>
 </header>
@@ -369,6 +371,7 @@
                     <th>Admin</th>
                     <th>Queue</th>
                     <th>Room</th>
+                    <th>Status</th>
                 </tr>
             </table>
         </div>

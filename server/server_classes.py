@@ -8,9 +8,9 @@ import gevent
 from flask import Response, Request
 
 import server.const as const
+import server.database as DB
 from engine.ai import AI
 from engine.engine import Game
-import server.database as DB
 
 
 class Session:
@@ -143,9 +143,9 @@ class Room:
 	def to_json(self) -> dict:
 		return {
 			'id': self.id.__str__(),
-			'type': 'PvP' if self.type == const.MODE_PVP else 'PvE',
+			'type': ['PvE', 'PvP', 'Friend'][self.type],
 			'user1': self.players[0].user if self.players[0] else 'None',
-			'user2': (self.players[1].user if self.players[1] else 'None') if self.type == const.MODE_PVP else 'AI',
+			'user2': 'AI' if self.type == const.MODE_PVE else (self.players[1].user if self.players[1] else 'None'),
 			'game_stage': self.game.set.remain()
 		}
 
@@ -203,7 +203,7 @@ class RoomPvP(Room):
 		}))
 		return 'OK'
 
-	def add_player(self, player):
+	def add_player(self, player: Session):
 		if self.players[0] is None:
 			self.players[0] = player
 			self.queues[0] = player['msg_queue']
@@ -227,14 +227,15 @@ class RoomPvP(Room):
 
 class RoomPvE(Room):  # User - 0, AI - 1
 	# don't have add_player method, because delete when player leave PvE room
-	def __init__(self, player: Session, seed=None):
+	def __init__(self, player: Session=None, seed=None):
 		super().__init__(player, seed=seed)
-		self.players[1] = AI(self.game, not const.PLAYER_HAND)
-		self.queues = [player['msg_queue']]
-		self.type = const.MODE_PVE
-		if self.game.turn != const.PLAYER_HAND:
-			x = self.players[1].attack()
-			self.game.attack(x, ai=[self.players[1]])
+		if player is not None:
+			self.players[1] = AI(self.game, not const.PLAYER_HAND)
+			self.queues = [player['msg_queue']]
+			self.type = const.MODE_PVE
+			if self.game.turn != const.PLAYER_HAND:
+				x = self.players[1].attack()
+				self.game.attack(x, ai=[self.players[1]])
 
 	def attack(self, player, card):
 		ai = self.players[not const.PLAYER_HAND]
@@ -290,6 +291,20 @@ class RoomPvE(Room):  # User - 0, AI - 1
 
 		self.send_changes()
 		return 'OK'
+
+
+class RoomFriend(RoomPvP):
+	def __init__(self, player: Session=None, for_: str=None, seed=None):
+		super().__init__(player, seed=seed)
+		if player is not None:
+			self.for_ = (player.user, for_)
+		self.type = const.MODE_FRIEND
+
+	def add_player(self, player: Session):
+		if player.user not in self.for_:
+			return -1
+		else:
+			super().add_player(player)
 
 
 class ServerCache:

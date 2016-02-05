@@ -13,7 +13,7 @@ from werkzeug.contrib.cache import SimpleCache
 import server.const as const
 import server.database as DB
 import server.email as email_
-from server.server_classes import RoomPvE, RoomPvP, Session, Logger
+from server.server_classes import RoomPvE, RoomPvP, RoomFriend, Session, Logger
 
 
 # TODO: write session documentation
@@ -36,7 +36,15 @@ class Server:
 			s = Session(obj.name, obj.activated, obj.uid, obj.id, obj.admin)
 			self.sessions[obj.id] = s
 			self.sessions_by_user_name[obj.name] = s
-		self.rooms = dict()
+		self.rooms = {
+			'PvE': {0: RoomPvE()},
+			'PvP': {0: RoomPvP()},
+			'Friends': {0: RoomFriend()}
+		}
+		# TODO(debug): При релизе убрать этот костыль для подсветки типов :)
+		del self.rooms['PvE'][0]
+		del self.rooms['PvP'][0]
+		del self.rooms['Friends'][0]
 		self.logger = Logger()
 		self.logger.write_msg('==Server run at %s==' % ip)
 		self.seed = seed
@@ -149,9 +157,13 @@ class Server:
 		@self.app.route('/arena')
 		# static; need: get@mode
 		def send_arena():
-			return redirect('/static/arena.html?mode=' + request.args.get('mode'))
+			url = '/static/arena.html?'
+			for arg in request.args:
+				url += arg + '=' + request.args[arg] + '&'
+			return redirect(url)
 
-		@self.app.route('/static/server_statistic.html')  # static; need: session@admin
+		@self.app.route('/static/server_statistic.html')
+		# static; need: session@admin
 		def send_server_statistic_file():
 			session = self.get_session(request)
 			if session:
@@ -206,6 +218,7 @@ class Server:
 			return 'OK'
 
 		@self.app.route("/api/subscribe_allow")
+		# need: session
 		def subscribe_allow():
 			session = self.get_session(request)
 			if not session:
@@ -244,43 +257,50 @@ class Server:
 		# need: session@msg_queue
 		def unsubscribe():
 			session = self.get_session(request)
+			room = session['cur_room']
 			if not session:
 				response = make_response('Fail', 401)
 				response.headers["Cache-Control"] = "no-store"
 				return response
 
-			def notify():
+			if 'msg_queue' in session.data:
 				session['msg_queue'].put('stop')
 
-			if 'msg_queue' in session.data:
-				gevent.spawn(notify)
-
 			session.status = Session.ONLINE
-			room = session['cur_room']
 			response = make_response('OK')
 			response.headers["Cache-Control"] = "no-store"
 			if room is None:
 				return response
 			room_id = room.id
 			if room.type == const.MODE_PVE:
-				del self.rooms[room_id]
+				del self.rooms['PvE'][room_id]
 				del session['cur_room']
 				del room
-
 				return response
+
+			elif room.type == const.MODE_FRIEND:
+				room.send_msg('exit')
+				if room.is_ready():
+					room.remove_player(session['player_n'])
+				else:
+					del self.rooms['Friends'][room_id]
+					del room
+				del session['cur_room']
+				return response
+
 			elif room.type == const.MODE_PVP:
 				if room.is_ready():
 					room.remove_player(session['player_n'])
 					self.merge_room(room)
 				else:
-					del self.rooms[room_id]
+					del self.rooms['PvP'][room_id]
 					del room
 				del session['cur_room']
 
 				return response
 
 		@self.app.route("/api/join")
-		# need: session@msg_queue, get@mode
+		# need: session@msg_queue, get@mode; maybe: get@for(user)
 		def join_room():
 			session = self.get_session(request)
 			if not self.get_session(request):
@@ -289,17 +309,46 @@ class Server:
 			mode = int(request.args.get('mode'))
 			if mode == const.MODE_PVE:
 				room = RoomPvE(session, seed=self.seed)
-				self.rooms[room.id] = session['cur_room'] = room
+				self.rooms['PvE'][room.id] = session['cur_room'] = room
 				session['player_n'] = const.PLAYER_HAND
 				room.send_player_inf()
 				room.send_changes()
+
+			elif mode == const.MODE_FRIEND:
+				for_ = request.args.get('for')
+				if for_ is None or session.user == for_ or DB.check_user(for_) is None:
+					return 'Bad request', 400
+				for id, room in self.rooms['Friends'].items():
+					if session.user in room.for_ and for_ in room.for_:
+						session['player_n'] = room.add_player(session)
+						break
+				else:
+					room = RoomFriend(session, for_=for_, seed=self.seed)
+					session['player_n'] = 0
+					self.rooms['Friends'][room.id] = room
+
+				session['cur_room'] = room
+				if room.is_ready():
+					room.send_player_inf()
+					room.send_changes()
+					room.send_msg(dumps({
+						'data': [{
+							'type': 'wait',
+							'player': room.game.turn,
+							'card': None,
+							'inf': None
+						}]
+					}))
+				else:
+					room.send_msg('wait')
+
 			elif mode == const.MODE_PVP:
-				for room in self.rooms.values():
+				for room in self.rooms['PvP'].values():
 					if room.type == const.MODE_PVP and not room.is_ready():
 						break
 				else:
 					room = RoomPvP(seed=self.seed)
-					self.rooms[room.id] = room
+					self.rooms['PvP'][room.id] = room
 
 				session['player_n'] = room.add_player(session)
 				session['cur_room'] = room
@@ -332,7 +381,7 @@ class Server:
 			if result == 'END':
 				room_id = room.id
 				if room.type == const.MODE_PVE:
-					del self.rooms[room_id]
+					del self.rooms['PvE'][room_id]
 					del session['cur_room']
 					return 'OK'
 			return result
@@ -350,7 +399,7 @@ class Server:
 			if result == 'END':
 				room_id = room.id
 				if room.type == const.MODE_PVE:
-					del self.rooms[room_id]
+					del self.rooms['PvE'][room_id]
 					del session['cur_room']
 					return 'OK'
 			return result
@@ -572,18 +621,22 @@ class Server:
 
 		@self.app.route('/api/get_table', methods=['GET'])
 		# need: session@admin, get@table
-		def get_sessions():
+		def get_table():
 			session = self.get_session(request)
 			if session:
 				if session.admin:
 					table_s = request.args.get('table')
 					if table_s == 'sessions':
-						table = self.sessions
+						table = self.sessions.values()
+						result = list(map(lambda s: dict(s.to_json(), **{'status': self.get_user_status(s.user)}), table))
 					elif table_s == 'rooms':
-						table = self.rooms
+						result=[]
+						for table in [self.rooms['PvE'].values(), self.rooms['PvP'].values(),
+								  self.rooms['Friends'].values()]:
+							result += list(map(lambda s: s.to_json(), table))
 					else:
 						return 'Bad request', 400
-					result = list(map(lambda s: s.to_json(), table.values()))
+
 					return dumps(result)
 				else:
 					return 'Permission denied', 401
@@ -659,24 +712,25 @@ class Server:
 			return None
 
 	def merge_room(self, room):
-		for thin_room in self.rooms.values():
-			if thin_room.is_ready() or thin_room is room: continue
-			session = room.players[0] if room.players[0] is not None else room.players[1]
-			session['player_n'] = thin_room.add_player(session)
-			session['cur_room'] = thin_room
-			if thin_room.is_ready():
-				thin_room.send_player_inf()
-				thin_room.send_changes()
-				thin_room.send_msg(dumps({
-					'data': [{
-						'type': 'wait',
-						'player': thin_room.game.turn,
-						'card': None,
-						'inf': None
-					}]
-				}))
-			del self.rooms[room.id]
-			return thin_room
+		if room.type == const.MODE_PVP:
+			for thin_room in self.rooms['PvP'].values():
+				if thin_room.is_ready() or thin_room is room: continue
+				session = room.players[0] if room.players[0] is not None else room.players[1]
+				session['player_n'] = thin_room.add_player(session)
+				session['cur_room'] = thin_room
+				if thin_room.is_ready():
+					thin_room.send_player_inf()
+					thin_room.send_changes()
+					thin_room.send_msg(dumps({
+						'data': [{
+							'type': 'wait',
+							'player': thin_room.game.turn,
+							'card': None,
+							'inf': None
+						}]
+					}))
+				del self.rooms['PvP'][room.id]
+				return thin_room
 		return None
 
 	def user_to_json(self, user, session, color=""):

@@ -199,7 +199,7 @@ function friendsLoad() {
         ).always(function () {
             loading++;
             if (loading == 2) $('header .loading-bar').slideUp();
-            if (!length && !loading)
+            if (!length && loading==2)
                 $("#friends-one").hide();
         });
     }
@@ -223,7 +223,7 @@ function friendsLoad() {
     ).always(function () {
         loading++;
         if (loading == 2) $('header .loading-bar').slideUp();
-        if (!length && !loading)
+        if (!length && loading==2)
             $("#friends-one").hide();
         loadFriends();
     });

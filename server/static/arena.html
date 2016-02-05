@@ -18,6 +18,8 @@
     <script src="js/card_manipulations.js"></script>
     <script src="js/chat.js"></script>
     <script>
+        var init = false;
+        var URLParams = null;
         var evtSrc = null;
         var myHand = 0;
         var data = {
@@ -31,9 +33,24 @@
             'set': 52
         };
         var card_deleted = 100;
-        var menu_opened = false;
         var wait = false;
         var end = false;
+
+        function getURLParams() {
+            var tmp = [];		// два вспомагательных
+            var tmp2 = [];		// массива
+            var param = [];
+
+            var get = location.search;	// строка GET запроса
+            if (get != '') {
+                tmp = (get.substr(1)).split('&');	// разделяем переменные
+                for (var i = 0; i < tmp.length; i++) {
+                    tmp2 = tmp[i].split('=');		// массив param будет содержать
+                    param[tmp2[0]] = tmp2[1];		// пары ключ(имя переменной)->значение
+                }
+            }
+            return param;
+        }
 
         function preCacheImages() { //data
             var constPath = "/static_/svg/";
@@ -65,10 +82,10 @@
         function serverSentEventHandler(e) { //ajax
             console.log(e);
             if (e.data == 'init') {
-                if (window.location.href.match(/^.*\?mode=0$/))
-                    $.ajax('/api/join?mode=0');
-                else if (window.location.href.match(/^.*\?mode=1$/))
-                    $.ajax('/api/join?mode=1');
+                if (URLParams['mode'] == 2)
+                    $.ajax('/api/join?mode=2&for=' + URLParams['for']);
+                else
+                    $.ajax('/api/join?mode=' + URLParams['mode']);
             } else if (e.data == 'wait') {
                 myHand = 0;
                 data = {
@@ -91,11 +108,22 @@
                 $('#set').find('.card').show();
                 $('main').hide();
                 $('.chat .msgs .container').empty();
+            } else if (e.data == 'exit') {
+                init = false;
+                $('#search-msg').hide();
+                $('#leave-msg').show();
+                $('#wait').show();
+                $('.rotating-card').hide();
+                setTimeout(function () {
+                    if (!init)
+                        location.href = '/';
+                }, 10000)
             } else {
                 $('#wait').hide();
                 $('main').show();
                 var jsonData = JSON.parse(e.data);
                 if (jsonData.you && jsonData.other) {
+                    init = true;
                     /** @namespace jsonData.you */
                     /** @namespace jsonData.other */
                     /** @namespace jsonData.your_hand */
@@ -290,10 +318,9 @@
         }
 
         window.onload = function () {
-            var spans = $('#wait-box').find("span");
             $('main').show();
-            spans.eq(0).show();
-            spans.eq(1).hide();
+            $('#load-msg').hide();
+            $('#search-msg').show();
 
             $.ajax({
                 url: '/api/subscribe_allow',
@@ -324,15 +351,19 @@
         $(function () {
             setTimeout(preCacheImages, 0);
             //$('#main').hide();
-            if (window.location.href.match(/^.*\?mode=0$/)) {
+            URLParams = getURLParams();
+            if (URLParams['mode'] == 0) {
                 document.title = "Fool | Игра против ИИ";
                 $('#chat').hide();
             }
-            else if (window.location.href.match(/^.*\?mode=1$/))
+            if (URLParams['mode'] == 1)
                 document.title = "Fool | Игра с другим игроком";
+            if (URLParams['mode'] == 2)
+                document.title = "Fool | Игра с другом";
 
             $('main').hide();
-            $('#wait-box').find("span").eq(0).hide();
+            $('#search-msg').hide();
+            $('#leave-msg').hide();
             $('#end-game').hide();
             $('#single-room-allowed').hide();
             /*.click(function (e) {
@@ -390,8 +421,9 @@
 </div>
 <div id="wait" class="background-of-msgbox">
     <div id="wait-box" class="standard-box">
-        <span class="message font300">Поиск другого игрока</span>
-        <span class="message font300">Загрузка</span>
+        <span id="search-msg" class="message font300">Поиск другого игрока</span>
+        <span id="load-msg" class="message font300">Загрузка</span>
+        <span id="leave-msg" class="message font300">Противник вышел из игры</span>
 
         <div class="rotating-card">
             <div class="card-front"><img src="/static_/svg/simple_card_red.svg"></div>

@@ -8,10 +8,8 @@
 <script>
     var loaders = {
         "default": {
-            false: function () {
-            },
-            true: function () {
-            },
+            false: defaultLoad,
+            true: defaultUnload,
             "load": true,
             "title": "Fool | Главное меню"
         },
@@ -29,8 +27,15 @@
         }
     };
 
+    function defaultLoad() {
+    }
+
+    function defaultUnload() {
+    }
+
     function serverStatisticLoad() {
     }
+
     function serverStatisticUnload() {
     }
 
@@ -238,8 +243,14 @@
             <img src="/static_/svg/ic_settings_black_24px.svg">
         </a>
     </div>
-    <div class="menu-item" group="1" container-name="new-games">Новая игра</div>
-    <div class="menu-item" group="1" container-name="friends">Друзья</div>
+    <div class="menu-item" group="1" container-name="new-games">
+        Новая игра
+        <span id="new-game-invite" class="menu-additional-inf">N</span>
+    </div>
+    <div class="menu-item" group="1" container-name="friends">
+        Друзья
+        <span id="new-friend" class="menu-additional-inf">N</span>
+    </div>
     <div class="menu-item" group="1" container-name="server-statistic">Статистика по серверу</div>
     {% if admin %}
     <div class="menu-item" group="1">

@@ -8,6 +8,7 @@ class Dummy(object):
 PLAYER_HAND = 0  # use in PvE
 MODE_PVE = 0
 MODE_PVP = 1
+MODE_FRIEND = 2
 IMAGES = {'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/png': '.png'}
 
 INICONFIG = ConfigParser()

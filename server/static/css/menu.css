@@ -69,3 +69,9 @@
     border-right: 8px solid #9bed2f;
     transition: top 0.2s ease;
 }
+
+.menu-additional-inf {
+    float: right;
+    font-weight: 700;
+    padding-right: 9px;
+}
