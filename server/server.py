@@ -123,7 +123,8 @@ class Server:
 			if session:
 				user_data = DB.check_user(session.user)
 				return render_template(
-					'account_settings.html', header_mini=True, page_name='Настройки аккаунта', page_title='Настройки',
+					'account_settings.html',
+					header_mini=True, page_name='Настройки аккаунта', page_title='Настройки',
 					u_name=session.user, email=user_data.email)
 			else:
 				return redirect('/')
@@ -155,7 +156,7 @@ class Server:
 			return redirect('/static/api_methods.html')
 
 		@self.app.route('/arena')
-		# static; need: get@mode
+		# static; need: get@mode; maybe: get@for(user)
 		def send_arena():
 			url = '/static/arena.html?'
 			for arg in request.args:
@@ -320,6 +321,8 @@ class Server:
 					return 'Bad request', 400
 				for id, room in self.rooms['Friends'].items():
 					if session.user in room.for_ and for_ in room.for_:
+						if session in room.players:
+							return 'Player is already invited'
 						session['player_n'] = room.add_player(session)
 						break
 				else:
@@ -442,11 +445,11 @@ class Server:
 			return response
 
 		@self.app.route("/api/avatar", methods=['GET'])
-		# need: get@user; maybe: get@type := menu | round_white any
+		# need: get@user; maybe: get@type := menu | round | round_white any
 		def get_avatar():
 			user = request.args.get('user')
 			if user == 'AI' or user == 'root':
-				if request.args.get('type') == 'menu':
+				if request.args.get('type') == 'menu' or request.args.get('type') == 'round':
 					response = make_response("/static_/svg/ic_computer_24px.svg")
 				else:
 					response = make_response("/static_/svg/ic_computer_24px_white.svg")
@@ -628,11 +631,12 @@ class Server:
 					table_s = request.args.get('table')
 					if table_s == 'sessions':
 						table = self.sessions.values()
-						result = list(map(lambda s: dict(s.to_json(), **{'status': self.get_user_status(s.user)}), table))
+						result = list(
+							map(lambda s: dict(s.to_json(), **{'status': self.get_user_status(s.user)}), table))
 					elif table_s == 'rooms':
-						result=[]
+						result = []
 						for table in [self.rooms['PvE'].values(), self.rooms['PvP'].values(),
-								  self.rooms['Friends'].values()]:
+									  self.rooms['Friends'].values()]:
 							result += list(map(lambda s: s.to_json(), table))
 					else:
 						return 'Bad request', 400
@@ -654,7 +658,7 @@ class Server:
 			return self.get_user_status(u_name)
 
 		@self.app.route('/api/users/get_friend_list')
-		# need: session;
+		# need: session; maybe: get@invited(bool)
 		def get_friend_list():
 			session = self.get_session(request)
 			if not session:
@@ -700,6 +704,23 @@ class Server:
 					DB.invite_friend(session.user, friend)
 					return 'OK'
 			return 'Fail'
+
+		@self.app.route('/api/get_game_invites')
+		# need: session;
+		def get_game_invites():
+			session = self.get_session(request)
+			if not session:
+				return 'Fail', 401
+
+			rooms=self.get_friends_games_for_user(session.user)
+
+			if rooms:
+				return dumps(list(map(
+					lambda room: room.for_[0] if room.for_[0] != session.user else room.for_[1],
+					rooms
+				)))
+			else:
+				return '[]'
 
 	def get_session(self, request_) -> Session:  # -> Session | False | None
 		if 'sessID' in request_.cookies and request_.cookies['sessID'] in self.sessions:
@@ -773,6 +794,9 @@ class Server:
 				return "Offline"
 		else:
 			return 'Offline'
+
+	def get_friends_games_for_user(self, user) -> filter:
+		return filter(lambda room: user in room.for_, self.rooms['Friends'].values())
 
 
 class ServerSentEvent(object):

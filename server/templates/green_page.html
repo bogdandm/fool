@@ -27,19 +27,17 @@
             display: inline-block;
         }
 
-        #to_main_menu {
-            padding: 5px;
+        #to_main_menu > img {
+            float: left;
+            box-sizing: border-box;
+            height: 100%;
+            padding: 3px;
             transition: transform 0.5s ease;
             transform: translateX(0);
         }
 
-        #to_main_menu:hover {
+        #to_main_menu:hover > img{
             transform: translateX(-10px);
-        }
-
-        #to_main_menu > img {
-            float: left;
-            height: 100%;
         }
     </style>
     {% if header_mini %}
@@ -50,7 +48,7 @@
             font-size: 24px;
         }
 
-        #to_main_menu:hover {
+        #to_main_menu:hover > img {
             transform: translateX(-5px);
         }
     </style>
@@ -61,8 +59,8 @@
 <header>
     <a class="none" href="/" id="to_main_menu">
         <img src="/static_/svg/ic_arrow_back_24px.svg">
+        <span>{{ page_name }}</span>
     </a>
-    <span>{{ page_name }}</span>
 </header>
 <main>
     {% block body %}{% endblock %}

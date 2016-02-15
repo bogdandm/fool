@@ -304,7 +304,7 @@ class RoomFriend(RoomPvP):
 		if player.user not in self.for_:
 			return -1
 		else:
-			super().add_player(player)
+			return super().add_player(player)
 
 
 class ServerCache:

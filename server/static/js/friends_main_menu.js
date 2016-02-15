@@ -5,6 +5,7 @@
 var userData;
 
 $(function () {
+    initGameInvites();
     initFriend();
 });
 
@@ -141,7 +142,7 @@ function initFriend() {
     })
 }
 
-var INVITED = 0, ACCEPTED = 1;
+var INVITED = 0, ACCEPTED = 1, REJECT = 2;
 function addFriend(user, mode) {
     /** @namespace user.name */
     /** @namespace user.status */
@@ -159,15 +160,7 @@ function addFriend(user, mode) {
         friendHTML.removeClass('online').addClass('play');
     if (mode == INVITED) {
         friendHTML.find('button.more').hide();
-        friendHTML.addClass('invited').find('button.add').show().click(function () {
-            $.ajax({
-                url: "/api/users/friend_invite?user=" + user.name + "&accept",
-                success: function () {
-                    friendsUnload();
-                    friendsLoad();
-                }
-            })
-        });
+        friendHTML.addClass('invited').find('button.add').show();
         friendHTML.find('button.reject').show();
     }
     $("#friends-one").find(".body").append(friendHTML);
@@ -189,17 +182,21 @@ function friendsLoad() {
                         addFriend(val, ACCEPTED);
                     });
                     $('.friend button.more').click(function (e) {
-                        showMenu($('#friend-dialog'), $(this).parents().filter('.friend'), {
+                        var dialog = $('#friend-dialog');
+                        var a = dialog.find('a');
+                        var name = $(this).parents().filter('.friend').attr('name');
+                        showMenu(dialog, $(this).parents().filter('.friend'), {
                             directVert: 'top',
                             directHoriz: 'right'
                         });
+                        a.attr('href', a.attr('href_tmp').replace('user', name));
                     })
                 }
             }
         ).always(function () {
             loading++;
             if (loading == 2) $('header .loading-bar').slideUp();
-            if (!length && loading==2)
+            if (!length && loading == 2)
                 $("#friends-one").hide();
         });
     }
@@ -212,18 +209,34 @@ function friendsLoad() {
                 $.each(data, function (key, val) {
                     addFriend(val, INVITED);
                 });
-                $('.friend button.add').click(function (e) {
-                    //TODO
+                $('.friend button.add').click(function () {
+                    var user = $(this).parents().filter('.friend').attr('name');
+                    $.ajax({
+                        url: "/api/users/friend_invite?user=" + user + "&accept",
+                        success: function () {
+                            friendsUnload();
+                            updateMenuInfo();
+                            friendsLoad();
+                        }
+                    })
                 });
-                $('.friend button.reject').click(function (e) {
-                    //TODO
-                })
+                $('.friend button.reject').click(function () {
+                    var user = $(this).parents().filter('.friend').attr('name');
+                    $.ajax({
+                        url: "/api/users/friend_invite?user=" + user + "&reject",
+                        success: function () {
+                            friendsUnload();
+                            updateMenuInfo();
+                            friendsLoad();
+                        }
+                    })
+                });
             }
         }
     ).always(function () {
         loading++;
         if (loading == 2) $('header .loading-bar').slideUp();
-        if (!length && loading==2)
+        if (!length && loading == 2)
             $("#friends-one").hide();
         loadFriends();
     });
@@ -231,4 +244,45 @@ function friendsLoad() {
 
 function friendsUnload() {
     $("#friends-one").find(".body").empty();
+}
+
+function initGameInvites() {
+    $("#games-invites").mCustomScrollbar({
+        theme: 'minimal-dark'
+    });
+}
+
+function gamesInvitesLoad() {
+    var gameInvites = $('#games-invites');
+    gameInvites.find('.body').append($('<div class="friend" style="color: #9f9f9f;padding: 10px">' +
+        'Для отправки приглашения воспользуйтесь вкладкой "Друзья"' +
+        '</div>'));
+    $.each(invites.game, function (index, value) {
+        var userHTML = $('.hidden > .friend').clone();
+        userHTML.attr('name', value);
+        userHTML.find('.name').text(value);
+        userHTML.find('.status').text('Приглашение в игру');
+        if (value == 'root') userHTML.find('img.avatar').css({
+            borderRadius: '2px'
+        });
+        $.ajax({
+            url: '/api/avatar?user=' + value + '&type=round',
+            success: function (data) {
+                userHTML.find('img.avatar').attr('src', data);
+            }
+        });
+        userHTML.find('.buttons').hide();
+        userHTML.click(function () {
+        });
+        $("#games-invites-container").find(".body").append(userHTML);
+    });
+
+    gameInvites.find('.friend[name]').click(function () {
+        var name = $(this).attr('name');
+        location.href = '/arena?mode=2&for=' + name
+    })
+}
+
+function gamesInvitesUnload() {
+    $("#games-invites-container").find(".body").empty();
 }

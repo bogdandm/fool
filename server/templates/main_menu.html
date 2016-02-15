@@ -24,8 +24,30 @@
             true: serverStatisticUnload,
             "load": false,
             "title": "Fool | Статистиска по серверу"
+        },
+        "games-invites-container": {
+            false: gamesInvitesLoad,
+            true: gamesInvitesUnload,
+            "load": false,
+            "title": "Fool | Приглашения в игру"
         }
     };
+
+    var invites = {
+        "game": [],
+        "friend": []
+    };
+    function updateMenuInfo() {
+        $.getJSON("/api/get_game_invites", function (data) {
+            invites.game = data;
+            $('#new-game-invite').text(data.length ? data.length : '');
+        });
+
+        $.getJSON("api/users/get_friend_list?invited", function (data) {
+            invites.friend = data;
+            $('#new-friend').text(data.length ? data.length : '');
+        });
+    }
 
     function defaultLoad() {
     }
@@ -48,7 +70,7 @@
             });
         });
 
-        var x = $("#main-menu");
+        var x = $(".menu");
         x.find("> .menu-item[container-name]").add('#settings').click(onMenuItemClick);
         x.find("> .menu-item:not([container-name])").click(function () { // Клик по не выпадающему эл-ту
             $(".menu > .selection").add(".container").add(".container-mini").hide();
@@ -72,7 +94,10 @@
     }
 
     function onMenuItemClick() {// Клик по выпадающему элементу
+        updateMenuInfo();
+        var group = $(this).attr('group');
         var selection = $(".menu > .selection");
+        var group2 = selection.attr('group');
         var containerToShow = $(this).attr('container-name');
         var containerToHide = selection.attr('position');
 
@@ -81,7 +106,7 @@
 
         if (containerToShow != 'default') {
             selection.attr('position', containerToShow);
-            if ($(this).attr('id') !== 'settings')
+            if ($(this).attr('id') !== 'settings' && group == group2)
                 selection.css({
                     top: $(this).position().top + 'px'
                 }).show();
@@ -107,9 +132,15 @@
     }
 
     $(function () {
-        $('#to_main_menu').hide();
+        $('#to_main_menu').find('> img').hide();
         addLoadBar($('header'), {position: 'top'}).hide();
         initMenu();
+
+        updateMenuInfo();
+        loaders.default[false]();
+        setInterval(function () {
+            updateMenuInfo();
+        }, 10 * 1000);
 
         $('#logout').click(function () {
             $.ajax({
@@ -143,10 +174,11 @@
 
     .container {
         position: relative;
+        box-sizing: border-box;
         height: 100%;
         width: 100%;
-        z-index: -10;
         padding-left: 10px;
+        z-index: -10;
     }
 
     .container-mini {
@@ -201,7 +233,7 @@
 {% block body %}
 <div class="hidden">
     <div class="friend">
-        <img src="/static/avatar/leon.jpg">
+        <img class="avatar" src="">
 
         <div class="friend-body">
             <div class="name">Leon</div>
@@ -234,7 +266,7 @@
         </div>
     </div>
 </div>
-<div id="main-menu" class="menu standard-box">
+<div id="main-menu" class="menu standard-box" group="1">
     <div class="selector" group="1"></div>
     <div class="user_name" group="1">
         <img src="">
@@ -245,11 +277,11 @@
     </div>
     <div class="menu-item" group="1" container-name="new-games">
         Новая игра
-        <span id="new-game-invite" class="menu-additional-inf">N</span>
+        <span id="new-game-invite" class="menu-additional-inf"></span>
     </div>
     <div class="menu-item" group="1" container-name="friends">
         Друзья
-        <span id="new-friend" class="menu-additional-inf">N</span>
+        <span id="new-friend" class="menu-additional-inf"></span>
     </div>
     <div class="menu-item" group="1" container-name="server-statistic">Статистика по серверу</div>
     {% if admin %}
@@ -258,31 +290,43 @@
     </div>
     {% endif %}
     <div id="logout" class="menu-item" group="1">Выйти из аккаунта</div>
-    <div class="selection" position="default"></div>
+    <div class="selection" group="1" position="default"></div>
 </div>
 <div id="default" class="container">
     <div class="standard-box">Main page</div>
 </div>
 <div id="new-games" class="container-mini">
-    <div class="menu standard-box">
+    <div class="menu standard-box" group="2">
         <div class="selector" group="2"></div>
         <div class="menu-item" group="2"><a href="/arena?mode=0" class="none">Играть против ИИ</a></div>
         <div class="menu-item" group="2"><a href="/arena?mode=1" class="none">Игра против другого игрока</a></div>
-        <div class="menu-item" group="2"><a href="#" class="none">Играть с другом</a></div>
+        <div class="menu-item" group="2" container-name="games-invites-container">
+            Играть с другом
+        </div>
+    </div>
+</div>
+<div id="games-invites-container" class="container">
+    <div id="games-invites">
+        <div class="body standard-box">
+        </div>
     </div>
 </div>
 <div id="friends" class="container">
     <div id="friends-one">
         <div id="friend-dialog" class="standard-box">
+            <a class="play none" href="#" href_tmp="/arena?mode=2&for=user">
+                <img src="/static_/svg/play.svg">
+                <span>Начать игру</span>
+            </a>
             <button class="remove">
-                <img src="/static_/svg/delete_people.svg"><span>Удалить из друзей</span>
+                <img src="/static_/svg/delete_people.svg">
+                <span>Удалить из друзей</span>
             </button>
+            <!--
             <button class="chat">
                 <img src="/static_/svg/ic_chat_24px.svg"><span>Начать диалог</span>
             </button>
-            <button class="play">
-                <img src="/static_/svg/play.svg"><span>Начать игру</span>
-            </button>
+            -->
         </div>
         <div class="body standard-box">
         </div>

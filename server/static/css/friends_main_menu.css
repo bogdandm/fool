@@ -4,7 +4,7 @@
     align-content: flex-start;
 }
 
-#friends, #friends-two, #friends-one {
+#friends, #friends-two, #friends-one, #games-invites-container {
     height: 100%;
 }
 
@@ -16,11 +16,11 @@
     display: inline-block;
 }
 
-#friends-one .mCSB_container {
+#friends-one .mCSB_container, #games-invites-container .mCSB_container {
     min-height: 100%;
 }
 
-#friends-one .body {
+#friends-one .body, #games-invites-container .body {
     z-index: 1;
     margin: 17px;
 }
@@ -115,27 +115,29 @@
     width: 200px;
 }
 
-#friend-dialog > button {
+#friend-dialog > button, #friend-dialog > a {
+    display: block;
+    box-sizing: border-box;
     padding: 10px;
     color: black;
     width: 100%;
     text-align: left;
 }
 
-#friend-dialog > button:hover {
+#friend-dialog > button:hover, #friend-dialog > a:hover {
     background-color: #f7f7f7;
 }
 
-#friend-dialog > button:active {
+#friend-dialog > button:active, #friend-dialog > a:active {
     background-color: #F0F0F0;
 }
 
-#friend-dialog > button > img {
+#friend-dialog > * > img {
     float: left;
     margin-right: 5px;
 }
 
-#friend-dialog > button > span {
+#friend-dialog > * > span {
     text-align: inherit;
 }
 
@@ -290,4 +292,13 @@
     height: 30px;
     max-width: 30px;
     margin: 0 10px 0 0;
+}
+
+#games-invites {
+    width: 300px;
+    height: 100%;
+}
+
+#games-invites .mCSB_container {
+    min-height: 100%;
 }

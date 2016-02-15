@@ -35,6 +35,12 @@ header {
 #to_main_menu > img {
     height: 15px;
     margin-right: 5px;
+    transition: transform 0.2s ease;
+    transform: translateX(0);
+}
+
+#to_main_menu:hover > img {
+   transform: translateX(-3px);
 }
 
 #timer_value {
