@@ -72,7 +72,7 @@ def check_email(email: str) -> bool:
 	return res
 
 
-def add_user(user_name, sha256, avatar: str, email) -> (str, bool):
+def add_user(user_name, pass_sha256, avatar: str, email) -> (str, bool):
 	random.seed(time.time() * 256)
 	activation_code = sha256(bytes(
 		user_name + int(time.time() * 256).__str__() + random.randint(0, 2 ** 20).__str__() + 'email activation',
@@ -81,7 +81,7 @@ def add_user(user_name, sha256, avatar: str, email) -> (str, bool):
 	return (activation_code, exec_query(
 		"INSERT INTO users(name, pass_sha256, email, has_avatar, activation_code, file_extension) "
 		"VALUES ('%s', '%s', '%s', %s, '%s', '%s')" %
-		(user_name, sha256, email, (avatar is not None).__str__(), activation_code, avatar)
+		(user_name, pass_sha256, email, (avatar is not None).__str__(), activation_code, avatar)
 	))
 
 

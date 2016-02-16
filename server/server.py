@@ -501,6 +501,7 @@ class Server:
 				if result2:
 					session = Session(name, result2.activated, result2.uid)
 					self.sessions[session.get_id()] = session
+					self.sessions_by_user_name[name] = session
 					session['avatar'] = result2.file
 					DB.add_session(session, result2.uid)
 					session.add_cookie_to_resp(response)
