@@ -88,8 +88,20 @@ def add_user(user_name, pass_sha256, avatar: str, email) -> (str, bool):
 def set_avatar_ext(user, ext):
 	exec_query("UPDATE users SET file_extension='%s' WHERE name='%s'" % (ext, user))
 
+
 def set_new_pass(user, sha256):
 	exec_query("UPDATE users SET pass_sha256='%s' WHERE name='%s'" % (sha256, user))
+
+
+def auto_set_new_pass(user, seed):
+	pass_str = sha256(bytes(
+		user + 'password' + int(time.time() * 256).__str__() + random.randint(0, 2 ** 20).__str__() + seed,
+		encoding='utf-8'
+	)).hexdigest()[10:20]
+	pass_sha256 = sha256(bytes(pass_str, encoding='utf-8')).hexdigest()
+
+	exec_query("UPDATE users SET pass_sha256='%s' WHERE name='%s'" % (pass_sha256, user))
+	return pass_str
 
 
 def add_session(s, uid):
@@ -149,15 +161,17 @@ def activate_account(token):
 	return res
 
 
-def get_email_adress(user):
+def update_email_token(user, seed):
 	random.seed(time.time() * 256)
 	activation_code = sha256(bytes(
-		user + int(time.time() * 256).__str__() + random.randint(0, 2 ** 20).__str__() + 'email activation',
+		user + int(time.time() * 256).__str__() + random.randint(0, 2 ** 20).__str__() + seed,
 		encoding='utf-8'
 	)).hexdigest()
 
 	exec_query("UPDATE users SET activation_code='%s' WHERE name='%s'" % (activation_code, user))
 
+
+def get_email_adress(user):
 	connection = connect_()
 	try:
 		cursor = connection.cursor()

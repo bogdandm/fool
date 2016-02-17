@@ -206,6 +206,7 @@ class Server:
 			else:
 				return 'Fail', 401
 
+			DB.update_email_token(session.user, 'email activation')
 			(email, activation_token) = DB.get_email_adress(session.user)
 			email_.send_email(
 				"Для подтвеждения регистрации пожалуйста перейдите по ссылке "
@@ -556,6 +557,55 @@ class Server:
 			else:
 				return 'Wrong password'
 
+		@self.app.route("/api/send_mail_for_auto_change_pass", methods=['GET'])
+		# get@user
+		def send_mail_for_auto_change_pass():
+			user = request.args.get('user')
+			DB.update_email_token(user, 'email activation')
+			(email, activation_token) = DB.get_email_adress(user)
+
+			email_.send_email(
+				"Для подтвеждения смены пароля пожалуйста перейдите по ссылке "
+				"http://{domain}/api/auto_change_pass?user={user}&token={token}".format(
+					domain=(self.domain if self.domain is not None else self.ip),
+					user=user,
+					token=activation_token
+				),
+				"Password change confirmation",
+				email)
+
+			return 'OK'
+
+		@self.app.route("/api/auto_change_pass", methods=['GET'])
+		# get@user, get@token
+		def auto_change_pass():
+			user = request.args.get('user')
+			token = request.args.get('token')
+
+			(email, activation_token) = DB.get_email_adress(user)
+			if (token == activation_token):
+				new_pass = DB.auto_set_new_pass(user, 'new password')
+
+				email_.send_email(
+					"Пользователь: {user}\n"
+					"Новый пароль: {password} "
+					"(Вы сможете изменить пароль на любой другой на странице пользователя)".format(
+						domain=(self.domain if self.domain is not None else self.ip),
+						user=user,
+						password=new_pass
+					),
+					"Password change",
+					email)
+
+				return render_template(
+					"error_page.html",
+					title="Password change",
+					text="Парол изменен",
+					description="Письмо с новым паролем отправлено на ваш e-mail"
+				)
+			else:
+				return redirect('/404')
+
 		@self.app.route("/api/init_session", methods=['POST'])
 		# need: post@user_name, post@pass
 		def init_session():
@@ -713,7 +763,7 @@ class Server:
 			if not session:
 				return 'Fail', 401
 
-			rooms=self.get_friends_games_for_user(session.user)
+			rooms = self.get_friends_games_for_user(session.user)
 
 			if rooms:
 				return dumps(list(map(

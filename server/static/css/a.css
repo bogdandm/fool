@@ -19,6 +19,19 @@ a:active {
 }
 
 /*==========================*/
+a.classic, a.classic:focus {
+    color: #1B2024;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+a.classic:hover {
+    text-decoration: underline;
+}
+
+/*==========================*/
 a.none, a.none:focus {
     color: #1B2024;
     background-color: transparent;

@@ -74,4 +74,5 @@
     float: right;
     font-weight: 700;
     padding-right: 9px;
+    z-index: 1000;
 }

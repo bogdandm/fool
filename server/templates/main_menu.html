@@ -151,6 +151,12 @@
             });
         });
 
+        $('#new-game-invite').click(function (event){
+            event.stopPropagation();
+            console.log(1);
+            $('.menu-item[container-name=games-invites-container]').click();
+        });
+
         $.ajax({
             url: '/api/avatar?user=' + $(".user_name > span").text() + '&type=menu',
             success: function (data) {
@@ -228,6 +234,18 @@
     .user_name > #settings > img {
         height: 30px;
     }
+
+    #new-game-invite  {
+        font-size: inherit;
+        padding: 0 9px;
+        margin-right: 5px;
+    }
+
+    #main-page {
+        height: calc(100% - 10px * 2 - 15px * 2);
+        margin: 10px 10px 10px 0;
+        padding: 15px;
+    }
 </style>
 {% endblock %}
 {% block body %}
@@ -277,7 +295,7 @@
     </div>
     <div class="menu-item" group="1" container-name="new-games">
         Новая игра
-        <span id="new-game-invite" class="menu-additional-inf"></span>
+        <button id="new-game-invite" class="menu-additional-inf"></button>
     </div>
     <div class="menu-item" group="1" container-name="friends">
         Друзья
@@ -293,7 +311,7 @@
     <div class="selection" group="1" position="default"></div>
 </div>
 <div id="default" class="container">
-    <div class="standard-box">Main page</div>
+    <div id="main-page" class="standard-box">Main page</div>
 </div>
 <div id="new-games" class="container-mini">
     <div class="menu standard-box" group="2">

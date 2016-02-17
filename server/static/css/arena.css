@@ -228,14 +228,16 @@ main {
 .card_border {
     overflow: hidden;
     position: relative;
-    width: calc(0.2967 * 300px + 1px);
-    height: calc(0.3012 * 430px - 1px);
+    width: calc(0.295 * 300px );
+    height: calc(0.289 * 430px );
+    background-color: white;
+    border-radius: 5px;
 }
 
 .card_border > img {
     position: absolute;
-    left: calc(-0.3494 * 300px);
-    top: calc(-0.3517 * 430px);
+    left: calc(-0.352 * 300px);
+    top: calc(-0.356 * 430px);
     width: 300px;
     height: 430px;
 }
@@ -266,6 +268,7 @@ main {
 }
 
 #hand2 > .card.on {
+    cursor: pointer;
     transform: translateY(-15px);
 }
 

@@ -18,6 +18,20 @@ button:active {
 }
 
 /*==========================*/
+button.classic, button.classic:focus {
+    color: #1B2024;
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+
+button.classic:hover {
+    text-decoration: underline;
+}
+
+/*==========================*/
 button.easy, button.easy:focus {
     background-color: transparent;
     opacity: 0.50;

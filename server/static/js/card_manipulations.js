@@ -33,7 +33,9 @@ function delCard1() {
 }
 
 function delCard2(str) {
-    var card = $('#hand2').find('.card[value=' + str + ']').css({width: 0}).find('img').css({opacity: 0});
+    var card = $('#hand2').find('.card[value=' + str + ']').css({width: 0})
+        .find('.card_border').css({opacity: 0});
+        //.find('img').css({opacity: 0});
     setTimeout(function () {
         $('#hand2').find('.card[value=' + str + ']').last().remove();
     }, 400)
