@@ -42,7 +42,7 @@
 }
 
 .user_name {
-    background-color: #9bed2f;
+    background-color: #2fed4a;
     font-weight: 400;
 }
 
@@ -58,7 +58,7 @@
 
 .selector {
     z-index: 1;
-    background-color: rgba(155, 237, 47, 0.5);
+    background-color: rgba(47, 237, 74, 0.5);
     transition: 0.2s ease;
     transition-property: top, background-color;
 }
@@ -66,7 +66,7 @@
 .selection {
     box-sizing: border-box;
     z-index: 2;
-    border-right: 8px solid #9bed2f;
+    border-right: 8px solid #2fed4a;
     transition: top 0.2s ease;
 }
 

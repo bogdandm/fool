@@ -19,12 +19,6 @@
             "load": false,
             "title": "Fool | Друзья"
         },
-        "server-statistic": {
-            false: serverStatisticLoad,
-            true: serverStatisticUnload,
-            "load": false,
-            "title": "Fool | Статистиска по серверу"
-        },
         "games-invites-container": {
             false: gamesInvitesLoad,
             true: gamesInvitesUnload,
@@ -55,12 +49,6 @@
     function defaultUnload() {
     }
 
-    function serverStatisticLoad() {
-    }
-
-    function serverStatisticUnload() {
-    }
-
     function initMenu() {
         $(".selector").add(".menu > .selection").add(".container").filter(":not(#default)").add(".container-mini").hide();
 
@@ -81,12 +69,12 @@
 
             function f() {
                 $(".selector").filter('[group="' + $(self).attr('group') + '"]').css({
-                    backgroundColor: "rgba(155, 237, 47, 0.5)"
+                    backgroundColor: "rgba(47, 237, 74, 0.5)"
                 });
             }
 
             $(".selector").filter('[group="' + $(this).attr('group') + '"]').css({
-                backgroundColor: "rgba(155, 237, 47, 0.8)"
+                backgroundColor: "rgba(47, 237, 74, 0.8)"
             });
 
             setTimeout(f, 200);
@@ -151,7 +139,7 @@
             });
         });
 
-        $('#new-game-invite').click(function (event){
+        $('#new-game-invite').click(function (event) {
             event.stopPropagation();
             console.log(1);
             $('.menu-item[container-name=games-invites-container]').click();
@@ -167,7 +155,7 @@
 </script>
 <style>
     header {
-        background-color: #90DD2B;
+        background-color: #2bdd44;
     }
 
     main {
@@ -235,16 +223,82 @@
         height: 30px;
     }
 
-    #new-game-invite  {
+    #new-game-invite {
         font-size: inherit;
         padding: 0 9px;
         margin-right: 5px;
     }
-
+</style>
+<style>
     #main-page {
-        height: calc(100% - 10px * 2 - 15px * 2);
+        height: calc(100% - 10px * 2);
         margin: 10px 10px 10px 0;
+        background-color: #21aa35;
+
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    #main-page-left {
+        position: relative;
+        box-sizing: border-box;
+        height: 90%;
+        width: 68%;
+        padding: 0 10%;
+    }
+
+    #main-page-left > img {
+        position: absolute;
+        bottom: 0;
+        max-width: 80%;
+        max-height: calc(100% - 200px);
+        margin-bottom: 5%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #main-page-title {
+        position: relative;
+        margin: 7% 0 40px 40px;
+    }
+
+    #main-page-title1 {
+        font-size: 60pt;
+        color: white;
+        font-weight: 700;
+    }
+
+    #main-page-title2 {
+        position: absolute;
+        top: 60px;
+        left: 120px;
+        font-size: 36pt;
+        font-weight: 300;
+    }
+
+    #main-page-right {
+        box-sizing: border-box;
+        height: 70%;
+        width: 30%;
+        margin-right: 2%;
         padding: 15px;
+    }
+
+    #main-page-right > .title {
+        font-size: 16pt;
+        font-weight: 500;
+    }
+
+    #main-page-right > .text {
+        font-size: 14pt;
+        font-weight: 300;
+    }
+
+    ul {
+        padding-left: 20px;
+        margin: 0;
     }
 </style>
 {% endblock %}
@@ -301,7 +355,6 @@
         Друзья
         <span id="new-friend" class="menu-additional-inf"></span>
     </div>
-    <div class="menu-item" group="1" container-name="server-statistic">Статистика по серверу</div>
     {% if admin %}
     <div class="menu-item" group="1">
         <a class="none" href="/static/server_statistic.html">Данные сервера</a>
@@ -311,7 +364,28 @@
     <div class="selection" group="1" position="default"></div>
 </div>
 <div id="default" class="container">
-    <div id="main-page" class="standard-box">Main page</div>
+    <div id="main-page" class="standard-box">
+        <div id="main-page-left">
+            <div id="main-page-title">
+                <span id="main-page-title1">Дурак</span>
+                <span id="main-page-title2">online</span>
+            </div>
+            <img src="/static/monitors.png">
+        </div>
+        <div id="main-page-right" class="standard-box">
+            <span class="title">О проекте:</span><br>
+            <span class="text">Данный проект разработан струдентом ЮФУ ИВТиПТ группы 4-3 Калашниковым Б.Д.
+                в качестве выпускной работы</span><br><br>
+
+            <span class="title">Ипользованные технологии</span><br>
+            <ul class="text">
+                <li>фрэймворк Flask (Python)</li>
+                <li>MySql</li>
+                <li>Server Sent Events</li>
+                <li>HTML5</li>
+            </ul>
+        </div>
+    </div>
 </div>
 <div id="new-games" class="container-mini">
     <div class="menu standard-box" group="2">
@@ -368,5 +442,4 @@
         </div>
     </div>
 </div>
-<div id="server-statistic" class="container">server statistic</div>
 {% endblock %}

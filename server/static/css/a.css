@@ -73,15 +73,15 @@ a.raised:active {
 /*==========================*/
 a.raised_color, a.raised_color:focus {
     background-color: #F0F0F0;
-    box-shadow: 0 2px 0 0 #9bed2f;
+    box-shadow: 0 2px 0 0 #2fed4a;
 }
 
 a.raised_color:hover {
-    box-shadow: 0 4px 0 0 #abff3f;
+    box-shadow: 0 4px 0 0 #40ff5b;
 }
 
 a.raised_color:active {
-    background-color: #abff3f;
+    background-color: #40ff5b;
 }
 
 /*==========================*/
