@@ -379,12 +379,6 @@
                     $('#end-game').hide();
             });
 
-            $('#open-btn').click(function () {
-                $('#menu-container').css({top: menu_opened ? (30 - $('body').outerHeight()) : 0});
-                menu_opened = !menu_opened;
-                $('#open-btn').find('> img').toggleClass('open');
-            });
-
             $('#drop_connections').click(function () {
                 $.ajax({
                     url: '/api/unsubscribe',
@@ -439,17 +433,12 @@
         <a href="/">Выйти в главное меню</a>
     </div>
 </div>
-<div id="menu-container">
-    <div id="main"></div>
-    <div id="open">
-        <a href="/" id="to_main_menu">
-            <img src="/static_/svg/ic_arrow_back_24px_white.svg">
-            <span>В главное меню</span>
-        </a>
-
-        <div id="open-btn"><img src="/static_/svg/ic_expand_more_24px_white.svg"></div>
-    </div>
-</div>
+<header>
+    <a href="/" id="to_main_menu">
+        <img src="/static_/svg/ic_arrow_back_24px_white.svg">
+        <span>В главное меню</span>
+    </a>
+</header>
 <main>
     <div id="left" class="font500">
         <div class="user-name standard-box">
