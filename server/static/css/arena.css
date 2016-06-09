@@ -373,3 +373,7 @@ main {
 .user-name > span {
     padding: 0 10px 0 5px;
 }
+
+#arena > .pair > .card:nth-child(2) > .card_border {
+	box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.1), 0 2px 3px 0 rgba(0, 0, 0, 0.2);
+}

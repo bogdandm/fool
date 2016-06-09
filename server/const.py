@@ -50,5 +50,45 @@ if 'MAX_LOG_LENGTH_AFTER_CLEANING' not in INICONFIG['LOG']:
 	MAX_LOG_LENGTH_AFTER_CLEANING = 200
 else:
 	MAX_LOG_LENGTH_AFTER_CLEANING = int(INICONFIG['LOG']['MAX_LOG_LENGTH_AFTER_CLEANING'])
+# ===========================================
+if 'SMTPServer' not in INICONFIG['EMAIL']:
+	SMTPServer = 'smtp.gmail.com'
+else:
+	SMTPServer = INICONFIG['EMAIL']['SMTPServer']
+
+if 'SENDER' not in INICONFIG['EMAIL']:
+	SENDER = 'smtp.gmail.com'
+else:
+	SENDER = INICONFIG['EMAIL']['SENDER']
+
+if 'USERNAME' not in INICONFIG['EMAIL']:
+	USERNAME = 'smtp.gmail.com'
+else:
+	USERNAME = INICONFIG['EMAIL']['USERNAME']
+
+if 'PASSWORD' not in INICONFIG['EMAIL']:
+	PASSWORD = 'smtp.gmail.com'
+else:
+	PASSWORD = INICONFIG['EMAIL']['PASSWORD']
+# ===========================================
+if 'USER' not in INICONFIG['DB']:
+	DB_USER = 'python_flask'
+else:
+	DB_USER = INICONFIG['DB']['USER']
+
+if 'PASS' not in INICONFIG['DB']:
+	DB_PASS = '11061995'
+else:
+	DB_PASS = INICONFIG['DB']['PASS']
+
+if 'USERNAME' not in INICONFIG['DB']:
+	DB_HOST = '127.0.0.1'
+else:
+	DB_HOST = INICONFIG['DB']['HOST']
+
+if 'DB' not in INICONFIG['DB']:
+	DB_NAME = 'fool_db'
+else:
+	DB_NAME = INICONFIG['DB']['DB']
 
 del INICONFIG

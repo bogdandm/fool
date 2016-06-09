@@ -1,10 +1,8 @@
-from smtplib import SMTP_SSL as SMTP
 from email.mime.text import MIMEText
+from smtplib import SMTP_SSL as SMTP
 
-SMTPServer = 'smtp.gmail.com'
-sender = 'fool.online.server@gmail.com'
-USERNAME = "fool.online.server"
-PASSWORD = "fool_server"
+from server.const import SENDER, USERNAME, PASSWORD, SMTPServer
+
 text_subtype = 'plain'
 
 
@@ -12,13 +10,13 @@ def send_email(message, subject, to):
 	try:
 		msg = MIMEText(message, text_subtype)
 		msg['Subject'] = subject
-		msg['From'] = sender
+		msg['From'] = SENDER
 
 		conn = SMTP(SMTPServer)
 		conn.set_debuglevel(False)
 		conn.login(USERNAME, PASSWORD)
 		try:
-			res = conn.sendmail(sender, to, msg.as_string())
+			res = conn.sendmail(SENDER, to, msg.as_string())
 		finally:
 			conn.close()
 

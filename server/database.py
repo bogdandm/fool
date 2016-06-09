@@ -4,17 +4,19 @@ from hashlib import sha256
 
 from mysql.connector import connect, Error
 
+import server.const as const
 from server.const import Dummy
+
+__config = {
+	'user': const.DB_USER,
+	'password': const.DB_PASS,
+	'host': const.DB_HOST,
+	'database': const.DB_NAME
+}
 
 
 def connect_():
-	config = {
-		'user': 'python_flask',
-		'password': '11061995',
-		'host': '127.0.0.1',
-		'database': 'fool_db'
-	}
-	return connect(**config)
+	return connect(**__config)
 
 
 def exec_query(query, connection=None):
