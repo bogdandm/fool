@@ -253,7 +253,7 @@ class Server:
 				return 'Fail', 401
 			session.status = Session.PLAY
 
-			return Response(gen(session.id), mimetype="text/event-stream", headers={'X-Accel-Buffering': 'No'})
+			return Response(gen(session.id), mimetype="text/event-stream")
 
 		@self.app.route("/api/unsubscribe")
 		# need: session@msg_queue
