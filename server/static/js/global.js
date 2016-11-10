@@ -1,6 +1,7 @@
 (function () {
     $(document).ajaxSend(function( event, jqxhr, settings ) {
-        settings.url = "/fool"+settings.url;
+        if (settings.url.indexOf("/fool"))
+            settings.url = "/fool" + settings.url;
     })
 })();
 
