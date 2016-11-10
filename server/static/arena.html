@@ -330,7 +330,7 @@
                         $('main').hide();
                         $('#single-room-allowed').show();
                     } else {
-                        evtSrc = new EventSource("/api/subscribe");
+                        evtSrc = new EventSource("/fool/api/subscribe");
                         evtSrc.onmessage = serverSentEventHandler;
                         $(window).on('beforeunload', function () {
                             evtSrc.close();

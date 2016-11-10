@@ -148,7 +148,7 @@
         $.ajax({
             url: '/api/avatar?user=' + $(".user_name > span").text() + '&type=menu',
             success: function (data) {
-                $('.user_name').find('img').eq(0).attr('src', data);
+                $('.user_name').find('img').eq(0).attr('src', "/fool/" + data);
             }
         });
     })
@@ -370,7 +370,7 @@
                 <span id="main-page-title1">Дурак</span>
                 <span id="main-page-title2">online</span>
             </div>
-            <img src="/static/monitors.png">
+            <img src="/fool/static/monitors.png">
         </div>
         <div id="main-page-right" class="standard-box">
             <span class="title">О проекте:</span><br>
