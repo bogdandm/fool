@@ -151,7 +151,7 @@ function addFriend(user, mode) {
     friendHTML.attr('name', user.name);
     friendHTML.find('.name').text(user.name);
     friendHTML.find('.status').text(mode == ACCEPTED ? user.status : "Приглашение в друзья");
-    friendHTML.find('> img').attr('src', user.avatar);
+    friendHTML.find('> img').attr('src', "/fool" + user.avatar);
     if (user.status == "Online")
         friendHTML.removeClass('play').addClass('online');
     else if (user.status == "Offline")
