@@ -148,7 +148,7 @@
         $.ajax({
             url: '/api/avatar?user=' + $(".user_name > span").text() + '&type=menu',
             success: function (data) {
-                $('.user_name').find('img').eq(0).attr('src', "/fool/" + data);
+                $('.user_name').find('img').eq(0).attr('src', "/fool" + data);
             }
         });
     })
