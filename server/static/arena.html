@@ -36,6 +36,13 @@
         var wait = false;
         var end = false;
 
+        (function () {
+            $(document).ajaxSend(function (event, jqxhr, settings) {
+                if (settings.url.indexOf("/fool"))
+                    settings.url = "/fool" + settings.url;
+            })
+        })();
+
         function getURLParams() {
             var tmp = [];		// два вспомагательных
             var tmp2 = [];		// массива
