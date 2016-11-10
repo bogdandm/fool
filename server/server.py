@@ -111,11 +111,11 @@ class Server:
 					'main_menu.html', page_name='Дурак online', page_title='Главная',
 					user_name=name, admin=bool(session.admin))
 			elif session is None:
-				return redirect('/static/login.html')
+				return redirect(self.app.config["APPLICATION_ROOT"] + '/static/login.html')
 			else:
 				session = self.sessions[request.cookies['sessID']]
 				session.update_activation_status()
-				return redirect('/static/errors/not_activated.html')
+				return redirect(self.app.config["APPLICATION_ROOT"] + '/static/errors/not_activated.html')
 
 		@self.app.route('/account_settings.html')
 		def account_settings():
@@ -127,7 +127,7 @@ class Server:
 					header_mini=True, page_name='Настройки аккаунта', page_title='Настройки',
 					u_name=session.user, email=user_data.email)
 			else:
-				return redirect('/')
+				return redirect(self.app.config["APPLICATION_ROOT"] + '/')
 
 		@self.app.route('/static_/svg/<path:path>')
 		# static
@@ -153,12 +153,12 @@ class Server:
 		# static
 		def send_api_methods():
 			# TODO: rewrite documentation
-			return redirect('/static/api_methods.html')
+			return redirect(self.app.config["APPLICATION_ROOT"] + '/static/api_methods.html')
 
 		@self.app.route('/arena')
 		# static; need: get@mode; maybe: get@for(user)
 		def send_arena():
-			url = '/static/arena.html?'
+			url = self.app.config["APPLICATION_ROOT"] + '/static/arena.html?'
 			for arg in request.args:
 				url += arg + '=' + request.args[arg] + '&'
 			return redirect(url)
@@ -177,7 +177,7 @@ class Server:
 				else:
 					return 'Permission denied'
 			else:
-				return redirect('/')
+				return redirect(self.app.config["APPLICATION_ROOT"] + '/')
 
 		@self.app.route('/api/activate_account')
 		# need: get@token
@@ -194,7 +194,7 @@ class Server:
 			session['avatar'] = result.file
 			DB.add_session(session, result.uid)
 
-			response = redirect('/')
+			response = redirect(self.app.config["APPLICATION_ROOT"] + '/')
 			session.add_cookie_to_resp(response)
 			return response
 
@@ -604,7 +604,7 @@ class Server:
 					description="Письмо с новым паролем отправлено на ваш e-mail"
 				)
 			else:
-				return redirect('/404')
+				return redirect(self.app.config["APPLICATION_ROOT"] + '/404')
 
 		@self.app.route("/api/init_session", methods=['POST'])
 		# need: post@user_name, post@pass
