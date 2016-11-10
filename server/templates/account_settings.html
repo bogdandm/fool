@@ -97,7 +97,7 @@
             url: '/api/avatar?user={{ u_name }}',
             success: function (data) {
                 var avatar = $('#avatar-image');
-                if (data != '/static_/svg/ic_person_24px_white.svg')
+                if (data != '/fool/static_/svg/ic_person_24px_white.svg')
                     avatar.css('padding', 0);
                 avatar.attr('src', data);
             }
@@ -279,12 +279,12 @@
 <div>
     <div id="top">
         <div id="avatar" class="standard-box">
-            <img id="avatar-image" src="/static_/svg/ic_person_24px_white.svg">
+            <img id="avatar-image" src="/fool/static_/svg/ic_person_24px_white.svg">
 
             <div id="pseudo-file">
                 <span id="load_text">
                     <span>Загрузить аватар</span>
-                    <img src="/static_/svg/ic_file_upload_24px_white.svg">
+                    <img src="/fool/static_/svg/ic_file_upload_24px_white.svg">
                 </span>
                 <span class="error" id="file_error">Файл слишком большой</span>
             </div>
@@ -304,7 +304,7 @@
                 <input id="new_pass" type="password" placeholder="Введите новый пароль">
                 <input id="new_pass_repeat" type="password" placeholder="Повторите пароль">
                 <span id="pass_error" class="error">Пароли не совпадают</span>
-                <button id="pass_enter"><img src="/static_/svg/ic_keyboard_enter_24px.svg"></button>
+                <button id="pass_enter"><img src="/fool/static_/svg/ic_keyboard_enter_24px.svg"></button>
             </div>
         </div>
     </div>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Fool | Зарегистрироваться</title>
     <script src="js/jquery-2.1.4.min.js"></script>
-    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico">
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700,300&subset=latin,cyrillic-ext,cyrillic'
           rel='stylesheet' type='text/css'>
     <link href="css/global.css" rel="stylesheet">
@@ -331,7 +331,7 @@
             addLoadBar($('#right'), {position: 'top'}).hide();
             $('#loading-progress').add('.error').hide();
             $('#login-btn').click(function () {
-                window.location.href = '/';
+                window.location.href = '/fool';
             });
 
             $('#pseudo-file').click(function () {
@@ -365,7 +365,7 @@
                     complete: function (x) {
                         data = x.responseText;
                         if (data == 'True' || data == 'OK') {
-                            window.location.href = '/';
+                            window.location.href = '/fool';
                         }
                         $('form .loading-bar').slideUp();
                     }
@@ -379,12 +379,12 @@
 <main>
     <form>
         <div id="avatar" class="standard-box">
-            <img src="/static_/svg/ic_person_24px_white.svg">
+            <img src="/fool/static_/svg/ic_person_24px_white.svg">
 
             <div id="pseudo-file">
                 <span id="load_text">
                     <span>Загрузить аватар</span>
-                    <img src="/static_/svg/ic_file_upload_24px_white.svg">
+                    <img src="/fool/static_/svg/ic_file_upload_24px_white.svg">
                 </span>
                 <span class="error" id="file_error">Файл слишком большой</span>
             </div>
@@ -405,7 +405,7 @@
             <span id="pass_error" class="error">Пароли не совпадают</span>
 
             <div class="btn_container">
-                <a class="raised" href="/">Войти</a>
+                <a class="raised" href="/fool">Войти</a>
                 <span class="grey">или</span>
                 <button class="raised_color" type="button" id="reg-btn">Зарег.</button>
             </div>

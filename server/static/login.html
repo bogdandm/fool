@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Fool | Войти</title>
     <script src="js/jquery-2.1.4.min.js"></script>
-    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="shortcut icon" href="favicon.ico">
     <link href='https://fonts.googleapis.com/css?family=Roboto:400,500,700,300&subset=latin,cyrillic-ext,cyrillic'
           rel='stylesheet' type='text/css'>
     <link href="css/global.css" rel="stylesheet">
@@ -93,7 +93,7 @@
                             if (data == 'True' || data == 'OK') {
                                 $('input').css({borderBottomColor: '#9f9f9f'});
                                 $('#error').slideUp();
-                                window.location.href = '/';
+                                window.location.href = '/fool';
                             } else {
                                 $('input').css({borderBottomColor: '#ff433e'});
                                 $('#error').slideDown();
@@ -129,7 +129,7 @@
         <button id="forget" class="classic">Забыли пароль?</button>
 
         <div class="btn_container">
-            <a class="raised" href="/static/registration.html">Зарег.</a>
+            <a class="raised" href="registration.html">Зарег.</a>
             <span>или</span>
             <button class="raised_color" type="button" id="login-btn">Войти</button>
         </div>

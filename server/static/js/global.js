@@ -1,3 +1,10 @@
+(function () {
+    $(document).ajaxSend(function( event, jqxhr, settings ) {
+        settings.url = "/fool"+settings.url;
+    })
+})();
+
+
 function addLoadBar(element, data) {
     /** @namespace val.position */
     /** @namespace val.color */

@@ -49,7 +49,7 @@ function findUser(userName) {
                         userHTML.removeClass('online').addClass('play');
                     if (val.is_friend)
                         userHTML.find('button.add').removeClass('on')
-                            .find('img').attr('src', '/static_/svg/ic_done_24px.svg');
+                            .find('img').attr('src', '/fool/static_/svg/ic_done_24px.svg');
                     else
                         userHTML.find('button.add').click(function () {
                             var this_ = this;
@@ -57,7 +57,7 @@ function findUser(userName) {
                                 url: "/api/users/friend_invite?user=" + val.name,
                                 success: function () {
                                     $(this_).unbind('click').removeClass('on')
-                                        .find('img').attr('src', '/static_/svg/ic_done_24px.svg');
+                                        .find('img').attr('src', '/fool/static_/svg/ic_done_24px.svg');
                                 }
                             })
                         });
@@ -279,7 +279,7 @@ function gamesInvitesLoad() {
 
     gameInvites.find('.friend[name]').click(function () {
         var name = $(this).attr('name');
-        location.href = '/arena?mode=2&for=' + name
+        location.href = '/fool/arena?mode=2&for=' + name
     })
 }
 

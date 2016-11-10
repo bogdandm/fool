@@ -5,7 +5,7 @@
 *     <div class="input">
 *         <span class="gt">&gt;</span>
 *         <input type="text">
-*         <button class="send"><img src="/static_/svg/ic_keyboard_enter_24px_white.svg"></button>
+*         <button class="send"><img src="/fool/static_/svg/ic_keyboard_enter_24px_white.svg"></button>
 *     </div>
 * </div>
 **/

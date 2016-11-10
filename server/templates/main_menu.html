@@ -1,10 +1,10 @@
 {% extends "green_page.html" %}
 {% block head%}
-<link href="/static/css/menu.css" rel="stylesheet" type="text/css">
-<link href="/static/css/friends_main_menu.css" rel="stylesheet" type="text/css">
-<link href="/static/css/loading_bar.css" rel="stylesheet">
-<script src="/static/js/global.js"></script>
-<script src="/static/js/friends_main_menu.js"></script>
+<link href="/fool/static/css/menu.css" rel="stylesheet" type="text/css">
+<link href="/fool/static/css/friends_main_menu.css" rel="stylesheet" type="text/css">
+<link href="/fool/static/css/loading_bar.css" rel="stylesheet">
+<script src="/fool/static/js/global.js"></script>
+<script src="/fool/static/js/friends_main_menu.js"></script>
 <script>
     var loaders = {
         "default": {
@@ -134,7 +134,7 @@
             $.ajax({
                 url: "/api/destroy_session",
                 success: function () {
-                    window.location.href = '/static/login.html';
+                    window.location.href = '/fool/static/login.html';
                 }
             });
         });
@@ -312,20 +312,20 @@
             <div class="status">offline</div>
             <div class="buttons">
                 <button class="more easy">
-                    <img src="/static_/svg/ic_more_vert_black_24px.svg">
+                    <img src="/fool/static_/svg/ic_more_vert_black_24px.svg">
                 </button>
                 <button class="reject easy" style="display: none">
-                    <img src="/static_/svg/ic_close_24px.svg">
+                    <img src="/fool/static_/svg/ic_close_24px.svg">
                 </button>
                 <button class="add easy" style="display: none">
-                    <img src="/static_/svg/ic_done_24px.svg">
+                    <img src="/fool/static_/svg/ic_done_24px.svg">
                 </button>
             </div>
         </div>
     </div>
     <div class="user">
         <div>
-            <img class="avatar" src="/static_/svg/account-circle.svg">
+            <img class="avatar" src="/fool/static_/svg/account-circle.svg">
 
             <div style="display: inline-block">
                 <div class="name">-</div>
@@ -334,7 +334,7 @@
         </div>
         <div>
             <div class="mutual">N</div>
-            <button class="add on"><img src="/static_/svg/ic_add_24px.svg"></button>
+            <button class="add on"><img src="/fool/static_/svg/ic_add_24px.svg"></button>
         </div>
     </div>
 </div>
@@ -344,7 +344,7 @@
         <img src="">
         <span>{{ user_name }}</span>
         <a id="settings" class="easy" group="1" container-name="settings_page" href="account_settings.html">
-            <img src="/static_/svg/ic_settings_black_24px.svg">
+            <img src="/fool/static_/svg/ic_settings_black_24px.svg">
         </a>
     </div>
     <div class="menu-item" group="1" container-name="new-games">
@@ -357,7 +357,7 @@
     </div>
     {% if admin %}
     <div class="menu-item" group="1">
-        <a class="none" href="/static/server_statistic.html">Данные сервера</a>
+        <a class="none" href="/fool/static/server_statistic.html">Данные сервера</a>
     </div>
     {% endif %}
     <div id="logout" class="menu-item" group="1">Выйти из аккаунта</div>
@@ -390,8 +390,8 @@
 <div id="new-games" class="container-mini">
     <div class="menu standard-box" group="2">
         <div class="selector" group="2"></div>
-        <div class="menu-item" group="2"><a href="/arena?mode=0" class="none">Играть против ИИ</a></div>
-        <div class="menu-item" group="2"><a href="/arena?mode=1" class="none">Игра против другого игрока</a></div>
+        <div class="menu-item" group="2"><a href="/fool/arena?mode=0" class="none">Играть против ИИ</a></div>
+        <div class="menu-item" group="2"><a href="/fool/arena?mode=1" class="none">Игра против другого игрока</a></div>
         <div class="menu-item" group="2" container-name="games-invites-container">
             Играть с другом
         </div>
@@ -406,17 +406,17 @@
 <div id="friends" class="container">
     <div id="friends-one">
         <div id="friend-dialog" class="standard-box">
-            <a class="play none" href="#" href_tmp="/arena?mode=2&for=user">
-                <img src="/static_/svg/play.svg">
+            <a class="play none" href="#" href_tmp="/fool/arena?mode=2&for=user">
+                <img src="/fool/static_/svg/play.svg">
                 <span>Начать игру</span>
             </a>
             <button class="remove">
-                <img src="/static_/svg/delete_people.svg">
+                <img src="/fool/static_/svg/delete_people.svg">
                 <span>Удалить из друзей</span>
             </button>
             <!--
             <button class="chat">
-                <img src="/static_/svg/ic_chat_24px.svg"><span>Начать диалог</span>
+                <img src="/fool/static_/svg/ic_chat_24px.svg"><span>Начать диалог</span>
             </button>
             -->
         </div>
@@ -428,7 +428,7 @@
             <div id="find-user-box" class="standard-box">
                 <div class="top">
                     <input id="find-user" placeholder="Введите имя пользователя">
-                    <button id="find-user-btn"><img src="/static_/svg/ic_search_24px.svg"></button>
+                    <button id="find-user-btn"><img src="/fool/static_/svg/ic_search_24px.svg"></button>
                 </div>
                 <div class="result">
                     <div class="body">

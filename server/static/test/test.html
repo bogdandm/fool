@@ -11,7 +11,7 @@
             cards.forEach(function(item, i, arr){
                 if (i % 2) return;
                 var card = $('.hidden > .card').clone();
-                card.find('img').attr({src: "/static_/svg/"+item+".svg"});
+                card.find('img').attr({src: "/fool/static_/svg/"+item+".svg"});
                 hand.append(card);
             })
         }
