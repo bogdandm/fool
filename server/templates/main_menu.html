@@ -37,7 +37,7 @@
             $('#new-game-invite').text(data.length ? data.length : '');
         });
 
-        $.getJSON("api/users/get_friend_list?invited", function (data) {
+        $.getJSON("/api/users/get_friend_list?invited", function (data) {
             invites.friend = data;
             $('#new-friend').text(data.length ? data.length : '');
         });
