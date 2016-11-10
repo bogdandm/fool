@@ -75,7 +75,7 @@ class Server:
 
 		http_errors = loads(open('server/configs/http_errors.json').read())
 		for error, data in http_errors.items():
-			self.app.error_handler_spec[None][int(error)] = error_handler_generator(error, data)
+			self.app.register_error_handler(int(error), error_handler_generator(error, data))
 
 		@self.app.route('/500')  # static
 		def error_500_generator():
