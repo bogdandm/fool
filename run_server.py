@@ -5,7 +5,7 @@ from gevent.wsgi import WSGIServer
 from werkzeug.wsgi import DispatcherMiddleware
 
 from server.server import Server
-from uwsgi import route
+from uwsgi import route, simple
 
 
 def get_argk(argv: list) -> dict:
@@ -23,11 +23,6 @@ def get_outer_ip():
 
 
 if __name__ == "__main__":
-	def simple(env, resp):
-		resp(b'404 Page not found', [(b'Content-Type', b'text/plain')])
-		return [b'No server for this url']
-
-
 	argk = get_argk(sys.argv)
 	if "-l" in argk:
 		ip = "0.0.0.0"

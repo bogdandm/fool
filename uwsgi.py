@@ -6,7 +6,7 @@ from server.server import Server
 
 
 def simple(env, resp):
-	resp(b'404 Page not found', [(b'Content-Type', b'text/plain')])
+	resp('404 Page not found', [('Content-Type', 'text/plain')])
 	return [b'No server for this url']
 
 

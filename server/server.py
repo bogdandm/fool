@@ -451,23 +451,23 @@ class Server:
 			user = request.args.get('user')
 			if user == 'AI' or user == 'root':
 				if request.args.get('type') == 'menu' or request.args.get('type') == 'round':
-					response = make_response("/static_/svg/ic_computer_24px.svg")
+					response = make_response(self.app.config["APPLICATION_ROOT"] + "/static_/svg/ic_computer_24px.svg")
 				else:
-					response = make_response("/static_/svg/ic_computer_24px_white.svg")
+					response = make_response(self.app.config["APPLICATION_ROOT"] + "/static_/svg/ic_computer_24px_white.svg")
 			else:
 				file_ext = DB.check_user(user).file
 				if file_ext is not None and file_ext != 'None':
-					response = make_response("/static/avatar/{user_name}{file_ext}".
+					response = make_response(self.app.config["APPLICATION_ROOT"] + "/static/avatar/{user_name}{file_ext}".
 											 format(user_name=user, file_ext=file_ext))
 				else:
 					if request.args.get('type') == 'menu':
-						response = make_response("/static_/svg/ic_person_24px.svg")
+						response = make_response(self.app.config["APPLICATION_ROOT"] + "/static_/svg/ic_person_24px.svg")
 					elif request.args.get('type') == 'round':
-						response = make_response("/static_/svg/account-circle.svg")
+						response = make_response(self.app.config["APPLICATION_ROOT"] + "/static_/svg/account-circle.svg")
 					elif request.args.get('type') == 'round_white':
-						response = make_response("/static_/svg/account-circle_white.svg")
+						response = make_response(self.app.config["APPLICATION_ROOT"] + "/static_/svg/account-circle_white.svg")
 					else:
-						response = make_response("/static_/svg/ic_person_24px_white.svg")
+						response = make_response(self.app.config["APPLICATION_ROOT"] + "/static_/svg/ic_person_24px_white.svg")
 			response.headers["Cache-Control"] = "no-store"
 			return response
 
